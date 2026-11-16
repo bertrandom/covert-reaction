@@ -15,6 +15,7 @@
 #include "formats/Pan.h"
 #include "formats/Pic.h"
 #include "formats/TextDb.h"
+#include "game/CaseGen.h"
 #include "game/NewChar.h"
 #include "game/Paper.h"
 
@@ -371,8 +372,27 @@ private:
     std::unique_ptr<Scene> next_;
 };
 
+// The end of FINAL's start-up: generate_case (with case_briefing's leader line-up
+// when it asks for one), then GAME would take over -- the city loop isn't ported
+// yet, so a notice says where the case starts.
 std::unique_ptr<Scene> caseNotPorted(App& app, const Frame& last) {
-    return std::make_unique<NoticeScene>(app, last, "The case itself\nisn't ported yet.\n");
+    auto& g = app.game;
+    CaseResult res = CaseGenerator(g.world, g.rng, app.data, caseSetupFor(g)).generate();
+    auto startNotice = [&app](const Frame& f) -> std::unique_ptr<Scene> {
+        const auto& w = app.game.world;
+        std::string text = "Your case begins in\n" + w.cities[static_cast<std::size_t>(w.hdr.hereCity) & 15].name.str() +
+                           ".\nThe city loop\nisn't ported yet.\n";
+        return std::make_unique<NoticeScene>(app, f, text);
+    };
+    if (!res.faceCheck) return startNotice(last);
+    return makeLeaderFacesScene(app, res.lineup, [&app, startNotice](bool passed, const Frame& f) -> std::unique_ptr<Scene> {
+        if (passed) {
+            clearedForDuty(app.game.world);
+            return startNotice(f);
+        }
+        // FINAL discards the case and sends a wrong answer to a practice mission.
+        return std::make_unique<NoticeScene>(app, f, "Identification failed:\na practice mission\nwould follow.\n");
+    });
 }
 
 }  // namespace
