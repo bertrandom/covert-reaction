@@ -36,6 +36,7 @@ EM_JS(void, redux_js_exit, (int status), {
 #include "app/App.h"
 #include "app/Scenes.h"
 #include "app/Screen.h"
+#include "app/UserFiles.h"
 #include "core/GameData.h"
 
 namespace fs = std::filesystem;
@@ -132,6 +133,13 @@ public:
           scripted_(script_.shot.has_value()),
           screen_("Covert Redux", 3, headless),
           app_{data_, screen_, FontSet::load(data_)} {
+        if (!headless) {   // scripted runs keep the defaults, so they stay reproducible
+            app_.settingsFile = userFile("settings.ini");
+            app_.settings = Settings::load(app_.settingsFile);
+#ifndef __EMSCRIPTEN__
+            if (app_.settings.fullscreen) screen_.setFullscreen(true);
+#endif
+        }
         scene_ = makeScene(app_, sceneName);
         if (!scene_) throw std::runtime_error("unknown scene: " + sceneName);
         freq_ = SDL_GetPerformanceFrequency();
@@ -147,8 +155,13 @@ public:
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) scene_->quit = true;
             else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN &&
-                     (e.key.keysym.mod & KMOD_ALT))
+                     (e.key.keysym.mod & KMOD_ALT)) {
                 screen_.toggleFullscreen();
+#ifndef __EMSCRIPTEN__
+                app_.settings.fullscreen = screen_.fullscreen();
+                app_.saveSettings();
+#endif
+            }
             else
                 scene_->handle(e);
         }

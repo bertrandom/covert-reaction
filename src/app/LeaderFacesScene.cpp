@@ -78,7 +78,7 @@ public:
         Frame last;
         last.image = Image(320, 200, 5);   // gfx_fill_rect(0, 0, 320, 200, 5); game palette
         last.palette = mcgaPalette(palettes::kGame);
-        next_ = then_(right || !app_.game.copyProtection, last);
+        next_ = then_(right || !(app_.game.copyProtection || app_.settings.copyProtection), last);
     }
 
     void draw(Frame& f) override {

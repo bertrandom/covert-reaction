@@ -74,6 +74,20 @@ For local testing only, `-DREDUX_WEB_PRELOAD_DATA=ON` packs `resources/Covert`
 into the build (`index.data`) and starts straight away. That build contains the
 original, copyrighted game files: never publish or share it.
 
+## Options
+
+The main menu has an **Options** item (not in the original) for the redux's own
+settings, saved in `settings.ini` in the per-user folder:
+
+| Option | What it does | Default |
+|---|---|---|
+| Keypad on 789/UIO/JKL | 7 8 9 / U I O / J K L act as the numeric keypad in TAC and BUG (Shift dives in TAC); BUG also takes the number row | On |
+| Copy protection | The leader line-up after the briefing counts; a wrong answer means a practice mission | Off |
+| Sound | Automatic (MT-32 if its ROMs are found, else AdLib), Roland MT-32, AdLib, PC speaker or Off | Automatic |
+| Full screen | Desktop only; Alt+Enter also switches it | Off |
+
+Scripted test runs (`--shot`) ignore the saved settings and use the defaults.
+
 ## The game files
 
 Covert Redux needs an installed copy of the original game (the directory with

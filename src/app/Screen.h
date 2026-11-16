@@ -21,6 +21,8 @@ public:
 
     void present(const Image& frame, const Palette& pal);
     void toggleFullscreen();
+    void setFullscreen(bool on) { if (on != fullscreen_) toggleFullscreen(); }
+    bool fullscreen() const { return fullscreen_; }
     // Window coordinates -> 320x200 frame coordinates (for the mouse).
     SDL_Point toFrame(int wx, int wy) const;
 

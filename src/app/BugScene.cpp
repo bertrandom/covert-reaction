@@ -33,7 +33,7 @@ using Ev = WiretapEvent::Kind;
 // the arrows they are with Num Lock off; so do the number row's digits, the
 // keypad on the letters (7 8 9 / U I O / J K L), for keyboards without a
 // keypad (app/Keypad.h).
-int dosKey(const SDL_Keysym& k) {
+int dosKey(const SDL_Keysym& k, bool keypadKeys) {
     using namespace bugkeys;
     if (k.mod & KMOD_ALT) {
         switch (k.sym) {
@@ -43,7 +43,7 @@ int dosKey(const SDL_Keysym& k) {
         default: return kNone;
         }
     }
-    switch (k.mod & (KMOD_CTRL | KMOD_GUI) ? k.sym : letterKeypad(digitAsKeypad(k.sym))) {
+    switch (!keypadKeys || (k.mod & (KMOD_CTRL | KMOD_GUI)) ? k.sym : letterKeypad(digitAsKeypad(k.sym))) {
     case SDLK_UP: case SDLK_KP_8: return kUp;
     case SDLK_PAGEUP: case SDLK_KP_9: return kPgUp;
     case SDLK_RIGHT: case SDLK_KP_6: return kRight;
@@ -98,7 +98,7 @@ public:
             }
             return;
         }
-        const int k = dosKey(e.key.keysym);
+        const int k = dosKey(e.key.keysym, app_.settings.keypadKeys);
         if (k != bugkeys::kNone && keys_.size() < 15) keys_.push_back(k);   // the BIOS buffer
     }
 

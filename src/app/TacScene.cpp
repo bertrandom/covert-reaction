@@ -114,7 +114,7 @@ public:
         // While Max moves (TAC's NumLock on), the number row and 7 8 9 / U I O /
         // J K L are the keypad: walk, with Shift dive, I (5) sneak. Not while
         // typing a message (NumLock off), nor with Ctrl / Alt / Cmd.
-        if (tac_.numLock() && !(key.mod & (KMOD_CTRL | KMOD_ALT | KMOD_GUI)))
+        if (app_.settings.keypadKeys && tac_.numLock() && !(key.mod & (KMOD_CTRL | KMOD_ALT | KMOD_GUI)))
             key.sym = letterKeypad(digitAsKeypad(key.sym));
         const int code = tacKey(key, tac_.numLock());
         if (code < 0) return;

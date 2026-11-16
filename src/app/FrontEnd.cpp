@@ -34,9 +34,10 @@ public:
         menu_->tick();
         auto r = menu_->result();
         if (!r || next_) return;
-        if (notice_) {           // a "not ported yet" notice was closed
-            notice_ = false;
-            openMain();
+        if (options_) {               // the Options window: change one, show it again
+            if (*r < 0 || *r == kOptionsDone) { options_ = false; openMain(); return; }
+            changeOption(*r);
+            openOptions(*r);
             return;
         }
         if (practiceStep_ == 1) {     // practice_menu: the difficulty
@@ -79,13 +80,7 @@ public:
                           80, 128);
             return;
         }
-        static const char* what[] = {"Creating a character", "Loading a saved game",
-                                     "Practising a skill", "The Hall of Fame"};
-        std::string text = std::string(what[sel]) + "\nisn't ported yet.\n";
-        TextWindowOptions opt;
-        opt.showOk = true;
-        menu_.emplace(app_.fonts.font(1), text, 96, 90, opt);
-        notice_ = true;
+        if (sel == 4) openOptions(0);
     }
 
     void draw(Frame& f) override {
@@ -100,15 +95,65 @@ private:
     void openMain() {
         menu_.emplace(app_.fonts.font(1),
                       "Do you want to...\n Create a New Character\n Load a Saved Game\n"
-                      " Practice a skill\n Review Hall of Fame\n",
+                      " Practice a skill\n Review Hall of Fame\n Options\n",
                       80, 80);
+    }
+
+    // The redux's own options (core/Settings.h), not in the original's menu.
+    // Choosing one changes it and saves; "Done" or Esc goes back.
+    static constexpr const char* kSounds[] = {"auto", "mt32", "adlib", "speaker", "none"};
+    static constexpr const char* kSoundNames[] = {"Automatic", "Roland MT-32", "AdLib", "PC speaker", "Off"};
+#ifdef __EMSCRIPTEN__
+    static constexpr int kOptionsDone = 3;   // (the page has its own full-screen button)
+#else
+    static constexpr int kOptionsDone = 4;
+#endif
+
+    void openOptions(int selected) {
+        const Settings& s = app_.settings;
+        auto onOff = [](bool b) { return b ? "On" : "Off"; };
+        std::string text = "Options\n";
+        text += std::string(" Keypad on 789/UIO/JKL: ") + onOff(s.keypadKeys) + "\n";
+        text += std::string(" Copy protection: ") + onOff(s.copyProtection) + "\n";
+        text += std::string(" Sound: ") + kSoundNames[soundIndex()] + "\n";
+#ifndef __EMSCRIPTEN__
+        text += std::string(" Full screen: ") + onOff(app_.screen.fullscreen()) + "\n";
+#endif
+        text += " Done\n";
+        TextWindowOptions opt;
+        opt.selected = selected;
+        menu_.emplace(app_.fonts.font(1), text, 64, 80, opt);
+        options_ = true;
+    }
+
+    int soundIndex() const {
+        for (int i = 0; i < 5; ++i)
+            if (app_.settings.sound == kSounds[i]) return i;
+        return 0;
+    }
+
+    void changeOption(int item) {
+        Settings& s = app_.settings;
+        switch (item) {
+        case 0: s.keypadKeys = !s.keypadKeys; break;
+        case 1: s.copyProtection = !s.copyProtection; break;
+        case 2: s.sound = kSounds[(soundIndex() + 1) % 5]; break;
+#ifndef __EMSCRIPTEN__
+        case 3:
+            app_.screen.toggleFullscreen();
+            s.fullscreen = app_.screen.fullscreen();
+            break;
+#endif
+        default: return;
+        }
+        app_.saveSettings();
     }
 
     App& app_;
     Image background_;
     Palette palette_;
     std::optional<Menu> menu_;
-    bool notice_ = false;
+    bool options_ = false;    // the Options window is open
     int practiceStep_ = 0;    // 1: difficulty menu, 2: skill menu
     std::unique_ptr<Scene> next_;
 };
