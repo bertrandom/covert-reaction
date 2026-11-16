@@ -220,9 +220,9 @@ private:
 
     void drawClock() { text(2, clock_.update(), 256, 1, 2, true, 10); }
 
-    void playSound(int /*n*/) {
-        // play_sound(n): effect 45 (letter set) / 46 (scramble, decoded) when
-        // options & 4. No sound driver in Covert Redux yet.
+    // play_sound(n): effect 45 (letter set) / 46 (scramble, decoded) when options & 4.
+    void playSound(int n) {
+        if (outcome_.options & 4) app_.driverSound(n);
     }
 
     // --- the program ---

@@ -4,6 +4,7 @@
 #include <filesystem>
 
 #include "app/Screen.h"
+#include "audio/Audio.h"
 #include "core/GameData.h"
 #include "core/Settings.h"
 #include "formats/Font.h"
@@ -26,6 +27,17 @@ struct App {
     std::filesystem::path settingsFile{};
     void saveSettings() const {
         if (!settingsFile.empty()) settings.save(settingsFile);
+    }
+
+    // The sound driver (null: no sound at all, as in scripted runs). sound() is
+    // play_sound(n, a, b) as FINAL and GAME call it, when options & 4 (sound on);
+    // the mini-games keep their own options and call driverSound().
+    audio::AudioEngine* audio = nullptr;
+    void sound(int n, int a = 0, int b = 0) const {
+        if (game.world.hdr.options & 4) driverSound(n, a, b);
+    }
+    void driverSound(int n, int a = 0, int b = 0) const {
+        if (audio) audio->play(n, a, b);
     }
 
     // The mouse position of an event, in 320x200 frame coordinates.

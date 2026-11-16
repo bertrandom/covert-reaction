@@ -154,6 +154,12 @@ public:
         if (wait_ > 0 && --wait_ > 0) return;
         for (int guard = 0; wait_ == 0 && !menu_ && guard < 1000; ++guard)
             if (!step()) break;
+        playSounds();
+    }
+
+    // The play_sound calls of this tick, to the driver (with sound_param).
+    void playSounds() {
+        for (const auto& s : game_.takeSounds()) app_.driverSound(s[0], s[1]);
     }
 
     void draw(Frame& f) override {
@@ -206,7 +212,8 @@ private:
 
     // --- car_select_screen ---
     void startSelect() {
-        // play_sound(27h); load_picture_swapped("cars.pic", 1)
+        game_.playSound(0x27);                             // the car select tune
+        // load_picture_swapped("cars.pic", 1)
         auto pic = decodePicture(app_.data.read("cars.pic"));
         back_.blit(pic.image, 0, 0, pic.image.width(), pic.image.height(), 0, 0);
         copyRect(back_, 0x9A, 0, 0xA6, 200, screen_, 0x9A, 0);
@@ -284,7 +291,7 @@ private:
             startPick();
             return true;
         }
-        // play_sound(1)
+        game_.playSound(1);
         startChase();
         return true;
     }
@@ -340,7 +347,8 @@ private:
                     menu_.emplace(app_.fonts.font(2), "Are you sure\nyou want to Quit?\n No\n Yes\n", 0xCA, 4);
                     return true;
                 case Chase::KeyAction::Pause:
-                    state_ = St::Paused;                   // play_sound(25h); get_key()
+                    game_.playSound(0x25);                 // get_key()
+                    state_ = St::Paused;
                     return true;
                 case Chase::KeyAction::None:
                     break;
@@ -352,7 +360,8 @@ private:
         }
         case St::Paused:
             if (keys_.empty()) return false;
-            popKey();                                      // play_sound(26h)
+            popKey();
+            game_.playSound(0x26);
             game_.afterKey();
             moveCars();
             return true;
@@ -397,7 +406,8 @@ private:
             } while (x > 8);
         }
         turnFrame_ = 0;
-        setPalette(palettes::kGame);                       // text_palette; play_sound(23)
+        setPalette(palettes::kGame);                       // text_palette
+        if (!turnFrames_.empty()) game_.playSound(23);
         state_ = St::Turn;
     }
     bool stepTurn() {
@@ -442,7 +452,9 @@ private:
             state_ = St::Done;
             return;
         }
-        // play_sound(0); drv_set_palette(text_palette); text_window(message, 100, 80)
+        game_.playSound(0);                                // main, after the loop
+        playSounds();
+        // drv_set_palette(text_palette); text_window(message, 100, 80)
         setPalette(palettes::kGame);
         keys_.clear();
         state_ = St::Message;

@@ -219,7 +219,9 @@ private:
             palette_ = mcgaPalette(m);
             break;
         }
-        case Ev::Sound:       // no sound driver yet
+        case Ev::Sound:       // play_sound(n) (emitted only with sound on)
+            app_.driverSound(ev.a);
+            break;
         case Ev::Wait:        // (handled by tick)
             break;
         case Ev::Intercept:

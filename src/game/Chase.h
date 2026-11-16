@@ -182,6 +182,17 @@ public:
     int lostCount() const { return lostCount_; }
     std::uint16_t options() const { return options_; }
 
+    // play_sound(n): with sound on (options & 4), n and sound_param (the speed
+    // the car engines 1Ah/1Bh take) for the driver. The scene plays them.
+    void playSound(int n) {
+        if (options_ & 4) sounds_.push_back({n, soundParam_});
+    }
+    std::vector<std::array<int, 2>> takeSounds() {
+        std::vector<std::array<int, 2>> out;
+        out.swap(sounds_);
+        return out;
+    }
+
     // main's end: the message and the env block values. `quit`: Alt-Q, Yes.
     ChaseResult result(bool quit = false) const;
     // format_clock(t): "h:mm:ss", the hour's last digit only.
@@ -197,6 +208,8 @@ private:
     int mode_ = 0, gameSpeed_ = 1, difficulty_ = 0;
     bool night_ = false;
     std::uint16_t options_ = 0;
+    int soundParam_ = 0;                          // sound_param
+    std::vector<std::array<int, 2>> sounds_;
     int targetBuilding_ = 0;
     int buildingReached_ = -1;
 

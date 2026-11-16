@@ -126,6 +126,7 @@ ScriptScene::Step ScriptScene::vacationStep(int n, std::function<bool(int)> extr
         const Vacation v = vacationFor(n);
         const bool maxine = (s.app_.game.world.hdr.options & 2) != 0;
         s.pics_ = loadVacation(s.app_.data, v, maxine, extra && extra(v.kind));
+        s.app_.sound(v.kind + 40);   // play_sound(kind + 40): the vacation tune
         // icon_page: the background, the extra picture, the hand; copied whole.
         s.screen_ = s.pics_.back;
         if (!s.pics_.extra.empty()) s.screen_.blit(s.pics_.extra, 0, 0, 320, 200, 0, 0, 0);

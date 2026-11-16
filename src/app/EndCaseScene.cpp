@@ -22,6 +22,11 @@ namespace redux {
 
 namespace {
 
+// play_sound(n) as a step (FINAL: when options & 4).
+ScriptScene::Step soundStep(int n) {
+    return [n](ScriptScene& s) { s.app().sound(n); };
+}
+
 using Step = ScriptScene::Step;
 using EcPtr = std::shared_ptr<EndOfCase>;
 
@@ -163,8 +168,9 @@ std::unique_ptr<Scene> careerPart(App& app, const EcPtr& ec, const Frame& last) 
                 ec->game().storeCareer();
                 if (auto t = ec->retirement()) {
                     App& app2 = s2.app();
-                    s2.insert({ScriptScene::pagesStep(ec->roguesGallery()),
-                               ScriptScene::menuStep(*t, ec->rogueMenuX(), 0x40),
+                    // rogues_gallery: play_sound(2) ... show_menu; play_sound(1)
+                    s2.insert({soundStep(2), ScriptScene::pagesStep(ec->roguesGallery()),
+                               ScriptScene::menuStep(*t, ec->rogueMenuX(), 0x40), soundStep(1),
                                ScriptScene::finishStep([&app2](const Frame& f) { return endGame(app2, f); })});
                     return;
                 }
@@ -184,6 +190,7 @@ std::unique_ptr<Scene> debriefing(App& app) {
     return std::make_unique<ScriptScene>(app, start, [ec, plot](ScriptScene& s) {
         App& app2 = s.app();
         s.insert({
+            soundStep(2),   // end_of_case: play_sound(2)
             ScriptScene::storyStep(4),
             ScriptScene::menuStep(EndOfCase::introText(), 8, 149, {}, true),
             // case_timeline
@@ -195,7 +202,8 @@ std::unique_ptr<Scene> debriefing(App& app) {
                     if (esc) ec->timelineEscaped((*tl)[i]);
                 })});
             },
-            [ec](ScriptScene& s2) { s2.insert({ScriptScene::pagesStep(ec->efficiencyReport())}); },
+            // ep = efficiency_report(); play_sound(1)
+            [ec](ScriptScene& s2) { s2.insert({ScriptScene::pagesStep(ec->efficiencyReport()), soundStep(1)}); },
             // the plot's story of the episode
             [ec, plot](ScriptScene& s2) {
                 std::vector<Step> steps{ScriptScene::storyStep(ec->storyVar())};
@@ -229,7 +237,7 @@ std::unique_ptr<Scene> debriefing(App& app) {
                 s2.screen().fill(0);
                 s2.insert({ScriptScene::pausedStep(caption, 0x40, 0x50), ScriptScene::retraceStep(120),
                            ScriptScene::vacationStep(n, [ec](int kind) { return ec->vacationExtra(kind); }),
-                           ScriptScene::anyKeyStep()});
+                           ScriptScene::anyKeyStep(), soundStep(1)});
             },
             // load_hall_of_fame; hall_of_fame_insert(ep); save_hall_of_fame
             ScriptScene::finishStep([&app2, ec](const Frame&) {

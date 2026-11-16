@@ -57,6 +57,7 @@ public:
             next_ = makeScene(app_, scenes[*r]);
             return;
         }
+        app_.sound(1);                // FINAL main: play_sound(1) after show_menu (the title music stops)
         // FINAL.C: -1 (Esc) and 0 create a new character.
         int sel = *r < 0 ? 0 : *r;
         if (sel == 0 || sel == 3) {
@@ -177,7 +178,10 @@ public:
 
     void tick() override {
         if (phase_ == Phase::Labs) {
-            if (++labsTicks_ >= kTicksPerSecond * 2 || skip_) start("title2.pan", Phase::Title);
+            if (++labsTicks_ >= kTicksPerSecond * 2 || skip_) {
+                app_.sound(2);        // FINAL main (start_mode 1): play_sound(2), the title theme
+                start("title2.pan", Phase::Title);
+            }
             return;
         }
         if (skip_ || !player_->finished()) {

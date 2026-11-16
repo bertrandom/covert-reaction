@@ -178,7 +178,10 @@ bool Chase::loopStart() {
     turns_.clear();
     if (mode_ != 2 && clock_ == 32) {
         cars_[1].speed = cars_[2].speed = 2;
-        // play_sound(16h), sound_param = speed, play_sound(1Bh), play_sound(1Ah)
+        playSound(0x16);
+        soundParam_ = cars_[static_cast<std::size_t>(curCar_)].speed;
+        playSound(0x1B);
+        playSound(0x1A);
         return true;
     }
     return false;
@@ -196,17 +199,26 @@ Chase::KeyAction Chase::key(int k) {
     case 0x5000: c.req = 2; c.follow = 0; break;
     case 0x4B00: c.req = 3; c.follow = 0; break;
     case '=':
+        if (c.speed == 0) playSound(0x16);
+        else if (static_cast<unsigned>((c.bits + 2) & 3) > static_cast<unsigned>(c.speed)) playSound(0x18);
         c.speed = clampTo(c.speed + 1, 0, (c.bits & 3) + 2);
         if (mode_ == 2 && c.speed > 2) c.speed = 2;
+        soundParam_ = c.speed;
+        playSound(curCar_ == 1 ? 0x1A : 0x1B);
         break;
     case '-':
+        if (c.speed) playSound(0x19);
         c.speed = clampTo(c.speed - 1, 0, 3);
+        soundParam_ = c.speed;
+        playSound(curCar_ == 1 ? 0x1A : 0x1B);
         break;
     case ' ':
         if (mode_ != 2) {
             if (++curCar_ >= 3) curCar_ = 1;
             scene_ = (scene_ + 4) & 7;
         }
+        soundParam_ = cars_[static_cast<std::size_t>(curCar_)].speed;
+        playSound(curCar_ == 1 ? 0x1A : 0x1B);
         break;
     case 'a':
     case 0x3B00:                                         // F1: arrest
@@ -224,7 +236,10 @@ Chase::KeyAction Chase::key(int k) {
         }
         break;
     case 0x1000: return KeyAction::QuitPrompt;           // Alt-Q
-    case 0x1F00: options_ ^= 4; break;                   // Alt-S: sound
+    case 0x1F00:                                         // Alt-S: sound
+        if (options_ & 4) playSound(0);
+        options_ ^= 4;
+        break;
     case 0x1900: return KeyAction::Pause;                // Alt-P
     case 0x1B:
         if (mode_ != 2) {
@@ -240,7 +255,10 @@ Chase::KeyAction Chase::key(int k) {
 void Chase::afterKey() {
     ChaseCar& c = cars_[static_cast<std::size_t>(curCar_)];
     if (((c.dir + 2) & 3) == c.req) {                    // a U-turn: only with good handling
-        if (c.bits & 8) c.dir = c.req;                   // play_sound(17h)
+        if (c.bits & 8) {
+            playSound(0x17);
+            c.dir = c.req;
+        }
         c.req = -1;
     }
 }

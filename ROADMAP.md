@@ -24,7 +24,9 @@ scenes sharing one `World`.
    - [x] fonts (`FONTS.CV`) and text drawing; text windows and menus (TEXTWIN.C)
    - [x] animations (`.PAN` bytecode player)
    - [x] input: keyboard, mouse, the menu conventions
-   - [ ] sound (the effects the sound drivers play; AdLib/MT-32 music later)
+   - [x] sound: the drivers (RSOUND, ASOUND, ISOUND) ported in src/audio, on the
+     emulated MT-32 (Munt, the player's ROMs), AdLib (Nuked-OPL3) or PC speaker;
+     checked against the original drivers in DOSBox-X (tests/msc-sound)
 2. **Title and front end** (FINAL.C): [x] title animation, credits, main menu,
    [x] new character (NEWCHAR.C), [x] plot briefing and leader line-up,
    [x] Hall of Fame, [x] load game (and the save menu: cv0-3.sve in the

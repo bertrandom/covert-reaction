@@ -88,6 +88,51 @@ settings, saved in `settings.ini` in the per-user folder:
 
 Scripted test runs (`--shot`) ignore the saved settings and use the defaults.
 
+## Sound
+
+The original has one sound driver per device (`RSOUND.CA` for the Roland MT-32,
+`ASOUND.CA` for the AdLib, `ISOUND.CA` for the PC speaker, `NSOUND.CA` for none),
+and the music and effects are inside them. Covert Redux runs ports of those
+drivers (`src/audio`) on the data of your own copy's `.CA` files, at the
+drivers' own timer rate (60.88 Hz, 300 Hz for the speaker's and AdLib's noise
+effects), and emulates the device they drive:
+
+| Device | Emulation | Needs |
+|---|---|---|
+| Roland MT-32 (what the game was composed for) | [Munt](https://github.com/munt/munt)'s libmt32emu | your MT-32 (or CM-32L / LAPC-I) control and PCM ROMs |
+| AdLib | [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3) (OPL2 mode) | nothing |
+| PC speaker | the PIT's square wave | nothing |
+
+The Options menu picks the device (Automatic: the MT-32 if its ROMs are found,
+else the AdLib) and switches at once; `--sound auto|mt32|adlib|speaker|none` on
+the command line overrides it for one run. A device that can't be used falls back
+to the next one (MT-32, AdLib, PC speaker, none). Alt+S turns the sound off and on
+in the mini-games, as in the original. Scripted test runs (`--shot`) have no sound.
+In a browser the sound starts with the first click or key.
+
+**MT-32 ROMs.** The ROMs are Roland's and copyrighted: they are never part of
+Covert Redux and it never downloads them. Put your own dumps in one of these
+places (first found wins):
+
+1. `--mt32-roms <directory>` on the command line
+2. the `COVERT_MT32_ROMS` environment variable
+3. the game directory, or a `MT32`, `MT32/roms`, `mt32-roms` or `roms` folder in it
+   or next to it
+4. the per-user data folder, or `MT32` in it
+
+Any file names work: the ROMs are recognized by their contents (libmt32emu's
+list of known dumps), so Munt/DOSBox names (`MT32_CONTROL.ROM`, `MT32_PCM.ROM`,
+`CM32L_CONTROL.ROM`, `CM32L_PCM.ROM`), MAME names (`mt32_ctrl_1_07.rom`,
+`mt32_pcm.rom`, `cm32l_ctrl_1_02.rom`, ...) and split halves (`_a`/`_b`, `_l`/`_h`)
+all do. With several sets, the original MT-32 is preferred (control ROM 1.07, then
+1.06, 1.05, 1.04, BlueRidge, 2.0x), then the CM-32L. `redux-tool sound-roms` lists
+what it finds; the game prints the device it uses on stderr.
+
+`redux-tool sound-events DEVICE N` prints what a driver sends to its device for
+`play_sound(N)` (MIDI bytes, OPL register writes, speaker divisors), and
+`redux-tool sound-wav DEVICE OUT.wav N` renders it. `tests/msc-sound` checks the
+ports against the original drivers run in DOSBox-X.
+
 ## The game files
 
 Covert Redux needs an installed copy of the original game (the directory with
@@ -111,10 +156,11 @@ case-sensitive Linux file system all work.
 | `src/core` | platform-independent basics: finding and reading game files, indexed images and palettes |
 | `src/formats` | the original file formats (pictures, fonts, animations, ...) |
 | `src/game` | game logic, ported from the reconstructed original |
+| `src/audio` | the sound drivers, ported, and the emulated MT-32, AdLib and PC speaker |
 | `src/app` | the SDL2 application: window, input, the scene loop |
 | `tools` | `redux-tool`, a command-line inspector for the game files (`redux-tool` lists its commands) |
 
-The engine (`src/core`, `src/formats`, `src/game`) has no SDL dependency, so tools
+The engine (`src/core`, `src/formats`, `src/game`, `src/audio`) has no SDL dependency, so tools
 and tests can use it without a window. The screen is the original 320x200 256-colour
 frame, shown at 4:3 with nearest-neighbour scaling; Alt+Enter toggles full screen.
 
@@ -127,3 +173,14 @@ keep their own licenses.
 The license covers this project's code only. Covert Action itself (its game files,
 and the MT-32 ROMs if you use them) belongs to its owners and is not included:
 you supply your own copy.
+
+### Third-party code
+
+Fetched at build time (CMake FetchContent, pinned versions) and built as separate
+libraries; none of their code is copied into this repository:
+
+| Library | Version | License | Used for |
+|---|---|---|---|
+| [Munt](https://github.com/munt/munt) libmt32emu | 2.8.4 | LGPL-2.1-or-later | the MT-32 / CM-32L emulation |
+| [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3) | 765ec96 (2024) | LGPL-2.1-or-later | the AdLib's OPL2 |
+| SDL2 | system | zlib | window, input, audio output |

@@ -144,6 +144,7 @@ private:
         const Vacation v = vacationFor(std::min((score & 0x7FFF) / 150, 20));
         const bool extra = v.kind <= 1 && app_.game.rng.below(3);
         pics_ = loadVacation(app_.data, v, (opts & 2) != 0, extra);
+        app_.sound(v.kind + 40);   // play_sound(kind + 40): the vacation tune
         screen_ = composeVacation(0);
         if (!pics_.extra.empty()) {
             // The first picture also has laudude1 (it isn't redrawn for the frames).
@@ -167,7 +168,8 @@ private:
     void endVacation() {
         vacation_ = false;
         pics_ = {};
-        drawHall();   // play_sound(1); the loop draws the Hall again
+        app_.sound(1);   // FAME.C: play_sound(1), the tune stops
+        drawHall();      // the loop draws the Hall again
     }
 
     void finish() {
