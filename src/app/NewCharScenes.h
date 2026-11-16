@@ -33,4 +33,10 @@ std::unique_ptr<Scene> makeHallOfFameScene(App& app, std::optional<int> insertPo
 std::unique_ptr<Scene> makeLeaderFacesScene(App& app, LeaderLineup lineup,
                                             std::function<std::unique_ptr<Scene>(bool passed, const Frame& last)> then);
 
+// A wrong face in the line-up (with copy protection on): case_briefing's
+// "not quite up to speed" over briefing.pan, then FINAL main's answer to it:
+// difficulty 0, training_screen(1) (which practice) and start_practice: the
+// practice mini-game, which ends in the main menu. The case is dropped.
+std::unique_ptr<Scene> makeLineupFailedScene(App& app, const Frame& last);
+
 }  // namespace redux

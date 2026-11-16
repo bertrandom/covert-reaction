@@ -28,7 +28,8 @@ scenes sharing one `World`.
 2. **Title and front end** (FINAL.C): [x] title animation, credits, main menu,
    [x] new character (NEWCHAR.C), [x] plot briefing and leader line-up,
    [x] Hall of Fame, [x] load game (and the save menu: cv0-3.sve in the
-   original's format, src/game/SaveGame.*), [ ] practice menu.
+   original's format, src/game/SaveGame.*), [x] practice menu (and the practice
+   mission after a wrong face in the line-up, with copy protection on).
 3. **Case generation** (CASE.C + GAMELIB CLUE.C): [x] a new case from the
    crime/world files, byte-identical to the original's C for the same seed
    (`tests/msc`).

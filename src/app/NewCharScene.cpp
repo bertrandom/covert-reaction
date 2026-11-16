@@ -347,32 +347,6 @@ private:
 // screen, then the main menu.
 std::unique_ptr<Scene> caseNotPorted(App& app, const Frame& last);
 
-class NoticeScene : public Scene {
-public:
-    NoticeScene(App& app, Frame back, std::string text)
-        : app_(app), back_(std::move(back)) {
-        TextWindowOptions opt;
-        opt.showOk = true;
-        menu_.emplace(app.fonts.font(1), std::move(text), 96, 90, opt);
-    }
-    void handle(const SDL_Event& e) override { menu_->handle(e, app_.mouse(e)); }
-    void tick() override {
-        menu_->tick();
-        if (menu_->result() && !next_) next_ = makeMainMenuSceneOver(app_, back_.image);
-    }
-    void draw(Frame& f) override {
-        f = back_;
-        menu_->draw(f.image);
-    }
-    std::unique_ptr<Scene> next() override { return std::move(next_); }
-
-private:
-    App& app_;
-    Frame back_;
-    std::optional<Menu> menu_;
-    std::unique_ptr<Scene> next_;
-};
-
 // The end of FINAL's start-up: generate_case (with case_briefing's leader line-up
 // when it asks for one), then GAME: the mission briefing and the city loop.
 std::unique_ptr<Scene> caseNotPorted(App& app, const Frame& last) {
@@ -389,8 +363,8 @@ std::unique_ptr<Scene> caseNotPorted(App& app, const Frame& last) {
             clearedForDuty(app.game.world);
             return startNotice(f);
         }
-        // FINAL discards the case and sends a wrong answer to a practice mission.
-        return std::make_unique<NoticeScene>(app, f, "Identification failed:\na practice mission\nwould follow.\n");
+        // FINAL drops the case and sends a wrong answer to a practice mission.
+        return makeLineupFailedScene(app, f);
     });
 }
 

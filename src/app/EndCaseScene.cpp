@@ -27,14 +27,6 @@ using EcPtr = std::shared_ptr<EndOfCase>;
 
 std::unique_ptr<Scene> mainMenu(App& app, const Frame& last) { return makeMainMenuSceneOver(app, last.image); }
 
-// A text window, then `then`.
-std::unique_ptr<Scene> noticeThen(App& app, const Frame& last, std::string text,
-                                  std::function<std::unique_ptr<Scene>(const Frame&)> then) {
-    return std::make_unique<ScriptScene>(app, last, [text = std::move(text), then = std::move(then)](ScriptScene& s) {
-        s.insert({ScriptScene::menuStep(text, 96, 90), ScriptScene::finishStep(then)});
-    });
-}
-
 // The story pages of plot.txt `key`, each a window at (8, 149) cleared after.
 std::vector<Step> storySteps(const TextDb& plot, const std::string& key) {
     std::vector<Step> out;
@@ -61,8 +53,7 @@ std::unique_ptr<Scene> generateCase(App& app, const Frame& last) {
             app.game.storeCareer();
             return startCityForNewCase(app, f);
         }
-        return noticeThen(app, f, "Identification failed:\na practice mission\nwould follow.\n",
-                          [&app](const Frame& f2) { return mainMenu(app, f2); });
+        return makeLineupFailedScene(app, f);
     });
 }
 

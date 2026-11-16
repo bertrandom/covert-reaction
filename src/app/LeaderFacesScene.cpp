@@ -14,6 +14,9 @@
 #include "app/Menu.h"
 #include "app/NewCharScenes.h"
 #include "app/Scenes.h"
+#include "app/ScriptScene.h"
+#include "formats/Pic.h"
+#include "game/Paper.h"
 #include "formats/McgaPalette.h"
 #include "formats/TextWindow.h"
 #include "game/Face.h"
@@ -131,6 +134,33 @@ private:
 
 std::unique_ptr<Scene> makeLeaderFacesScene(App& app, LeaderLineup lineup, FacesThen then) {
     return std::make_unique<LeaderFacesScene>(app, lineup, std::move(then));
+}
+
+// CASE.C case_briefing's end after identify_leader_faces fails, then FINAL.C
+// main: "if (scene_vars[0] != 1) { difficulty = 0; sel = training_screen(1L);
+// start_practice(sel == -1 ? 0 : sel); }" (ENV[0] = 13 + sel: TAC, CHASE, CODE,
+// BUG). The practice program goes back to FINAL, whose main menu follows.
+std::unique_ptr<Scene> makeLineupFailedScene(App& app, const Frame& last) {
+    std::string text = "I'm afraid you're not quite up to speed yet Max. "
+                       "Perhaps you should practice your skills before you take this case.";
+    wrapTextBuffer(text, 40);
+    auto choice = std::make_shared<int>(-1);
+    return std::make_unique<ScriptScene>(app, last, [text, choice](ScriptScene& s) {
+        s.insert({
+            ScriptScene::storyStep(4),   // set_scene_var(0, 4); set_scene_background("briefing.pan")
+            ScriptScene::menuStep(text, 8, 149),
+            [](ScriptScene& sc) {        // training_screen(1): training.pic, the practice menu
+                const Picture pic = decodePicture(sc.app().data.read("training.pic"));
+                sc.screen().blit(pic.image, 0, 0, pic.image.width(), pic.image.height(), 0, 0);
+            },
+            ScriptScene::menuStep(trainingMenu(true), 92, 25, [choice](int r) { *choice = r; }),
+            ScriptScene::finishStep([&a = s.app(), choice](const Frame&) {
+                a.practiceLevel = 0;     // difficulty = 0
+                static const char* scenes[] = {"tac", "chase", "code", "bug"};
+                return makeScene(a, scenes[*choice < 0 || *choice > 3 ? 0 : *choice]);
+            }),
+        });
+    });
 }
 
 REDUX_SCENE("leader-faces", [](App& app) {
