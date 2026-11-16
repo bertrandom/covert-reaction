@@ -43,12 +43,18 @@ std::vector<fs::path> bundleCandidates() {
     return out;
 }
 
+struct ScriptKey {
+    SDL_Keycode key;
+    Uint16 mod;
+};
+
 struct Script {
     std::optional<fs::path> shot;
     long ticks = -1;
-    std::multimap<long, SDL_Keycode> keys;
+    std::multimap<long, ScriptKey> keys;
 };
 
+// "T:KEY" tokens; KEY may carry modifiers: "40:Alt+Q", "50:Shift+Tab", "60:Ctrl+C".
 Script parseScript(const std::string& input) {
     Script s;
     std::istringstream in(input);
@@ -56,18 +62,37 @@ Script parseScript(const std::string& input) {
     while (in >> tok) {
         auto colon = tok.find(':');
         if (colon == std::string::npos) continue;
-        SDL_Keycode k = SDL_GetKeyFromName(tok.substr(colon + 1).c_str());
-        if (k != SDLK_UNKNOWN) s.keys.emplace(std::stol(tok.substr(0, colon)), k);
+        std::string name = tok.substr(colon + 1);
+        Uint16 mod = 0;
+        for (;;) {
+            auto plus = name.find('+');
+            if (plus == std::string::npos || plus + 1 >= name.size()) break;
+            std::string m = name.substr(0, plus);
+            if (m == "Alt") mod |= KMOD_LALT;
+            else if (m == "Shift") mod |= KMOD_LSHIFT;
+            else if (m == "Ctrl") mod |= KMOD_LCTRL;
+            else break;
+            name = name.substr(plus + 1);
+        }
+        SDL_Keycode k = SDL_GetKeyFromName(name.c_str());
+        if (k != SDLK_UNKNOWN) s.keys.emplace(std::stol(tok.substr(0, colon)), ScriptKey{k, mod});
     }
     return s;
 }
 
-void pushKey(SDL_Keycode k) {
+void pushKey(ScriptKey sk) {
     SDL_Event e{};
     e.type = SDL_KEYDOWN;
-    e.key.keysym.sym = k;
-    e.key.keysym.scancode = SDL_GetScancodeFromKey(k);
+    e.key.keysym.sym = sk.key;
+    e.key.keysym.mod = sk.mod;
+    e.key.keysym.scancode = SDL_GetScancodeFromKey(sk.key);
     SDL_PushEvent(&e);
+    if (!sk.mod && sk.key >= 32 && sk.key < 127) {       // the text it would type
+        SDL_Event t{};
+        t.type = SDL_TEXTINPUT;
+        t.text.text[0] = static_cast<char>(sk.key);
+        SDL_PushEvent(&t);
+    }
     e.type = SDL_KEYUP;
     SDL_PushEvent(&e);
 }
