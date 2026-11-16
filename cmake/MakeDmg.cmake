@@ -29,7 +29,9 @@ file(MAKE_DIRECTORY "${stage}")
 run(cp -R "${APP}" "${stage}/")
 file(MAKE_DIRECTORY "${fw}")
 
-# SDL2: copy it in under its install name and point the executable at the copy.
+# SDL2: copy it in under its install name and point the executable at the copy
+# (nothing to do when SDL is linked in statically: SDL2_LIB empty).
+if(SDL2_LIB)
 file(REAL_PATH "${SDL2_LIB}" sdl2_real)
 execute_process(COMMAND otool -D "${sdl2_real}" OUTPUT_VARIABLE sdl2_id OUTPUT_STRIP_TRAILING_WHITESPACE)
 string(REGEX REPLACE "^[^\n]*\n" "" sdl2_id "${sdl2_id}")   # (otool -D prints the file name first)
@@ -46,18 +48,22 @@ if(SDL3_LIB)
   file(CHMOD "${fw}/libSDL3.dylib" PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
   run(install_name_tool -id "@rpath/libSDL3.dylib" "${fw}/libSDL3.dylib")
 endif()
+endif()
 
 # Nothing may still point outside the app or the system.
-execute_process(COMMAND otool -L "${exe}" "${fw}/${sdl2_file}" OUTPUT_VARIABLE deps)
+file(GLOB bundled "${fw}/*.dylib")
+execute_process(COMMAND otool -L "${exe}" ${bundled} OUTPUT_VARIABLE deps)
 if(deps MATCHES "/opt/homebrew|/usr/local/(opt|lib|Cellar)")
   message(FATAL_ERROR "the app still depends on a library outside it:\n${deps}")
 endif()
 
 # Ad-hoc signature (install_name_tool invalidated the old one). A Developer ID
 # signature and notarization would remove the "unidentified developer" warning.
-run(codesign --force --sign - "${fw}/${sdl2_file}")
-if(SDL3_LIB)
-  run(codesign --force --sign - "${fw}/libSDL3.dylib")
+foreach(lib IN LISTS bundled)
+  run(codesign --force --sign - "${lib}")
+endforeach()
+if(NOT bundled)
+  file(REMOVE_RECURSE "${fw}")
 endif()
 run(codesign --force --deep --sign - "${app}")
 run(codesign --verify --deep --strict "${app}")

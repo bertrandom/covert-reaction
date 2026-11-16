@@ -14,6 +14,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
+# Distribution builds: compile SDL2 from source and link it in (see below), e.g.
+#   cmake -S . -B build-dist -DCMAKE_BUILD_TYPE=Release -DREACTION_VENDORED_SDL=ON \
+#         "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+option(REACTION_VENDORED_SDL "Build SDL2 from source and link it statically" OFF)
+
 if(EMSCRIPTEN)
   # Emscripten's own SDL2 port (downloaded on the first build). The engine uses
   # exceptions, everywhere, compile and link: Emscripten's JavaScript-based ones,
@@ -29,6 +34,21 @@ if(EMSCRIPTEN)
   # which is copyrighted) into the build. A build made with this ON must never be
   # published or shared; the default build asks the player for their own files.
   option(REACTION_WEB_PRELOAD_DATA "Embed resources/Covert in the web build (local testing only, never publish)" OFF)
+elseif(REACTION_VENDORED_SDL)
+  # SDL2 built from source as part of this build and linked statically: nothing
+  # to bundle, and it follows CMAKE_OSX_ARCHITECTURES / CMAKE_OSX_DEPLOYMENT_TARGET,
+  # so a distribution build can be universal (arm64 + x86_64) for older macOS.
+  include(FetchContent)
+  FetchContent_Declare(sdl2
+    URL https://github.com/libsdl-org/SDL/releases/download/release-2.30.9/SDL2-2.30.9.tar.gz
+    URL_HASH SHA256=24b574f71c87a763f50704bbb630cbe38298d544a1f890f099a4696b1d6beba4
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+  set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+  set(SDL_STATIC ON CACHE BOOL "" FORCE)
+  set(SDL_TEST OFF CACHE BOOL "" FORCE)
+  set(SDL2_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(sdl2)
+  set(REACTION_SDL2 SDL2::SDL2-static)
 else()
   find_package(SDL2 REQUIRED CONFIG)
   set(REACTION_SDL2 SDL2::SDL2)
@@ -103,12 +123,15 @@ if(APPLE)
   # `cmake --build build --target dmg`: "Covert Reaction.dmg" with the app and its
   # SDL libraries inside, ad-hoc signed, next to an /Applications shortcut
   # (cmake/MakeDmg.cmake). sdl2-compat loads SDL3 at run time, so it goes in too.
-  get_target_property(reaction_sdl2_lib SDL2::SDL2 LOCATION)
-  find_library(REACTION_SDL3_LIBRARY NAMES SDL3.0 SDL3)
+  set(reaction_sdl2_lib "")
   set(reaction_sdl3_lib "")
-  file(REAL_PATH "${reaction_sdl2_lib}" reaction_sdl2_real)   # (Homebrew: lib/ symlinks into Cellar/sdl2-compat)
-  if(reaction_sdl2_real MATCHES "sdl2-compat" AND REACTION_SDL3_LIBRARY)
-    set(reaction_sdl3_lib ${REACTION_SDL3_LIBRARY})
+  if(NOT REACTION_VENDORED_SDL)   # (a vendored SDL is linked in: nothing to bundle)
+    get_target_property(reaction_sdl2_lib SDL2::SDL2 LOCATION)
+    find_library(REACTION_SDL3_LIBRARY NAMES SDL3.0 SDL3)
+    file(REAL_PATH "${reaction_sdl2_lib}" reaction_sdl2_real)   # (Homebrew: lib/ symlinks into Cellar/sdl2-compat)
+    if(reaction_sdl2_real MATCHES "sdl2-compat" AND REACTION_SDL3_LIBRARY)
+      set(reaction_sdl3_lib ${REACTION_SDL3_LIBRARY})
+    endif()
   endif()
   add_custom_target(dmg
     COMMAND ${CMAKE_COMMAND}

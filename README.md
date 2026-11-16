@@ -86,12 +86,23 @@ Cross-compiling for Windows from macOS or Linux works with mingw-w64 (`brew inst
 mingw-w64`) and the official SDL2 "devel mingw" package; see
 `cmake/mingw-w64-x86_64.cmake`. Put `SDL2.dll` next to `covert-reaction.exe`.
 
-On macOS, `cmake --build build --target dmg` then makes `build/Covert Reaction.dmg`:
-the app with its SDL libraries inside, ad-hoc signed, next to a shortcut to
-Applications, so it can be dragged there. It runs on the same kind of Mac it was
-built on and newer (Homebrew's SDL is built for the current macOS and CPU), and
-other Macs warn about an "unidentified developer" the first time (Control-click,
-Open) until it's signed with a Developer ID and notarized.
+**A Mac DMG to share.** A distribution build compiles SDL2 from source and links
+it in, as a universal app (Apple Silicon and Intel) for macOS 11 and later:
+
+```bash
+cmake -S . -B build-dist -DCMAKE_BUILD_TYPE=Release -DREACTION_VENDORED_SDL=ON "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+```
+
+```bash
+cmake --build build-dist --target dmg
+```
+
+That makes `build-dist/Covert Reaction.dmg`: the app, ad-hoc signed, next to a
+shortcut to Applications to drag it to. (The `dmg` target works in a normal
+Homebrew build too; it then copies Homebrew's SDL libraries into the app, which
+only run on the same kind of Mac and macOS.) Other Macs warn about an
+"unidentified developer" the first time (Control-click, Open) until the app is
+signed with a Developer ID and notarized.
 
 On macOS the result is `build/Covert Reaction.app` (bundle identifier
 `org.bert.covertreaction`); elsewhere `build/covert-reaction`. The app isn't
