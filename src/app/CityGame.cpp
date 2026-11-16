@@ -27,7 +27,7 @@ CityGame::CityGame(App& app, CityEnv& env, CityUi& ui, std::uint32_t seed)
     app_.game.rng.seed(seed);   // randomize()
     sim_.setUi(&ui_);
     ui_.setSim(&sim_);
-    ui_.animations = (h().options & 8) != 0 || env_[1] == 0;
+    app_.syncAnimations();   // options bit 8 = Settings::animations
 }
 
 // ---------------------------------------------------------------- GAME.C
@@ -45,7 +45,7 @@ int CityGame::run() {
         if (advance) sim_.resumeGame(env_[15]);
         else sim_.drawStatusBar();
     }
-    ui_.animations = (h().options & 8) != 0;
+    app_.syncAnimations();   // (startNewGame did options |= 0Ch)
     env_[0] = 0xFF;
     ui_.flushInput();
     do {

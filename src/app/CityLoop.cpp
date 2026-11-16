@@ -33,7 +33,9 @@ class CityLoopScene : public Scene {
 public:
     CityLoopScene(App& app, std::shared_ptr<CityEnv> env, std::uint32_t seed)
         : app_(app), env_(std::move(env)), thread_([this] { body(); }), ui_(app, thread_),
-          game_(app, *env_, ui_, seed) {}
+          game_(app, *env_, ui_, seed) {
+        ui_.setScene(this);
+    }
 
     ~CityLoopScene() override = default;
 

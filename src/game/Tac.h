@@ -153,6 +153,11 @@ public:
     Wait waiting() const { return wait_; }
     bool finished() const { return wait_ == Wait::Done; }
     bool quitRequested() const { return quit_; }   // Alt-Q, Yes: the game ends
+    // The options word, for text_window's Alt keys in TAC's windows, and its
+    // play_sound (options & 4, with sfx_tempo and sfx_variant).
+    unsigned optionsWord() const { return options; }
+    void setOptionsWord(unsigned v) { options = v & 0xFFFF; }
+    void playSound(int n) { play_sound(n); }
 
     // The keyboard (get_key codes: ASCII, or scan code << 8).
     void pushKey(int code);

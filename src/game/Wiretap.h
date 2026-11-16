@@ -125,6 +125,9 @@ public:
     // board_status(update) etc. are private; done() is quit_flag.
     bool done() const { return quit_; }
     WiretapResult result() const;
+    // options & 4, for text_window's Alt-S in BUG's windows.
+    bool soundOn() const { return sound_; }
+    void setSound(bool on) { sound_ = on; }
 
     // The events appended since the last call.
     std::vector<WiretapEvent> takeEvents();

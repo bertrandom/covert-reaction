@@ -23,4 +23,13 @@ std::unique_ptr<Scene> makeCodeScene(App& app, const CodeSetup& setup, CodeDone 
 using TacDone = std::function<std::unique_ptr<Scene>(App&, const TacResult&)>;
 std::unique_ptr<Scene> makeTacScene(App& app, TacSetup setup, std::shared_ptr<TacHooks> hooks, TacDone onDone);
 
+// TAC and BUG save their options word to env.sve, so an Alt-A in their text
+// windows reaches the city: it is the Animations setting (App::syncAnimations
+// keeps options bit 8 equal to it). CHASE and CODE keep theirs to themselves.
+inline void saveAnimationsBit(App& app, int oldOptions, int newOptions) {
+    if (!((oldOptions ^ newOptions) & 8)) return;
+    app.settings.animations = (newOptions & 8) != 0;
+    app.saveSettings();
+}
+
 }  // namespace reaction

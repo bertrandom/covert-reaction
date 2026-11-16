@@ -220,6 +220,17 @@ private:
 
     void drawClock() { text(2, clock_.update(), 256, 1, 2, true, 10); }
 
+    // text_window's Alt keys in CODE's windows: its own options word (CODE writes
+    // back only ENV bytes: the toggles last for the puzzle).
+    TextWindowHotkeys hotkeys() {
+        TextWindowHotkeys h;
+        h.options = [this] { return static_cast<int>(static_cast<std::int16_t>(outcome_.options)); };
+        h.setOptions = [this](int v) { outcome_.options = static_cast<unsigned>(v) & 0xFFFF; };
+        h.sound = [this](int n) { playSound(n); };
+        h.quit = [this] { quit = true; };
+        return h;
+    }
+
     // play_sound(n): effect 45 (letter set) / 46 (scramble, decoded) when options & 4.
     void playSound(int n) {
         if (outcome_.options & 4) app_.driverSound(n);
@@ -332,7 +343,7 @@ private:
         case kAltQ:
             keys_.clear();
             state_ = St::QuitMenu;
-            menu_.emplace(app_.fonts.font(2), "Are you sure\nyou want to Quit?\n No\n Yes\n", 80, 80);
+            menu_.emplace(app_.fonts.font(2), "Are you sure\nyou want to Quit?\n No\n Yes\n", 80, 80).setHotkeys(hotkeys());
             return;
         case kAltS:
             outcome_.options ^= 4;
@@ -372,7 +383,7 @@ private:
             drawMessage();
             keys_.clear();
             state_ = St::Decoded;
-            menu_.emplace(app_.fonts.font(2), "MESSAGE DECODED\n", 100, 2);
+            menu_.emplace(app_.fonts.font(2), "MESSAGE DECODED\n", 100, 2).setHotkeys(hotkeys());
             return;
         }
         enterMain();

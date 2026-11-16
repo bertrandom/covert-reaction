@@ -345,7 +345,7 @@ private:
                 case Chase::KeyAction::QuitPrompt:
                     keys_.clear();
                     state_ = St::QuitMenu;
-                    menu_.emplace(app_.fonts.font(2), "Are you sure\nyou want to Quit?\n No\n Yes\n", 0xCA, 4);
+                    menu_.emplace(app_.fonts.font(2), "Are you sure\nyou want to Quit?\n No\n Yes\n", 0xCA, 4).setHotkeys(hotkeys());
                     return true;
                 case Chase::KeyAction::Pause:
                     game_.playSound(0x25);                 // get_key()
@@ -447,6 +447,20 @@ private:
         wait_ = std::max(1, game_.loopWait());
     }
 
+    // text_window's Alt keys in CHASE's windows: its own options word (CHASE
+    // doesn't save env.sve: the toggles last for the chase).
+    TextWindowHotkeys hotkeys() {
+        TextWindowHotkeys h;
+        h.options = [this] { return static_cast<int>(static_cast<std::int16_t>(game_.options())); };
+        h.setOptions = [this](int v) { game_.setOptions(static_cast<std::uint16_t>(v)); };
+        h.sound = [this](int n) {
+            game_.playSound(n);
+            playSounds();
+        };
+        h.quit = [this] { quit = true; };
+        return h;
+    }
+
     void finishChase(bool quitGame) {
         result_ = game_.result(quitGame);
         if (quitGame) {
@@ -459,7 +473,7 @@ private:
         setPalette(palettes::kGame);
         keys_.clear();
         state_ = St::Message;
-        menu_.emplace(app_.fonts.font(1), result_.message, 100, 80);
+        menu_.emplace(app_.fonts.font(1), result_.message, 100, 80).setHotkeys(hotkeys());
     }
 
     void menuClosed(int r) {

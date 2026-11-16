@@ -18,6 +18,7 @@
 
 #include "app/Keypad.h"
 #include "app/Menu.h"
+#include "app/MiniGames.h"
 #include "app/Scenes.h"
 #include "formats/McgaPalette.h"
 #include "formats/Pic.h"
@@ -284,10 +285,31 @@ private:
         app_.fonts.font(1).draw(screen_, 0x104, 0xB9, s, attr);
     }
 
+    // text_window's Alt keys in BUG's windows: BUG's options word (the board's
+    // sound bit, the rest as load_env read it; save_env takes it back).
+    TextWindowHotkeys hotkeys() {
+        TextWindowHotkeys h;
+        h.options = [this] {
+            const int o = (app_.game.world.hdr.options & ~4) | (logic_.soundOn() ? 4 : 0);
+            return static_cast<int>(static_cast<std::int16_t>(o));
+        };
+        h.setOptions = [this](int v) {
+            auto& o = app_.game.world.hdr.options;
+            saveAnimationsBit(app_, o, v);
+            logic_.setSound((v & 4) != 0);
+            o = static_cast<std::int16_t>((v & ~4) | (o & 4));
+        };
+        h.sound = [this](int n) {   // play_sound: options & 4
+            if (logic_.soundOn()) app_.driverSound(n);
+        };
+        h.quit = [this] { quit = true; };
+        return h;
+    }
+
     void openMenu(MenuKind kind, std::string text, int x, int y, TextWindowOptions opt) {
         keys_.clear();   // text_window: flush_input()
         menuKind_ = kind;
-        menu_.emplace(app_.fonts.font(1), std::move(text), x, y, opt);
+        menu_.emplace(app_.fonts.font(1), std::move(text), x, y, opt).setHotkeys(hotkeys());
     }
 
     // Plays the intercept's steps until one waits; true while it does.

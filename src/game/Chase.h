@@ -181,6 +181,7 @@ public:
     int escapeTimer() const { return escapeTimer_; }
     int lostCount() const { return lostCount_; }
     std::uint16_t options() const { return options_; }
+    void setOptions(std::uint16_t v) { options_ = v; }   // text_window's Alt keys
 
     // play_sound(n): with sound on (options & 4), n and sound_param (the speed
     // the car engines 1Ah/1Bh take) for the driver. The scene plays them.

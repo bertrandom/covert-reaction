@@ -43,6 +43,8 @@ public:
     CityUi(App& app, GameThread& thread);
 
     void setSim(Sim* sim) { sim_ = sim; }
+    // The scene showing this screen: the text windows' Alt-Q (Yes) quits it.
+    void setScene(Scene* scene) { scene_ = scene; }
     Sim& sim() { return *sim_; }
     const Font& font() const { return app_.fonts.font(1); }
     const FaceSprites& faces() const { return faces_; }
@@ -56,7 +58,8 @@ public:
     int screenW = 320;           // screen_width
     int animX = 0;               // anim.x (set_scene_background)
     int portraitX = 0, portraitY = 0;
-    bool animations = true;      // options & 8 (Alt-A)
+    // options & 8 (animations; App::syncAnimations keeps it = Settings::animations)
+    bool animations() const { return (app_.game.world.hdr.options & 8) != 0; }
 
     // ---- blocking calls (program side) ----
     // text_window(text, x, y): the chosen item, -1 (Esc, or a window without
@@ -160,10 +163,12 @@ private:
 
     void ask(Request r);               // program side: post and yield
     Image composite() const;           // the screen with the animation behind the window
+    void playAnimSounds();             // the animation's queued sounds
 
     App& app_;
     GameThread& thread_;
     Sim* sim_ = nullptr;
+    Scene* scene_ = nullptr;
     FaceSprites faces_;
     Palette palette_;
 

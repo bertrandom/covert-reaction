@@ -129,6 +129,7 @@ public:
         ++tick_;
         if (menu_) {
             menu_->tick();
+            for (const auto& s : tac_.takeSounds()) app_.driverSound(s[0], s[1], s[2]);   // Alt-A/S/J's
             if (auto r = menu_->result()) {
                 menu_->draw(tac_.screen());      // text_window leaves the window on the screen
                 menu_.reset();
@@ -147,7 +148,7 @@ public:
             const auto& req = tac_.menuRequest();
             TextWindowOptions opt;
             opt.fillColor = static_cast<std::uint8_t>(req.fill);
-            menu_.emplace(app_.fonts.font(1), req.text, req.x, req.y, opt);
+            menu_.emplace(app_.fonts.font(1), req.text, req.x, req.y, opt).setHotkeys(hotkeys());
             held_.reset();
         }
         if (tac_.quitRequested()) quit = true;
@@ -176,6 +177,19 @@ public:
         auto s = makeScene(app_, "main-menu");
         if (!s) quit = true;
         return s;
+    }
+
+    // text_window's Alt keys in TAC's windows: TAC's options word and play_sound.
+    TextWindowHotkeys hotkeys() {
+        TextWindowHotkeys h;
+        h.options = [this] { return static_cast<int>(static_cast<std::int16_t>(tac_.optionsWord())); };
+        h.setOptions = [this](int v) {
+            saveAnimationsBit(app_, static_cast<int>(tac_.optionsWord()), v);
+            tac_.setOptionsWord(static_cast<unsigned>(v));
+        };
+        h.sound = [this](int n) { tac_.playSound(n); };
+        h.quit = [this] { quit = true; };   // ENV[0] = -1, set_exit_state, exit
+        return h;
     }
 
 private:

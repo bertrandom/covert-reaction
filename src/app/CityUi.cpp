@@ -114,6 +114,7 @@ int CityUi::textWindow(const std::string& text, int x, int y, unsigned flags) {
         }
         anim_->step();
         anim_->step();
+        playAnimSounds();
     }
     if (sim_) sim_->globals().faceShown = -1;   // portrait = -1
     const TextWindowLayout lay = layoutTextWindow(font(), text, x, y);
@@ -143,6 +144,7 @@ int CityUi::textWindow(const std::string& text, int x, int y, unsigned flags) {
         return -1;
     }
     menu_.emplace(font(), text, x, y, opt);
+    if (scene_) menu_->setHotkeys(appHotkeys(app_, *scene_));   // Alt-A/S/J/Q
     animSw_ = std::min(screenW, 320);
     animStripY_ = (animActive && (y & 1) && y >= 144) ? y : -1;
     keys_.clear();   // flush_input
@@ -179,6 +181,12 @@ void CityUi::wait(int retraces) {
     ask(r);
 }
 
+// anim_flush_sounds: the .PAN's opcode-3 sounds, through GAME's play_sound.
+void CityUi::playAnimSounds() {
+    if (anim_)
+        for (int n : anim_->takeSounds()) app_.sound(n);
+}
+
 void CityUi::holdPaused(int retraces) {
     if (retraces <= 0) return;
     Request r;
@@ -196,7 +204,7 @@ void CityUi::dissolveBackPage() {
 }
 
 void CityUi::playAnimation(const std::string& name, int x) {
-    if (!animations || !app_.data.exists(name)) {
+    if (!animations() || !app_.data.exists(name)) {
         fill(x, 0, 320 - x, 200, 5);
         return;
     }
@@ -266,6 +274,7 @@ bool CityUi::tick() {
         if (playing_) {
             if (anim_ && !anim_->finished() && !(keys_.size() && anim_->framesShown() >= 3)) {
                 anim_->advance(kTick);
+                playAnimSounds();
                 if (!anim_->finished()) return false;
             }
             keys_.clear();
@@ -313,7 +322,11 @@ bool CityUi::tick() {
         // text_window steps the animation while no key is waiting, until it ends
         // or the window closes (anim_should_abort never fires there: it is only
         // reached with no key pending).
-        if (anim_ && !anim_->finished()) anim_->advance(kTick);
+        // (While Alt-Q's window is open, anim_active = 0: the animation holds.)
+        if (anim_ && !anim_->finished() && !menu_->confirmingQuit()) {
+            anim_->advance(kTick);
+            playAnimSounds();
+        }
         menu_->tick();
         if (auto r = menu_->result()) {
             req_.result = *r;
@@ -484,7 +497,7 @@ void CityUi::loadPicture(const std::string& name, int page) {
 }
 
 bool CityUi::setSceneBackground(const std::string& name, int x, int y) {
-    if (!animations || !app_.data.exists(name)) {
+    if (!animations() || !app_.data.exists(name)) {
         fill(0, 0, 320, 200, 5);
         animX = x;
         fillColor = 5;
