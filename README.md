@@ -158,6 +158,7 @@ own settings:
 | Sound | Automatic (the MT-32 if its ROMs are found, else the AdLib), Roland MT-32, AdLib, PC speaker or Off | Automatic |
 | Animations | The animations behind the briefings and the city's windows (Alt-A changes it too) | On |
 | MT-32 clean mixing | Mixes all of the MT-32's partials in phase. The real chip adds half of them in opposite phase, which can silence a sound such as TAC's gunshot while the music holds partials; Off is the faithful sound | Off |
+| Pause after break-in | The original waits about 2 seconds after you dismiss a break-in's closing message ("You quickly slip out of the building."); Off goes straight back | On |
 | Full screen | Desktop only | Off |
 
 ### Sound

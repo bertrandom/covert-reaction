@@ -378,7 +378,7 @@ Task<void> Tac::mission_end_text() {
     }
     message_shown = 1;
     co_await show_menu(msg_buf, 32, 100);
-    co_await wait_retrace(120);
+    if (setup_.endPause) co_await wait_retrace(120);
 }
 
 Task<void> Tac::search_files() {

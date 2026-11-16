@@ -94,10 +94,17 @@ int tacKey(const SDL_Keysym& k, bool numlock) {
     return -1;
 }
 
+// Covert Reaction's own options that TAC follows (core/Settings.h).
+TacSetup withOptions(const App& app, TacSetup s) {
+    s.endPause = app.settings.tacEndPause;
+    return s;
+}
+
 class TacScene : public Scene {
 public:
     TacScene(App& app, TacSetup setup, std::shared_ptr<TacHooks> hooks = {}, TacDone onDone = {})
-        : app_(app), tac_(app.data, app.fonts, std::move(setup), std::move(hooks)), onDone_(std::move(onDone)) {
+        : app_(app), tac_(app.data, app.fonts, withOptions(app, std::move(setup)), std::move(hooks)),
+          onDone_(std::move(onDone)) {
         tac_.start();
     }
 

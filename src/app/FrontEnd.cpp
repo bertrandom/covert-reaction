@@ -124,9 +124,9 @@ private:
     static constexpr const char* kSounds[] = {"auto", "mt32", "adlib", "speaker", "none"};
     static constexpr const char* kSoundNames[] = {"Automatic", "Roland MT-32", "AdLib", "PC speaker", "Off"};
 #ifdef __EMSCRIPTEN__
-    static constexpr int kOptionsDone = 5;   // (the page has its own full-screen button)
+    static constexpr int kOptionsDone = 6;   // (the page has its own full-screen button)
 #else
-    static constexpr int kOptionsDone = 6;
+    static constexpr int kOptionsDone = 7;
 #endif
 
     void openOptions(int selected) {
@@ -138,6 +138,7 @@ private:
         text += std::string(" Sound: ") + kSoundNames[soundIndex()] + "\n";
         text += std::string(" Animations: ") + onOff(s.animations) + "\n";
         text += std::string(" MT-32 clean mixing: ") + onOff(s.mt32CleanMixing) + "\n";
+        text += std::string(" Pause after break-in: ") + onOff(s.tacEndPause) + "\n";
 #ifndef __EMSCRIPTEN__
         text += std::string(" Full screen: ") + onOff(app_.screen.fullscreen()) + "\n";
 #endif
@@ -165,8 +166,9 @@ private:
             app_.syncAnimations();
             break;
         case 4: s.mt32CleanMixing = !s.mt32CleanMixing; break;   // (main.cpp passes it to the engine)
+        case 5: s.tacEndPause = !s.tacEndPause; break;           // (TacScene passes it to TAC)
 #ifndef __EMSCRIPTEN__
-        case 5:
+        case 6:
             app_.screen.toggleFullscreen();
             s.fullscreen = app_.screen.fullscreen();
             break;

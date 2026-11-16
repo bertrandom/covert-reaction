@@ -51,6 +51,8 @@ struct TacSetup {
     bool female = false;        // options & 2: spritesf.pic and equip1.pic (else sprites.pic, equip1m.pic)
     bool sound = true;          // options & 4
     unsigned otherOptions = 0;  // the options word's other bits (kept, and saved back)
+    bool endPause = true;       // mission_end_text's wait_retrace(120) after the closing
+                                // message (Covert Reaction's option; off skips it)
     int difficulty = 1;        // env +3Ah: the case's difficulty (orig_difficulty), 0-3
     int skillLevels = 0x0555;   // env +4Eh env_flags: bits 0-1 the skill, 8-9 the game speed
     int alertLevel = 0;         // env +48h (break-ins and practice); for the others the game's value

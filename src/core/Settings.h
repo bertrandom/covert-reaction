@@ -23,6 +23,9 @@ struct Settings {
     // so changes this). The game follows this setting where the original turns
     // the bit back on (a fresh start, a new case).
     bool animations = true;
+    // TAC: the original waits about 2 seconds after the break-in's closing
+    // message ("You quickly slip out of the building.") is dismissed; off skips it.
+    bool tacEndPause = true;
     // MT-32: mix every partial in phase. The real chip (and Munt) adds half of
     // them in opposite phase, which can cancel a two-partial sound such as TAC's
     // gunshot when the music holds partials; off is the faithful sound.
