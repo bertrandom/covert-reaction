@@ -359,10 +359,12 @@ private:
     bool paused_ = false, finished_ = false;
 };
 
-WiretapSetup practiceSetup(bool car) {
+// FINAL's start_practice(3): its options | 20h (the sound bit is the player's).
+WiretapSetup practiceSetup(const App& app, bool car) {
     WiretapSetup s;
     s.carTracer = car;
     s.practice = true;
+    s.sound = (app.game.world.hdr.options & 4) != 0;
     if (const char* d = std::getenv("REACTION_BUG_DIFFICULTY")) s.difficulty = std::atoi(d);
     if (const char* seed = std::getenv("REACTION_BUG_SEED"))
         s.seed = static_cast<std::uint32_t>(std::strtoul(seed, nullptr, 10));
@@ -371,7 +373,12 @@ WiretapSetup practiceSetup(bool car) {
     return s;
 }
 
-std::unique_ptr<Scene> backToMenu(App& app, const WiretapResult&) { return makeScene(app, "main-menu"); }
+// Back to FINAL, which reloads the env.sve BUG saved: its Alt-S stays.
+std::unique_ptr<Scene> backToMenu(App& app, const WiretapResult& r) {
+    auto& o = app.game.world.hdr.options;
+    o = static_cast<std::int16_t>(r.sound ? (o | 4) : (o & ~4));
+    return makeScene(app, "main-menu");
+}
 
 }  // namespace
 
@@ -381,10 +388,10 @@ std::unique_ptr<Scene> makeBugScene(App& app, const WiretapSetup& setup, BugDone
 }
 
 REACTION_SCENE("bug", [](App& app) {
-    WiretapSetup s = practiceSetup(false);
+    WiretapSetup s = practiceSetup(app, false);
     if (app.practiceLevel >= 0) s.difficulty = app.practiceLevel;
     return makeBugScene(app, s, backToMenu);
 });
-REACTION_SCENE("bug-car", [](App& app) { return makeBugScene(app, practiceSetup(true), backToMenu); });
+REACTION_SCENE("bug-car", [](App& app) { return makeBugScene(app, practiceSetup(app, true), backToMenu); });
 
 }  // namespace reaction

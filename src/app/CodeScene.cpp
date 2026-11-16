@@ -430,7 +430,7 @@ std::unique_ptr<Scene> makePracticeCodeScene(App& app) {
         envInt("COVERT_CODE_SEED", static_cast<int>(std::time(nullptr) & 0x7FFF)));
     setup.gameDifficulty = clampTo(envInt("COVERT_CODE_LEVEL", app.practiceLevel >= 0 ? app.practiceLevel : 0), 0, 3);
     setup.skillLevels = 0x555;
-    setup.options = 0x24;
+    setup.options = static_cast<std::uint16_t>(app.game.world.hdr.options | 0x20);   // FINAL's options | 20h
     if (const char* d = std::getenv("COVERT_CODE_DIFFICULTY"); d && *d) setup.difficultyOverride = std::atoi(d);
     Rng finalRng(setup.seed);
     setup.message = composePracticeIntercept(app.data, finalRng);

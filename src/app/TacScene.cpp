@@ -33,6 +33,7 @@
 #include "app/MiniGames.h"
 #include "app/Scenes.h"
 #include "game/Tac.h"
+#include "game/World.h"
 
 namespace reaction {
 
@@ -170,6 +171,8 @@ public:
         if (!tac_.finished() || !reported_ || left_) return nullptr;
         left_ = true;
         if (onDone_) return onDone_(app_, tac_.result());
+        // practice: FINAL reloads the env.sve TAC saved (load_env), options &= ~20h
+        app_.game.world.hdr.options = static_cast<std::int16_t>(tac_.result().options & ~0x20u);
         auto s = makeScene(app_, "main-menu");
         if (!s) quit = true;
         return s;
@@ -192,16 +195,32 @@ int envInt(const char* name, int def) {
     return v ? std::atoi(v) : def;
 }
 
-TacSetup practiceSetup() {
+// FINAL's start_practice(0): its options word | 20h, here_org = random(12) + 4,
+// here_city = random(16), load_world_file(random(3)) (the names the terminal's
+// file search looks up), FINAL's clock_base (0 on a fresh start: night) and
+// rand_seed (FINAL's srand seed, part of the building's seed). The draws are
+// FINAL's random() (app.game.rng).
+TacSetup practiceSetup(App& app) {
     TacSetup s;
-    // FINAL's start_practice: a random organization (4-15) and city
-    Rng r(static_cast<std::uint32_t>(std::time(nullptr)) & 0x7FFF);
+    const auto& h = app.game.world.hdr;
+    Rng& r = app.game.rng;
     s.org = envInt("REACTION_TAC_ORG", r.below(12) + 4);
     s.city = envInt("REACTION_TAC_CITY", r.below(16));
-    s.gameSeed = static_cast<unsigned>(envInt("REACTION_TAC_SEED", r.next()));
+    {
+        World world;
+        world.loadWorld(app.data, r.below(3));
+        for (std::size_t i = 0; i < 16; ++i) {
+            s.cityNames[i] = world.cities[i].name.str();
+            s.orgNames[i] = world.orgs[i].name.str();
+        }
+    }
+    s.gameSeed = static_cast<unsigned>(envInt("REACTION_TAC_SEED", static_cast<std::uint16_t>(h.randSeed)));
     s.difficulty = envInt("REACTION_TAC_DIFFICULTY", 1);
-    s.clockBase = static_cast<unsigned>(envInt("REACTION_TAC_HOUR", 12) * 60);
-    s.female = envInt("REACTION_TAC_FEMALE", 0) != 0;
+    const int clock = static_cast<std::uint16_t>(h.clockBase);
+    s.clockBase = static_cast<unsigned>(std::getenv("REACTION_TAC_HOUR") ? envInt("REACTION_TAC_HOUR", 12) * 60 : clock);
+    s.female = envInt("REACTION_TAC_FEMALE", (h.options & 2) ? 1 : 0) != 0;
+    s.sound = (h.options & 4) != 0;
+    s.otherOptions = static_cast<std::uint16_t>(h.options);
     if (const char* rs = std::getenv("REACTION_TAC_RUNSEED")) s.runSeed = static_cast<std::uint32_t>(std::strtoul(rs, nullptr, 10));
     if (const char* m = std::getenv("REACTION_TAC_MODE")) {
         s.env0 = std::atoi(m);
@@ -217,7 +236,7 @@ std::unique_ptr<Scene> makeTacScene(App& app, TacSetup setup, std::shared_ptr<Ta
 }
 
 REACTION_SCENE("tac", [](App& app) {
-    TacSetup s = practiceSetup();
+    TacSetup s = practiceSetup(app);
     if (app.practiceLevel >= 0) s.difficulty = app.practiceLevel;
     return std::make_unique<TacScene>(app, s);
 });

@@ -146,6 +146,7 @@ public:
         if (menu_) {
             menu_->tick();
             if (auto r = menu_->result()) {
+                menu_->draw(screen_);   // text_window leaves the window on the screen
                 menu_.reset();
                 menuClosed(*r);
             }
@@ -658,8 +659,8 @@ int envInt(const char* name, int fallback) {
 // options |= 20h, skill levels 555h (driving 1: no difficulty change; normal
 // speed), here_org = random(12) + 4 (the suspect's destination), here_city =
 // random(16), load_world_file(random(3)) (the city's known buildings and the
-// organizations' names); FINAL's clock_base is still 0 on the main menu, so
-// the practice chase is at night. Development settings: COVERT_CHASE_SEED
+// organizations' names); FINAL's options and clock_base (0 on a fresh start, so
+// the practice chase is at night). Development settings: COVERT_CHASE_SEED
 // (FINAL's and CHASE's random seed), COVERT_CHASE_LEVEL (difficulty 0-3),
 // COVERT_CHASE_CITY (0-15), COVERT_CHASE_TIME (clock, minutes),
 // COVERT_CHASE_MODE (ENV[0]: 3/14 follow, 6 you are chased), COVERT_CHASE_ORGMASK
@@ -679,8 +680,9 @@ std::unique_ptr<Scene> makePracticeChaseScene(App& app, int mode) {
         envInt("COVERT_CHASE_ORGMASK", world.cities[static_cast<std::size_t>(setup.cityId)].orgsKnown));
     for (std::size_t i = 0; i < 16; ++i) setup.orgAbbrev[i] = world.orgs[i].abbrev.str();
     setup.difficulty = clampTo(envInt("COVERT_CHASE_LEVEL", app.practiceLevel >= 0 ? app.practiceLevel : 0), 0, 3);
-    setup.gameTime = static_cast<std::uint16_t>(envInt("COVERT_CHASE_TIME", 0));
-    setup.options = 0x24;
+    setup.gameTime = static_cast<std::uint16_t>(
+        envInt("COVERT_CHASE_TIME", static_cast<std::uint16_t>(app.game.world.hdr.clockBase)));   // FINAL's clock_base
+    setup.options = static_cast<std::uint16_t>(app.game.world.hdr.options | 0x20);   // FINAL's options | 20h
     setup.envFlags = 0x555;
     setup.seed = seed;
     return std::make_unique<ChaseScene>(app, setup, nullptr);
