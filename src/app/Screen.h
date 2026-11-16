@@ -12,7 +12,8 @@ class Screen {
 public:
     static constexpr int kWidth = 320, kHeight = 200;
 
-    Screen(const char* title, int scale);
+    // headless: no window or renderer at all (scripted test runs only save frames).
+    Screen(const char* title, int scale, bool headless = false);
     ~Screen();
     Screen(const Screen&) = delete;
     Screen& operator=(const Screen&) = delete;
@@ -27,6 +28,7 @@ private:
     SDL_Renderer* renderer_ = nullptr;
     SDL_Texture* texture_ = nullptr;
     bool fullscreen_ = false;
+    bool headless_ = false;
 };
 
 }  // namespace redux

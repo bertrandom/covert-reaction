@@ -113,7 +113,10 @@ int main(int argc, char** argv) {
         else if (a == "--input") input = arg();
     }
     if (!input.empty()) script.keys = parseScript(input).keys;
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS) != 0) {
+    // Scripted runs are headless: no video or audio at all, just the event queue,
+    // so tests never open windows or dialogs on the desktop.
+    const bool headless = script.shot.has_value();
+    if (SDL_Init(headless ? SDL_INIT_EVENTS : SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS) != 0) {
         std::fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
         return 1;
     }
@@ -123,7 +126,7 @@ int main(int argc, char** argv) {
             "Covert Redux needs the files of the original Covert Action (1990).\n\n"
             "Run it with --data <directory>, set COVERT_DATA, or put the game's files in a "
             "folder named Covert next to the program.";
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Covert Redux", msg, nullptr);
+        if (!headless) SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Covert Redux", msg, nullptr);
         std::fprintf(stderr, "%s\n", msg);
         SDL_Quit();
         return 1;
@@ -132,7 +135,7 @@ int main(int argc, char** argv) {
 
     int status = 0;
     try {
-        Screen screen("Covert Redux", 3);
+        Screen screen("Covert Redux", 3, headless);
         App app{*data, screen, FontSet::load(*data)};
         std::unique_ptr<Scene> scene = makeScene(app, sceneName);
         if (!scene) throw std::runtime_error("unknown scene: " + sceneName);
@@ -177,7 +180,7 @@ int main(int argc, char** argv) {
             if (auto nxt = scene->next(); nxt) scene = std::move(nxt);
         }
     } catch (const std::exception& ex) {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Covert Redux", ex.what(), nullptr);
+        if (!headless) SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Covert Redux", ex.what(), nullptr);
         std::fprintf(stderr, "error: %s\n", ex.what());
         status = 1;
     }

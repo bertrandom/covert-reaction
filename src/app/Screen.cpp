@@ -11,7 +11,8 @@ namespace {
 constexpr int kLogicalW = 320 * 3, kLogicalH = 240 * 3;
 }
 
-Screen::Screen(const char* title, int scale) {
+Screen::Screen(const char* title, int scale, bool hidden) : headless_(hidden) {
+    if (headless_) return;   // scripted test run: no window, frames are only saved
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
     window_ = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                320 * scale, 240 * scale,
@@ -33,6 +34,7 @@ Screen::~Screen() {
 }
 
 void Screen::present(const Image& frame, const Palette& pal) {
+    if (headless_) return;
     void* pixels = nullptr;
     int pitch = 0;
     if (SDL_LockTexture(texture_, nullptr, &pixels, &pitch) == 0) {
@@ -56,11 +58,13 @@ void Screen::present(const Image& frame, const Palette& pal) {
 }
 
 void Screen::toggleFullscreen() {
+    if (headless_) return;
     fullscreen_ = !fullscreen_;
     SDL_SetWindowFullscreen(window_, fullscreen_ ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 }
 
 SDL_Point Screen::toFrame(int wx, int wy) const {
+    if (headless_) return {wx, wy};
     float lx = 0, ly = 0;
     SDL_RenderWindowToLogical(renderer_, wx, wy, &lx, &ly);
     return {static_cast<int>(lx * kWidth / kLogicalW), static_cast<int>(ly * kHeight / kLogicalH)};
