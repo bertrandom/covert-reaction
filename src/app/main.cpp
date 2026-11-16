@@ -52,12 +52,17 @@ namespace {
 std::vector<fs::path> bundleCandidates() {
     std::vector<fs::path> out;
     if (char* base = SDL_GetBasePath()) {
+        // In a macOS .app, SDL gives <app>/Contents/Resources/. The ".." are
+        // resolved lexically: that folder may not exist (a build-tree app has no
+        // resources), and the file system can't go "up" from a missing folder.
         fs::path b(base);
         SDL_free(base);
-        out.push_back(b / "Covert");                       // next to the executable
-        out.push_back(b / "resources" / "Covert");
-        out.push_back(b / ".." / "Resources" / "Covert");  // inside a macOS .app
-        out.push_back(b / ".." / ".." / ".." / ".." / "resources" / "Covert");  // build/ tree
+        auto add = [&](const fs::path& p) { out.push_back(p.lexically_normal()); };
+        add(b / "Covert");                                  // next to the executable
+        add(b / "resources" / "Covert");
+        add(b / ".." / "Resources" / "Covert");             // inside a macOS .app
+        add(b / ".." / ".." / ".." / "Covert");             // next to the .app
+        add(b / ".." / ".." / ".." / ".." / "resources" / "Covert");  // build/ tree
     }
     if (auto user = userDataDir(); !user.empty()) out.push_back(user / "Covert");
     return out;
