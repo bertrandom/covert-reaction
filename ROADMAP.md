@@ -49,8 +49,9 @@ scenes sharing one `World`.
    (intelligence scans, wiretaps, double agent, research office, crypto),
    [x] data files (clues, suspects, documents, news/chronology, organization and
    city summaries, activity report), [x] teletype, new-information boxes, clue
-   cards, dossiers, decoded messages, [x] interrogations, capture, prisoner
-   exchange, jailbreaks (from the Sim's routines, untested in play),
+   cards, dossiers, decoded messages, [x] interrogations (played through),
+   [x] capture, prisoner exchange, jailbreaks (from the Sim's routines, untested
+   in play),
    [x] the mini-games started with the case's data and their results taken back
    (src/app/CityLoop.cpp), [x] TAC's case hooks (src/game/TacCase.*: photos'
    new information, file and safe searches, the master plan and personnel

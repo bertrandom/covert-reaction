@@ -34,8 +34,8 @@ Not done yet:
 - Joystick or gamepad support (the original has a joystick option).
 - Modern extras: remappable keys, save anywhere, a faster pace, higher-resolution
   text.
-- A few paths are ported but have not been played through yet: interrogations,
-  being captured, prisoner exchanges and jailbreaks.
+- A few paths are ported but have not been played through yet: being captured,
+  prisoner exchanges and jailbreaks.
 
 [ROADMAP.md](ROADMAP.md) has the details.
 
