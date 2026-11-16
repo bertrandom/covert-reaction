@@ -113,15 +113,34 @@ const TextDb& Sim::textDb(const char* file) {
     return **slot;
 }
 
-void Sim::emit(SimEvent::Kind k, std::string title, int index) {
-    events_.push_back(SimEvent{k, std::move(title), g_.textBuf, index});
+int Sim::post(SimEvent e) {
+    // With a UI the events go to it as they happen (it may wait there); without
+    // one they are listed for takeEvents().
+    if (ui_) return ui_->event(e);
+    events_.push_back(std::move(e));
+    return -1;
 }
 
-void Sim::emitText(SimEvent::Kind k, std::string title, std::string text, int index) {
-    events_.push_back(SimEvent{k, std::move(title), std::move(text), index});
+int Sim::emit(SimEvent::Kind k, std::string title, int index) {
+    return post(SimEvent{k, std::move(title), g_.textBuf, index});
 }
 
-void Sim::notice(const std::string& s) { emitText(SimEvent::Kind::Notice, {}, s); }
+int Sim::emitText(SimEvent::Kind k, std::string title, std::string text, int index) {
+    return post(SimEvent{k, std::move(title), std::move(text), index});
+}
+
+int Sim::notice(const std::string& s, int x, int y, unsigned flags) {
+    SimEvent e{SimEvent::Kind::Notice, {}, s, -1};
+    e.x = x;
+    e.y = y;
+    e.flags = flags;
+    return post(std::move(e));
+}
+
+int Sim::drawWrapped(int width, int x, int y, int color) {
+    if (ui_) ui_->wrapped(g_.textBuf, width, x, y, color);
+    return drawWrappedText(width, y);
+}
 
 // ---------------------------------------------------------------- TIME.C
 
@@ -130,7 +149,7 @@ void Sim::advanceTime(int minutes) {
     while (minutes >= 60 && !caseOver_) {
         processEvents(60, false);
         minutes -= 60;
-        // (num_msgs > 5: wait_retrace(30))
+        if (w_.hdr.numMsgs > 5 && ui_ && !caseOver_) ui_->retrace(30);
     }
     if (minutes != 0 && !caseOver_) processEvents(30, false);
 }
@@ -182,7 +201,7 @@ void Sim::processEvents(int minutes, bool force) {
     int odaye = g_.clockDay;
     setClockBase(clockBase() + static_cast<unsigned>(minutes));
     drawStatusBar();
-    // (wait_retrace(2))
+    if (ui_) ui_->retrace(2);
     if (!((ohourf < 12 && g_.clockHour >= 12) || odaye != g_.clockDay || force)) return;
     h.gameTime = static_cast<std::int16_t>(h.gameTime + 1);
     for (auto& c : w_.cities) c.orgsVisited = 0;
@@ -524,7 +543,7 @@ void Sim::addChronologyEntry(int kind, int msg) {
     h.numMsgs = static_cast<std::int16_t>(h.numMsgs + 1);
     if (h.numMsgs >= 128) {
         g_.textBuf = "NSYN Overflow\n";
-        notice(g_.textBuf);
+        notice(g_.textBuf, 0x32, 0x32);
     }
 }
 

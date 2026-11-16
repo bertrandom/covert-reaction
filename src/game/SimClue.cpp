@@ -135,7 +135,7 @@ void Sim::describeClue(int p, unsigned newk) {
             t.clear();
             appendPersonName(p);
             t += " has been\nidentified as a participant\nin the plot.\n";
-            notice(t);
+            notice(t, 20, 60);
         } else if (diff & 2) {
             t.clear();
             appendPersonName(p);
@@ -143,13 +143,13 @@ void Sim::describeClue(int p, unsigned newk) {
             pp.known |= 2;
             appendPersonName(p);
             t += "\n";
-            notice(t);
+            notice(t, 20, 60);
         } else if (diff & 1) {
             pp.known |= 1;
             t = "We have acquired a\nphotograph of ";
             appendPersonName(p);
             t += ".\n";
-            notice(t);
+            notice(t, 20, 60);
         } else if (diff & 8) {
             pp.known |= 8;
             t.clear();
@@ -157,7 +157,7 @@ void Sim::describeClue(int p, unsigned newk) {
             t += " has been\nspotted in ";
             t += cityName();
             t += "\n";
-            notice(t);
+            notice(t, 20, 60);
             ++cityClueCount(pp.city & 31);
         } else if (diff & 4) {
             pp.known |= 4;
@@ -166,7 +166,7 @@ void Sim::describeClue(int p, unsigned newk) {
             t += " has been\nidentified as a member\nof the ";
             t += w_.orgs[static_cast<std::size_t>(pp.org & 15)].name.str();
             t += "\n";
-            notice(t);
+            notice(t, 20, 60);
             w_.orgs[static_cast<std::size_t>(pp.org & 15)].flags |= 1;
             ++orgClueCount(pp.org & 15);
         } else if (diff & 0x20) {
@@ -174,25 +174,25 @@ void Sim::describeClue(int p, unsigned newk) {
             t = "We have obtained\nadditional information\nconcerning ";
             appendPersonName(p);
             t += "\n";
-            notice(t);
+            notice(t, 20, 60);
         } else if (diff & 0x100) {
             pp.known |= 0x100;
             t = "We have determined\nthe rank of\n";
             appendPersonName(p);
             t += "\n";
-            notice(t);
+            notice(t, 20, 60);
         } else if (diff & 0x200) {
             pp.known |= 0x200;
             t = "We found recruiting\ninformation about\n";
             appendPersonName(p);
             t += "\n";
-            notice(t);
+            notice(t, 20, 60);
         } else if (diff & 0x400) {
             pp.known |= 0x400;
             t = "We found recruiting\ninformation about\n";
             appendPersonName(p);
             t += "\n";
-            notice(t);
+            notice(t, 20, 60);
             continue;
         } else {
             // A bit no branch reveals (40h, 80h, 800h+): the original loops forever.
@@ -288,6 +288,8 @@ int Sim::describeNewInfo(int org, int city, int amount, int popup) {
                     }
                     tb += "\n";
                     emit(SimEvent::Kind::NewInfo, {}, p);
+                    if (ui_) ui_->bevelBox(16, 96, 264, 48, 3);
+                    drawWrapped(32, 20, 100, 11);
                     waitKey();
                     m.flags |= static_cast<std::uint16_t>(bit8);
                     suspectDossier(p, 0, 0);
@@ -441,6 +443,7 @@ void Sim::showClue(int org, int city, int sus, int kind) {
         c.kind = static_cast<std::int16_t>(encodeClue(ci, kind));
         c.text = static_cast<std::int16_t>(loadClueText(sus, 0));
         suspect(sus).found |= static_cast<std::uint16_t>(kind);
+        if (ui_) ui_->pageFrame("Clue", 9);
         auto& tb = g_.textBuf;
         tb = "\x87Source: ";
         tb += w_.orgs[static_cast<std::size_t>(c.org & 15)].name.str();
@@ -452,7 +455,18 @@ void Sim::showClue(int org, int city, int sus, int kind) {
         tb += "\n\x87Method: ";
         tb += (g_.clueIcon >= 0 && g_.clueIcon < 7) ? kClueMethodNames[g_.clueIcon] : "";
         emit(SimEvent::Kind::Clue, {}, ci);
-        int line = 76;
+        drawWrapped(31, 16, 17, 5);
+        if (ui_) {
+            if (kind == 1) {
+                ui_->portrait(g_.faceShown, 264, 18);
+                ui_->sprite(108, 299, 46);
+            } else {
+                ui_->sprite(g_.clueIcon + 96, 272, 16);
+            }
+            ui_->text("\x8CRelated Clues:", 16, 66, 5);
+        }
+        int line = 76, picY = 73;
+        bool shown = false;
         for (int phase = 0; phase < 2; ++phase) {
             for (int cj = 0; cj < 80; ++cj) {
                 const Clue& o = clue(cj);
@@ -461,15 +475,24 @@ void Sim::showClue(int org, int city, int sus, int kind) {
                 if (!((phase && c.kind == o.kind) || (!phase && c.text == o.text))) continue;
                 tb.clear();
                 const int wid = rnd(12) + 4;
-                (void)wid;
+                if (ui_) ui_->cardPanel(wid, line - 2);
                 if ((o.kind >> 8) == 16) clueTextWrapper(cj);
                 else describePerson(cj);
                 tb += "\n";
+                shown = true;
                 emit(SimEvent::Kind::Clue, "related", cj);
-                line = drawWrappedText(32, line);
+                line = drawWrapped(32, wid + 8, line, 0);
                 line += 4;
+                if ((o.kind >> 8) == 1) {
+                    if (ui_) {
+                        ui_->portrait(person(suspect(o.suspect).person).id, 264, clampTo(picY, 0, 150));
+                        ui_->sprite(108, 299, clampTo(picY + 24, 0, 176));
+                    }
+                    picY += 40;
+                }
             }
         }
+        if (!shown && ui_) ui_->text("...none", 16, 72, 5);
         waitKey();
         g_.faceShown = -1;
         return;
@@ -618,18 +641,28 @@ void Sim::clueText(int kind, int text, int ci) {
 // message events (format_message_event) of his messages; the layout (y) decides
 // when a page is full and the message is shown again on a new page.
 void Sim::suspectDossier(int who, int x, int y) {
-    (void)x;
     emit(SimEvent::Kind::Dossier, {}, who);
     auto& tb = g_.textBuf;
+    auto text = [&](int tx, int ty, int c) {
+        if (ui_) ui_->text(tb, tx, ty, c);
+    };
+    auto line = [&](int x1, int y1, int x2, int y2, int c) {
+        if (ui_) ui_->line(x1, y1, x2, y2, c);
+    };
     const int embedded = y;
-    if (!y) {
+    if (y) {
+        x += 4;
+    } else {
         tb.clear();
         appendPersonName(who);
+        if (ui_) ui_->pageFrame(tb, 3);
         y = 18;
+        x += 10;
     }
     y += 2;
     tb = "Name:\x80";
     appendPersonName(who);
+    text(x, y, 7);
     Person& p = person(who);
     if (p.known & 0x100) {
         int nearCity = (p.id >> 2) & 7;
@@ -638,17 +671,20 @@ void Sim::suspectDossier(int who, int x, int y) {
         tb = "Rank:\x80";
         tb += (nearCity >= 0 && nearCity < 8) ? kRankNames[nearCity] : "";
         y += 8;
+        text(x, y, 7);
     }
     if (p.known & 4) {
         w_.orgs[static_cast<std::size_t>(p.org & 15)].flags |= 1;
         tb = "Org: \x80";
         tb += w_.orgs[static_cast<std::size_t>(p.org & 15)].name.str();
         y += 8;
+        text(x, y, 7);
     }
     if (p.known & 8) {
         tb = "City: \x80";
         tb += w_.cities[static_cast<std::size_t>(p.city & 15)].name.str();
         y += 8;
+        text(x, y, 7);
     }
     tb = "Recruited";
     if (p.known & 0x400) {
@@ -675,32 +711,47 @@ void Sim::suspectDossier(int who, int x, int y) {
             tb += w_.cities[static_cast<std::size_t>(nearCity)].name.str();
         }
     }
-    if (tb.size() > 12 && !embedded) y += 8;
+    if (tb.size() > 12 && !embedded) {
+        tb += ".";
+        y += 8;
+        text(x, y, 7);
+    }
+    if ((p.known & 1) && !embedded && ui_) {
+        ui_->portrait(p.id, 264, 8);
+        ui_->sprite(108, 299, 40);
+    }
     bool role = false;
     y += 10;
+    line(x, y - 2, x + 128, y - 2, 12);
     for (int ei = 0; ei < w_.hdr.numSuspects; ++ei) {
         if (p.roles & shl16(ei)) {
             tb = "Role: \x80";
             tb += suspect(ei).name.str();
+            text(x, y, 7);
             role = true;
         }
     }
     if (!role) {
         if ((p.known & 0x1F) == 0x1F && !(p.flags & 0x7FFF)) tb = "Role: \x80NOT INVOLVED";
         else tb = "Role: \x80unknown";
+        text(x, y, 7);
     }
     if (p.fate == -1) {
         tb = "(Under Arrest)";
         y += 8;
+        text(x, y, 5);
     }
     if (p.fate == -2) {
         tb = "(In Hiding)";
         y += 8;
+        text(x, y, 5);
     }
     if (p.fate == -3) {
         tb = "(Turned)";
         y += 8;
+        text(x, y, 5);
     }
+    line(x, y + 8, x + 128, y + 8, 12);
     y += 2;
     y = clampTo(y + 8, (p.known & 1) ? embedded + 54 : 0, 99);
     for (int ei = 0; ei < w_.hdr.numMsgs && ei < 128; ++ei) {
@@ -709,27 +760,32 @@ void Sim::suspectDossier(int who, int x, int y) {
         for (;;) {
             tb.clear();
             formatMessageEvent(ei);
-            y = drawWrappedText(37, y);
+            y = drawWrapped(37, x, y, 5);
             const int msg = m.msg;
             if (m.flags & 0x8000) {
                 tb = "'";
                 loadMessageText(msg);
                 tb += "'";
-                y = drawWrappedText(36, y);
+                y = drawWrapped(36, x + 4, y, 12);
             } else {
                 const int k = plot(msg).flags & 0xF00;
-                if (k == 0x200 || k == 0x300) y += 8;
+                if (k == 0x200 || k == 0x300) {
+                    if (ui_) ui_->textOpaque("(message not decoded)", x + 4, y, 4);
+                    y += 8;
+                }
                 if (k == 0x800 || k == 0x900) {
                     tb.clear();
                     loadMessageText(msg);
                     garbleMessage(m.flags, 5);
-                    y = drawWrappedText(36, y);
+                    y = drawWrapped(36, x + 4, y, 12);
                 }
             }
             if (y < 192) break;
-            waitKey();   // "...more"
+            if (ui_) ui_->textOpaque("...more", 256, 192, 12);
+            waitKey();
             tb.clear();
             appendPersonName(who);
+            if (ui_) ui_->pageFrame(tb, 3);
             y = 16;
         }
     }

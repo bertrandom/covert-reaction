@@ -128,12 +128,16 @@ void Sim::missionBriefing() {
         g_.inBuilding = 0;
         if (caseOver_) return;
     } while ((4 - difficulty()) * 2 > total);
+    if (ui_) {
+        ui_->sceneVar(0, 1);
+        ui_->sceneBackground("briefing.pan", 0, 0);
+    }
     g_.textBuf = "The rest is up to you. ";
     if (!difficulty())
         g_.textBuf += "I've assigned one of my best research assistants to work with you on this case. ";
     g_.textBuf += "The President's counting on you Max, don't let us down.";
     wrapTextBuffer(0x28);
-    notice(g_.textBuf);
+    notice(g_.textBuf, 8, 0x95);
 }
 
 void Sim::startNewGame() {
@@ -161,7 +165,7 @@ void Sim::hotelRest(int steps) {
 void Sim::hotelLounge() {
     g_.textBuf.clear();
     showProse("*lounge", 0x20);
-    notice(g_.textBuf);
+    notice(g_.textBuf, 0x14, 0x50);
     for (int i = 0; i < w_.hdr.numSuspects; ++i) {
         const int p = suspect(i).person;
         if (person(p).city == w_.hdr.hereCity && !(suspect(i).flags & 0x100)) revealRandomClue(i, 0, w_.hdr.hereCity);
@@ -171,7 +175,10 @@ void Sim::hotelLounge() {
 
 int Sim::localScan() {
     const int found = describeNewInfo(1, w_.hdr.hereCity, 100, 0);
-    if (!found) notice("No new information\n");
+    if (!found) {
+        if (ui_) ui_->clearPlayArea();
+        notice("No new information\n", 0x14, 0x29);
+    }
     advanceTime(240);
     return found;
 }
@@ -183,7 +190,10 @@ int Sim::internationalScan() {
         if (caseOver_) return found;
         found += describeNewInfo(1, rnd(16), 50, 0);
     }
-    if (!found) notice("No new information\n");
+    if (!found) {
+        if (ui_) ui_->clearPlayArea();
+        notice("No new information\n", 0x14, 0x29);
+    }
     return found;
 }
 
@@ -192,20 +202,24 @@ bool Sim::accuseDoubleAgent() {
     if (moleCities() & shl16(here)) {
         g_.textBuf = "The local agent confesses\nand is replaced.\n";
         g_.textBuf += "You search his files\nfor additional information...\n";
-        notice(g_.textBuf);
+        notice(g_.textBuf, 0x14, 0x14);
         w_.hdr.doubleAgents = static_cast<std::int16_t>(moleCities() - shl16(here));
         for (int k = 0; k < 3; ++k)
             if (describeNewInfo(1, here, 100, 0)) break;
         return true;
     }
     g_.textBuf = "The local agent is checked\nand proved innocent.\nYou are barred from\nusing the local office.\n";
-    notice(g_.textBuf);
+    notice(g_.textBuf, 0x14, 0x14);
     clearLocation(1, here);
     return false;
 }
 
 void Sim::showDecodedMessage(int n) {
     Msg& mn = w_.msgs[static_cast<std::size_t>(n & 127)];
+    if (ui_) {
+        ui_->teletypePaper();
+        ui_->text("Message Decode", 0x78, 0x12, 5);
+    }
     const int msg = mn.msg;
     const int role = plot(msg).flags & 0xFF;
     int src = mn.sender, tgt = mn.receiver;
@@ -234,11 +248,17 @@ void Sim::showDecodedMessage(int n) {
         person(src).roles |= static_cast<std::uint16_t>(person(src).flags & 0x7FFF);
         person(tgt).roles |= static_cast<std::uint16_t>(person(tgt).flags & 0x7FFF);
     }
+    if (ui_) {
+        ui_->text("FROM:", 0x20, 0x30, 5);
+        ui_->text("TO:", 0xA0, 0x30, 5);
+    }
     if (person(src).known) suspectDossier(src, 0x20, 0x38);
     if (person(tgt).known) suspectDossier(tgt, 0xA0, 0x38);
+    if (ui_) ui_->text("MESSAGE:", 0x20, 0x77, 5);
     g_.textBuf.clear();
     loadMessageText(msg);
     emitText(SimEvent::Kind::Decoded, "Message Decode", g_.textBuf, n);
+    drawWrapped(0x1E, 0x20, 0x7F, 0);
     waitKey();
     mn.flags |= 0x8000;
     w_.msgs[static_cast<std::size_t>(who)].flags |= 0x8000;
@@ -253,9 +273,12 @@ void Sim::suspectsOverviewMarks() {
 }
 
 void Sim::showPersonClues(int sus) {
+    if (ui_) ui_->pageFrame("Clue", 14);
+    int y = 16;
     for (int i = 0; i < 80; ++i) {
         if (clue(i).suspect != sus) continue;
-        (void)rnd(12);   // r = random(12) + 4: the card's indent
+        const int r = rnd(12) + 4;   // the card's indent
+        if (y != 16 && ui_) ui_->cardPanel(r, y - 2);
         g_.textBuf = "\x87Source: ";
         g_.textBuf += w_.orgs[static_cast<std::size_t>(clue(i).org & 15)].name.str();
         g_.textBuf += "/";
@@ -264,12 +287,22 @@ void Sim::showPersonClues(int sus) {
         clueTextWrapper(i);
         g_.textBuf += "\n";
         emit(SimEvent::Kind::Clue, {}, i);
+        y = drawWrapped(32, r + 8, y, 5);
+        y += 4;
     }
-    int y = 16;
+    y = 16;
     for (int i = 0; i < 80; ++i) {
         if (clue(i).suspect == sus && (clue(i).kind >> 8) == 1) {
             g_.textBuf.clear();
             describePerson(i);
+            if (ui_) {
+                ui_->portrait(g_.faceShown, 264, 16);
+                ui_->sprite(108, 299, 40);
+                const int fate = person(suspect(clue(i).suspect).person).fate;
+                if (fate == -1) ui_->text("ARRESTED", 258, 52, 12);
+                if (fate == -2) ui_->text("IN HIDING", 258, 52, 12);
+                if (fate == -3) ui_->text(" TURNED", 258, 52, 12);
+            }
             y += 64;
             if (y > 144) break;
         }
@@ -280,8 +313,13 @@ void Sim::showPersonClues(int sus) {
 void Sim::researchOffice() {
     auto& tb = g_.textBuf;
     const auto& h = w_.hdr;
+    if (ui_) {
+        ui_->sceneBackground((h.options & 2) ? "officem.pan" : "officef.pan", 168, 0);
+        ui_->sceneVar(0, (h.options & 2) ? -1 : 1);
+    }
     tb = "Max, I've been\ngoing over the\ninfo we've got\nso far ...\n";
-    notice(tb);
+    notice(tb, 16, 17);
+    constexpr unsigned kNoSelect = SimEvent::kNoSelect;
     int mmind = suspect(0).person;
     if (difficulty() || person(mmind).fate < 0 || h.hereCity != 1) mmind = -1;
     int maxa = 3;
@@ -318,7 +356,8 @@ void Sim::researchOffice() {
     if (mmind != -1) {
         const int si = setLocationKnown(person(mmind).org, 1, 12);
         if (si == -1 || w_.sites[static_cast<std::size_t>(si)].strength == 0) {
-            notice(tb);
+            notice(tb, 16, 81, kNoSelect);
+            if (ui_) ui_->clearPlayArea();
             tb = "The ";
             tb += w_.orgs[static_cast<std::size_t>(person(mmind).org & 15)].name.str();
             tb += " has a";
@@ -327,7 +366,7 @@ void Sim::researchOffice() {
             tb += w_.cities[static_cast<std::size_t>(h.hereCity & 15)].name.str();
             tb += "! I'd suggest you go there and place a wiretap or break in.";
             wrapTextBuffer(16);
-            notice(tb);
+            notice(tb, 16, 17);
             return;
         }
     }
@@ -387,13 +426,13 @@ void Sim::researchOffice() {
         } else {
             showProse("*advice5", 32, w_.cities[static_cast<std::size_t>(p.city & 15)].name.str());
         }
-        notice(tb);
+        notice(tb, 24, 104, kNoSelect);
     }
     if (best == -2) {
         wrapTextBuffer(16);
-        notice(tb);
+        notice(tb, 16, 81, kNoSelect);
     }
-    if (best == -1) notice(tb);
+    if (best == -1) notice(tb, 16, 81, kNoSelect);
 }
 
 // ---------------------------------------------------------------- CITY.C
@@ -424,10 +463,16 @@ void Sim::ciaContactScreen(int org, int city, bool fromStreet) {
     raiseAlertness(org, city, 20);
     auto& c = w_.cities[static_cast<std::size_t>(w_.hdr.hereCity & 15)];
     c.orgsVisited |= shl16(w_.hdr.hereOrg);
-    if (w_.hdr.hereOrg == 1 && !difficulty()) {
-        g_.textBuf = "You arrive at\nthe CIA building\nand check with\nyour contact.\n";
-        notice(g_.textBuf);
-        researchOffice();
+    if (w_.hdr.hereOrg == 1) {
+        if (ui_) {
+            ui_->clearScreen();
+            ui_->sceneBackground("hq.pan", 0xA8, 0);
+        }
+        if (!difficulty()) {
+            g_.textBuf = "You arrive at\nthe CIA building\nand check with\nyour contact.\n";
+            notice(g_.textBuf, 16, 17);
+            researchOffice();
+        }
     }
 }
 
@@ -437,9 +482,10 @@ int Sim::cityAmbushCheck(int choice, int menuCount) {
     g_.textBuf.clear();
     if (describeAlertLevel(whos, w_.hdr.hereCity) > ((moleCities() & shl16(w_.hdr.hereCity)) ? 20 : 50)) {
         heat() = 0;
+        if (ui_) ui_->clearScreen();
         g_.textBuf.clear();
         showProse("*surprise", 16);
-        notice(g_.textBuf);
+        notice(g_.textBuf, 24, 31);
         return whos;   // ENV[12] = whos, city_exit = 10 (a car chase)
     }
     return -1;
@@ -476,8 +522,13 @@ Sim::WatchResult Sim::watchBuilding(int org, int city) {
         if (++guard > 1000000) break;
     } while (person(who).fate < 0 || who == 0);
     g_.faceShown = person(who).id;
+    if (ui_) {
+        ui_->sceneBackground("binos3.pan", 150, 2);
+        ui_->sceneVar(0, (person(who).id & 1) ? -1 : 1);
+    }
     g_.textBuf = "You notice someone\nleaving the building.\nDo you ...\n Wait\n Follow car.\n Trace car.\n Check Data\n";
-    notice(g_.textBuf);   // the menu: the screen asks, then calls watchBuildingWait / follows
+    // The menu: with a UI its answer, else the caller asks.
+    r.choice = notice(g_.textBuf, 2, 20);
     r.who = who;
     r.bestOrg = bestOrg;
     return r;
@@ -519,10 +570,14 @@ int Sim::successBriefing(int org, int city, const MiniGameResult& res) {
     if ((res.env10 & 1) && who != -1) {
         for (int i = 0; i < 4; ++i) {
             if (w_.items[static_cast<std::size_t>(i)].holder == who) {
+                if (ui_) {
+                    ui_->sceneBackground("briefing.pan", 0, 0);
+                    ui_->sceneVar(0, 2);
+                }
                 g_.textBuf = "Good job Max, You found the\n";
                 g_.textBuf += w_.items[static_cast<std::size_t>(i)].name.str();
                 g_.textBuf += "!. That should really\nslow down their operation.\n";
-                notice(g_.textBuf);
+                notice(g_.textBuf, 16, 0x95);
                 successBriefingText(i);
             }
         }
@@ -539,6 +594,11 @@ void Sim::interrogateSuspect(int who, bool dbl) {
     const int diff = difficulty();
     w_.hdr.hereOrg = 1;
     g_.faceShown = person(who).id;
+    if (ui_) {
+        ui_->portraitPos(24, 37);
+        ui_->sceneBackground("intrgate.pan", 0xE0, 0);
+        ui_->sceneVar(0, (person(who).id & 1) ? -1 : 1);
+    }
     tb = "You accuse ";
     appendPersonName(who);
     tb += "\nof taking part in\nthe plot, 'We know\nthat your role was:\n";
@@ -559,14 +619,14 @@ void Sim::interrogateSuspect(int who, bool dbl) {
         appendPersonName(who);
         tb += (person(who).id & 1) ? ".\nHe" : ".\nShe";
         tb += " will have to\nbe released.\n";
-        notice(tb);
+        notice(tb, 16, 21);
         person(who).fate = 99;
         raiseAlertness(person(who).org, person(who).city, 99);
         addChronologyEntry(9, who);
         if (who == w_.hdr.jailbreakPerson) w_.hdr.jailbreakPerson = -1;
         return;
     }
-    notice(tb);
+    notice(tb, 16, 21);
     setLocationKnown(1, w_.hdr.hereCity, 12);
     tb.clear();
     if (!dbl) {
@@ -577,7 +637,8 @@ void Sim::interrogateSuspect(int who, bool dbl) {
         showProse("*doublea", 24);
     }
     addChronologyEntry(dbl ? 12 : 6, who);
-    notice(tb);
+    if (ui_) ui_->clearPlayArea();
+    notice(tb, 16, 21);
     for (int m = 0; m < w_.hdr.numMsgs && m < 128; ++m) {
         const Msg& mm = w_.msgs[static_cast<std::size_t>(m)];
         if (!(mm.type == 0 && mm.sender == who && ((mm.flags & 0xF) || diff < 2 || person(who).fate == -3) &&
@@ -590,12 +651,20 @@ void Sim::interrogateSuspect(int who, bool dbl) {
         if (kBitcount[mm.flags & 0x1F] >= diff * 2 || person(who).fate == -3) {
             tb += "\"Oh yeah, I guess I did,\" the prisoner responds.\n";
             wrapTextBuffer(24);
-            notice(tb);
+            if (ui_) ui_->clearPlayArea();
+            notice(tb, 16, 21);
+            if (ui_) ui_->toBackPage(224, 0, 96, 200);
             showDecodedMessage(m);
+            if (ui_) {
+                ui_->fillRect(0, 0, 224, 200, 5);
+                ui_->fromBackPage(224, 0, 96, 200);
+                ui_->screenWidth(224);
+            }
         } else {
             tb += "\"Hmmm..., I don't seem to remember.\", the suspect responds.\n";
             wrapTextBuffer(24);
-            notice(tb);
+            if (ui_) ui_->clearPlayArea();
+            notice(tb, 16, 21);
         }
     }
     person(who).known |= 0x71F;
@@ -604,7 +673,8 @@ void Sim::interrogateSuspect(int who, bool dbl) {
         if (mastermind) {
             tb = "The MasterMind breaks down and lists the participants in the plot.";
             wrapTextBuffer(24);
-            notice(tb);
+            if (ui_) ui_->clearPlayArea();
+            notice(tb, 16, 21);
         }
         for (int i = 0; i < activeSuspects(); ++i) {
             if (suspect(i).person == who) suspect(i).found |= 0x1F;
@@ -617,11 +687,24 @@ void Sim::interrogateSuspect(int who, bool dbl) {
             }
         }
         if (!dbl) {
+            if (ui_) {
+                ui_->clearScreen();
+                ui_->portraitPos(101, 19);
+            }
             g_.faceShown = person(who).id;
+            if (ui_) {
+                ui_->sceneBackground("injail.pan", 0xA8, 0);
+                ui_->sceneVar(0, (person(who).id & 1) ? -1 : 1);
+            }
             tb.clear();
             appendPersonName(who);
             tb += "\nis taken to\nthe local jail.\n";
-            notice(tb);
+            notice(tb, 24, 21);
+        }
+        if (ui_) {
+            ui_->clearScreen();
+            ui_->sceneBackground("briefing.pan", 0, 0);
+            ui_->sceneVar(0, 2);
         }
         tb.clear();
         appendPersonName(who);
@@ -629,7 +712,7 @@ void Sim::interrogateSuspect(int who, bool dbl) {
         tb.clear();
         showProse("*nice0", 36, name, (suspect(roleg).rank - 1) / 3);
         wrapTextBuffer(40);
-        notice(tb);
+        notice(tb, 16, 0x95);
     }
     processEvents(240, true);
 }
@@ -650,6 +733,7 @@ void Sim::successBriefingText(int n) {
 }
 
 int Sim::capturedScreen(bool agree) {
+    if (ui_) ui_->sceneBackground("surndr01.pan", 0xE0, 0);
     g_.textBuf.clear();
     showProse("*grilled", 0x18);
     if (!prisonerExchange(agree)) {
@@ -657,6 +741,10 @@ int Sim::capturedScreen(bool agree) {
             advanceTime(360);
             const int jb = w_.hdr.jailbreakPerson;
             if (jb != -1) {
+                if (ui_) {
+                    ui_->clearScreen();
+                    ui_->sceneBackground("warning.pan", 0xA0, 0);
+                }
                 auto& tb = g_.textBuf;
                 tb = "JailBreak in ";
                 tb += w_.cities[static_cast<std::size_t>(person(jb).city & 15)].name.str();
@@ -665,7 +753,7 @@ int Sim::capturedScreen(bool agree) {
                 tb += " agents\nfree ";
                 appendPersonName(jb);
                 tb += "!\n";
-                notice(tb);
+                notice(tb, 0x10, 0x15);
                 person(jb).known |= 0x40;
                 person(jb).fate = 99;
                 clearLocation(person(jb).org, person(jb).city);
@@ -674,9 +762,10 @@ int Sim::capturedScreen(bool agree) {
             }
         }
         if (caseOver_) return 0;
+        if (ui_) ui_->sceneBackground("escape.pan", 0xE0, 0);
         g_.textBuf.clear();
         showProse("*escape", 0x18);
-        notice(g_.textBuf);
+        notice(g_.textBuf, 0x10, 0x15);
         return 7;   // city_exit = 7: escape (TAC)
     }
     if (difficulty()) clearLocation(w_.hdr.hereOrg, w_.hdr.hereCity);
@@ -696,7 +785,8 @@ bool Sim::prisonerExchange(bool agree) {
         }
     }
     g_.textBuf += " No thanks, Squinty.\n Agree to exchange.\n";
-    notice(g_.textBuf);
+    const int choice = notice(g_.textBuf, 0x10, 0x15);
+    if (ui_) agree = choice == 1;   // (with a UI the player answers the menu)
     if (!agree) return false;
     g_.textBuf = "You are exchanged\nfor ";
     if (p != -1) {
@@ -713,7 +803,7 @@ bool Sim::prisonerExchange(bool agree) {
         m |= shl16(rnd(16));
         w_.hdr.doubleAgents = static_cast<std::int16_t>(m);
     }
-    notice(g_.textBuf);
+    notice(g_.textBuf, 0x10, 0x79);
     return true;
 }
 

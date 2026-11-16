@@ -63,6 +63,51 @@ struct SimEvent {
     std::string title;
     std::string text;
     int index = -1;
+    // Notice: the window's position (show_menu(text, x, y)) and how text_window
+    // runs it: kNoWait (dossier_state / paused: drawn, no wait), kNoSelect
+    // (menu_flag: lines starting with a space aren't highlighted).
+    int x = 16, y = 21;
+    unsigned flags = 0;
+    static constexpr unsigned kNoWait = 1, kNoSelect = 2;
+};
+
+// What the screens draw while the simulation runs: the original draws as it
+// goes (the dossier, clue cards, the decoded message) and waits for keys in the
+// middle of the rules. A UI given to Sim::setUi gets each event when it happens
+// (and may block there for the player: a Wait, a Notice, a Teletype) and the
+// drawing calls in the original's order. The defaults draw nothing.
+class SimUi {
+public:
+    virtual ~SimUi() = default;
+    // Returns the item chosen when the event is a menu (a Notice with items), else -1.
+    virtual int event(const SimEvent&) { return -1; }
+    // draw_status_bar, with format_date_time(clock_base); process_events draws it
+    // each time the clock moves.
+    virtual void statusBar(const std::string& /*dateTime*/) {}
+    virtual void retrace(int /*n*/) {}                                      // wait_retrace(n)
+    virtual void pageFrame(const std::string& /*title*/, int /*color*/) {}  // draw_page_frame
+    virtual void teletypePaper() {}                                         // draw_teletype_paper
+    virtual void text(const std::string&, int /*x*/, int /*y*/, int /*color*/) {}        // draw_text_transparent
+    virtual void textOpaque(const std::string&, int /*x*/, int /*y*/, int /*color*/) {}  // draw_text
+    virtual void line(int /*x1*/, int /*y1*/, int /*x2*/, int /*y2*/, int /*color*/) {}
+    // draw_wrapped_text(width, x, y, color) of `text` (the layout is Sim's).
+    virtual void wrapped(const std::string& /*text*/, int /*width*/, int /*x*/, int /*y*/, int /*color*/) {}
+    virtual void portrait(int /*face*/, int /*x*/, int /*y*/) {}           // draw_portrait
+    virtual void sprite(int /*n*/, int /*x*/, int /*y*/) {}                // draw_sprite_a
+    virtual void cardPanel(int /*x*/, int /*y*/) {}                        // draw_card_panel
+    virtual void bevelBox(int /*x*/, int /*y*/, int /*w*/, int /*h*/, int /*color*/) {}   // draw_bevel_box
+    virtual void clearPlayArea() {}                                        // clear_play_area
+    virtual void clearScreen() {}                                          // clear_screen
+    virtual void fillRect(int /*x*/, int /*y*/, int /*w*/, int /*h*/, int /*color*/) {}   // gfx_fill_rect
+    // drv_copy_rect between the screen and the back page (same rectangle).
+    virtual void toBackPage(int /*x*/, int /*y*/, int /*w*/, int /*h*/) {}
+    virtual void fromBackPage(int /*x*/, int /*y*/, int /*w*/, int /*h*/) {}
+    virtual void screenWidth(int /*w*/) {}                                 // screen_width = w
+    virtual void portraitPos(int /*x*/, int /*y*/) {}                      // portrait_x, portrait_y
+    // set_scene_var / set_scene_background(name, x, y): the animation the next
+    // text window plays.
+    virtual void sceneVar(int /*i*/, int /*v*/) {}
+    virtual void sceneBackground(const std::string& /*name*/, int /*x*/, int /*y*/) {}
 };
 
 // GAME's globals that are not in env.sve (TIME.C, CITY.C, the library's text
@@ -91,6 +136,9 @@ public:
     ~Sim();
 
     World& world() { return w_; }
+    // The screens drawing the simulation (nullptr: none, events are only listed).
+    void setUi(SimUi* ui) { ui_ = ui; }
+    SimUi* ui() const { return ui_; }
     SimGlobals& globals() { return g_; }
     const SimGlobals& globals() const { return g_; }
 
@@ -109,7 +157,10 @@ public:
     int checkSpecialLocation(int p);               // check_special_location
     void removeLocationType(int p, unsigned bits); // remove_location_type
     std::string formatDateTime(unsigned t);        // format_date_time (sets clock_minute/hour/day)
-    void drawStatusBar() { formatDateTime(clockBase()); }   // draw_status_bar's state change
+    void drawStatusBar() {                         // draw_status_bar (and the clock's globals)
+        const std::string t = formatDateTime(clockBase());
+        if (ui_) ui_->statusBar(t);
+    }
 
     // ---- CHRONO.C ----
     void addChronologyEntry(int kind, int msg);    // add_chronology_entry
@@ -196,6 +247,7 @@ public:
     struct WatchResult {
         int who = 0;          // person slot (face_shown = his id)
         int bestOrg = 0;      // here_org after "Follow car" / "Trace car"
+        int choice = -1;      // the menu's answer when a UI asked it (0 Wait .. 3 Check Data)
     };
     WatchResult watchBuilding(int org, int city);
     void watchBuildingWait(int who);               // "Wait": forget a passer-by
@@ -219,6 +271,9 @@ public:
     int capturedScreen(bool agree);                // captured_screen: 7 (escape) or 0 (exchanged)
     bool prisonerExchange(bool agree);             // prisoner_exchange (the menu's answer)
 
+    // CITY.C show_prose: a prose.dta passage appended to text_buf, wrapped at `width`.
+    void showProse(const char* key, int width, const std::string& rplc = {}, int n = 0);
+
     // ---- accessors with the original's out-of-table reads ----
     Person& person(int i);
     Suspect& suspect(int i);
@@ -236,11 +291,14 @@ public:
     std::int16_t& orgClueCount(int o) { return w_.cityClueCount[static_cast<std::size_t>(16 + o)]; }
 
 private:
-    void emit(SimEvent::Kind k, std::string title = {}, int index = -1);
-    void emitText(SimEvent::Kind k, std::string title, std::string text, int index = -1);
+    int emit(SimEvent::Kind k, std::string title = {}, int index = -1);
+    int emitText(SimEvent::Kind k, std::string title, std::string text, int index = -1);
+    int post(SimEvent e);
     void teletype(const char* title) { emit(SimEvent::Kind::Teletype, title); }
-    void notice(const std::string& s);             // show_menu(s, ...)
+    int notice(const std::string& s, int x = 16, int y = 21, unsigned flags = 0);   // show_menu(s, x, y)
     void waitKey() { emit(SimEvent::Kind::Wait); }
+    // draw_wrapped_text(width, x, y, color) of text_buf: drawn by the UI, laid out here.
+    int drawWrapped(int width, int x, int y, int color);
     void endCase();
     int rnd(int n) { return static_cast<std::int16_t>(rng_.below(n)); }
     Locations loc() { return Locations(w_, rng_, career_.mm); }
@@ -249,7 +307,6 @@ private:
     std::int16_t msgTime(int i) const;
     int msgReceiverCity(int i) const;
     const TextDb& textDb(const char* file);
-    void showProse(const char* key, int width, const std::string& rplc = {}, int n = 0);   // CITY.C show_prose
     void proseSubstitute(const std::string& key, const std::string& val);
 
     World& w_;
@@ -257,6 +314,7 @@ private:
     const GameData& data_;
     Career& career_;
     SimGlobals g_;
+    SimUi* ui_ = nullptr;
     std::vector<SimEvent> events_;
     bool caseOver_ = false;
     Person personM1_;                               // persons[-1]
