@@ -1,6 +1,8 @@
 // What every scene can reach: the game files, the loaded fonts, the screen.
 #pragma once
 
+#include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 
 #include "app/Screen.h"
@@ -28,12 +30,24 @@ struct App {
     void saveSettings() const {
         if (!settingsFile.empty()) settings.save(settingsFile);
     }
+    // Options bit 8 (animations) follows Settings::animations: the main menu's
+    // Options and Alt-A (appHotkeys) change the setting, and the setting wins
+    // where the original turns the bit back on (options |= 0Ch on a fresh start
+    // or a new case, |= 8 when FINAL starts after a case). The runner calls this
+    // every frame, between the scene's ticks.
+    void syncAnimations() {
+        auto& o = game.world.hdr.options;
+        o = static_cast<std::int16_t>(settings.animations ? (o | 8) : (o & ~8));
+    }
 
     // The sound driver (null: no sound at all, as in scripted runs). sound() is
     // play_sound(n, a, b) as FINAL and GAME call it, when options & 4 (sound on);
     // the mini-games keep their own options and call driverSound().
     audio::AudioEngine* audio = nullptr;
+    // COVERT_SOUND_LOG=1 prints each call to stderr (scripted runs have no audio).
     void sound(int n, int a = 0, int b = 0) const {
+        static const bool log = std::getenv("COVERT_SOUND_LOG") != nullptr;
+        if (log) std::fprintf(stderr, "play_sound(%d)%s\n", n, (game.world.hdr.options & 4) ? "" : " (sound off)");
         if (game.world.hdr.options & 4) driverSound(n, a, b);
     }
     void driverSound(int n, int a = 0, int b = 0) const {

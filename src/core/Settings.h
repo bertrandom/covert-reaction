@@ -18,6 +18,11 @@ struct Settings {
     // The sound device: auto (MT-32 if its ROMs are found, else AdLib), mt32,
     // adlib, speaker or none.
     std::string sound = "auto";
+    // The .PAN animations behind the briefings and the city's windows: the
+    // original's options bit 8, which Alt-A in a text window toggles too (and
+    // so changes this). The game follows this setting where the original turns
+    // the bit back on (a fresh start, a new case).
+    bool animations = true;
     // Desktop only: start in full screen (Alt+Enter also changes it).
     bool fullscreen = false;
 

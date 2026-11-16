@@ -179,6 +179,7 @@ std::unique_ptr<Scene> careerPart(App& app, const EcPtr& ec, const Frame& last) 
 // end_of_case up to the Hall of Fame.
 std::unique_ptr<Scene> debriefing(App& app) {
     EndOfCase::startFinal(app.game);
+    app.syncAnimations();   // options |= 8: unless Settings::animations is off
     auto ec = std::make_shared<EndOfCase>(app.game, app.data);
     auto plot = std::make_shared<TextDb>(TextDb::load(app.data, "plot.txt"));
     Frame start;

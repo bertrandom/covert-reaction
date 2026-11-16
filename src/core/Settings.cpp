@@ -36,6 +36,7 @@ Settings Settings::load(const std::filesystem::path& file) {
         if (key == "keypad_keys") readBool(value, s.keypadKeys);
         else if (key == "copy_protection") readBool(value, s.copyProtection);
         else if (key == "fullscreen") readBool(value, s.fullscreen);
+        else if (key == "animations") readBool(value, s.animations);
         else if (key == "sound" && (value == "auto" || value == "mt32" || value == "adlib" ||
                                     value == "speaker" || value == "none"))
             s.sound = value;
@@ -52,6 +53,7 @@ bool Settings::save(const std::filesystem::path& file) const {
         << "keypad_keys = " << onOff(keypadKeys) << "\n"
         << "copy_protection = " << onOff(copyProtection) << "\n"
         << "sound = " << sound << "\n"
+        << "animations = " << onOff(animations) << "\n"
         << "fullscreen = " << onOff(fullscreen) << "\n";
     return static_cast<bool>(out);
 }

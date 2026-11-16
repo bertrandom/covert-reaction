@@ -208,6 +208,7 @@ public:
         for (int n = 0; n < steps; ++n) {
             auto [lo, hi] = script_.keys.equal_range(tick_);
             for (auto it = lo; it != hi; ++it) pushKey(it->second);
+            app_.syncAnimations();   // options bit 8 = Settings::animations (App.h)
             scene_->tick();
             ++tick_;
         }
