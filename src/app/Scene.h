@@ -5,6 +5,7 @@
 
 #include <memory>
 
+#include "core/Canvas.h"
 #include "core/GameData.h"
 #include "core/Image.h"
 
@@ -22,6 +23,12 @@ public:
     // Called at a fixed rate (kTicksPerSecond).
     virtual void tick() {}
     virtual void draw(Frame& frame) = 0;
+    // Covert Reaction's own screens (the setup screen) draw in true colour at the
+    // window's pixel size instead of into the 320x200 frame: while this is true
+    // the runner calls drawCanvas (with the canvas at Screen::outputSize())
+    // rather than draw. drawCanvas returns whether the picture changed.
+    virtual bool fullResolution() const { return false; }
+    virtual bool drawCanvas(Canvas&) { return false; }
     // Non-null: switch to that scene. A scene returns itself to keep running.
     virtual std::unique_ptr<Scene> next() { return nullptr; }
     bool quit = false;

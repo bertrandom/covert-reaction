@@ -1,5 +1,8 @@
 #include "app/Screen.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -42,6 +45,8 @@ Screen::Screen(const char* title, int scale, bool hidden) : headless_(hidden) {
                                SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
     if (!window_) throw std::runtime_error(std::string("SDL_CreateWindow: ") + SDL_GetError());
     renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    // (The setup screen's layout needs some room; the game scales to anything.)
+    SDL_SetWindowMinimumSize(window_, 480, 400);
 #endif
     if (!renderer_) renderer_ = SDL_CreateRenderer(window_, -1, 0);
     if (!renderer_) throw std::runtime_error(std::string("SDL_CreateRenderer: ") + SDL_GetError());
@@ -52,6 +57,7 @@ Screen::Screen(const char* title, int scale, bool hidden) : headless_(hidden) {
 }
 
 Screen::~Screen() {
+    if (canvasTexture_) SDL_DestroyTexture(canvasTexture_);
     if (texture_) SDL_DestroyTexture(texture_);
     if (renderer_) SDL_DestroyRenderer(renderer_);
     if (window_) SDL_DestroyWindow(window_);
@@ -59,6 +65,10 @@ Screen::~Screen() {
 
 void Screen::present(const Image& frame, const Palette& pal) {
     if (headless_) return;
+    if (canvasMode_) {   // back from a full-size canvas: the 4:3 frame again
+        canvasMode_ = false;
+        SDL_RenderSetLogicalSize(renderer_, kLogicalW, kLogicalH);
+    }
     void* pixels = nullptr;
     int pitch = 0;
     if (SDL_LockTexture(texture_, nullptr, &pixels, &pitch) == 0) {
@@ -79,6 +89,73 @@ void Screen::present(const Image& frame, const Palette& pal) {
     SDL_RenderClear(renderer_);
     SDL_RenderCopy(renderer_, texture_, nullptr, nullptr);
     SDL_RenderPresent(renderer_);
+}
+
+void Screen::presentCanvas(const Canvas& canvas, bool changed) {
+    if (headless_ || canvas.width() <= 0 || canvas.height() <= 0) return;
+    if (!canvasMode_) {
+        // Pixels 1:1: no logical size (mouse events are then in window points).
+        canvasMode_ = true;
+        SDL_RenderSetLogicalSize(renderer_, 0, 0);
+        SDL_RenderSetScale(renderer_, 1, 1);
+        SDL_RenderSetViewport(renderer_, nullptr);
+        changed = true;
+    }
+    if (!canvasTexture_ || canvasW_ != canvas.width() || canvasH_ != canvas.height()) {
+        if (canvasTexture_) SDL_DestroyTexture(canvasTexture_);
+        canvasW_ = canvas.width();
+        canvasH_ = canvas.height();
+        canvasTexture_ = SDL_CreateTexture(renderer_, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING,
+                                           canvasW_, canvasH_);
+        if (!canvasTexture_) return;
+        SDL_SetTextureScaleMode(canvasTexture_, SDL_ScaleModeLinear);   // (only while a resize catches up)
+        changed = true;
+    }
+    if (changed) SDL_UpdateTexture(canvasTexture_, nullptr, canvas.pixels(), canvasW_ * 4);
+    SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+    SDL_RenderClear(renderer_);
+    SDL_RenderCopy(renderer_, canvasTexture_, nullptr, nullptr);
+    SDL_RenderPresent(renderer_);
+}
+
+SDL_Point Screen::outputSize() const {
+    if (headless_) {
+        return {static_cast<int>(static_cast<float>(headlessW_) * headlessRatio_ + 0.5f),
+                static_cast<int>(static_cast<float>(headlessH_) * headlessRatio_ + 0.5f)};
+    }
+    int w = 0, h = 0;
+    if (SDL_GetRendererOutputSize(renderer_, &w, &h) != 0 || w <= 0 || h <= 0) SDL_GetWindowSize(window_, &w, &h);
+    return {w, h};
+}
+
+float Screen::pixelRatio() const {
+    if (headless_) return headlessRatio_;
+    int ww = 0, wh = 0;
+    SDL_GetWindowSize(window_, &ww, &wh);
+    const SDL_Point out = outputSize();
+    return ww > 0 ? static_cast<float>(out.x) / static_cast<float>(ww) : 1.f;
+}
+
+float Screen::uiScale() const {
+    if (const char* env = std::getenv("COVERT_UI_SCALE"); env && std::atof(env) > 0)
+        return pixelRatio() * static_cast<float>(std::atof(env));
+    const float ratio = pixelRatio();
+#if !defined(__APPLE__) && !defined(__EMSCRIPTEN__)
+    // No HiDPI scaling by the system (X11; Windows without per-monitor
+    // scaling): go by the display's DPI.
+    if (!headless_ && ratio < 1.01f) {
+        float hdpi = 0;
+        if (SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(window_), nullptr, &hdpi, nullptr) == 0 && hdpi > 0)
+            return std::clamp(std::round(hdpi / 96.f * 4) / 4, 1.f, 3.f);
+    }
+#endif
+    return ratio;
+}
+
+void Screen::setHeadlessSize(int width, int height, float ratio) {
+    headlessW_ = width > 0 ? width : headlessW_;
+    headlessH_ = height > 0 ? height : headlessH_;
+    headlessRatio_ = ratio > 0 ? ratio : 1.f;
 }
 
 void Screen::toggleFullscreen() {

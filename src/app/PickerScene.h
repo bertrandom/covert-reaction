@@ -1,8 +1,8 @@
 // The in-game folder browser the setup screen (SetupScene) opens to choose the
 // game files (the folder with TEXT.DTA, or one of the releases' installers,
 // archives or disk images, which the setup screen imports) or the MT-32 ROMs'
-// folder, where
-// the system's own panel isn't used (Windows, Linux; macOS in tests). It runs
+// folder, where the system has no file dialog (app/FileDialog.h: Linux
+// without zenity or kdialog; COVERT_FILE_DIALOG=builtin). The last resort: it runs
 // before the game files are loaded, so it draws with the built-in 8x8 font
 // (core/BuiltinFont.h) in the game's palette, and it needs no App.
 //

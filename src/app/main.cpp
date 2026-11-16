@@ -1,33 +1,41 @@
 // Covert Reaction: entry point. Finds the game data, opens the window and runs scenes.
 //
 //   covert-reaction [--data DIR] [--scene NAME|picker] [--shot FILE --ticks N] [--input "T:KEY ..."]
-//                [--sound auto|mt32|adlib|speaker|none] [--mt32-roms DIR]
+//                [--ui-size WxH[@RATIO]] [--sound auto|mt32|adlib|speaker|none] [--mt32-roms DIR]
 //
 // --sound overrides the Options menu's sound device for this run; --mt32-roms
 // (or COVERT_MT32_ROMS) says where the MT-32 / CM-32L ROMs are (see README).
 //
 // --shot/--ticks/--input script a run for testing: KEYs (SDL key names, e.g.
 // "Down", "Return") are injected at the given ticks, and after N ticks the frame
-// is saved as a BMP and the program exits.
+// is saved as a BMP and the program exits. The setup screen, which is drawn at
+// the window's own size, is saved at --ui-size (default 1280x800, in points;
+// @2 doubles the pixels, as a Retina display), as a PNG if FILE ends in .png,
+// else a 24-bit BMP.
 //
 // Finding the game files: --data, COVERT_DATA, the folder saved in settings.ini
 // (game_data), the per-user folder's data (where the setup screen imports the game),
 // the bundle and per-user Covert folders (bundleCandidates). There is no search
 // of the disk: if all fail, the window opens on SetupScene, where the player
 // chooses the game (an installer, an archive, disk images or a folder: imported
-// into that data folder) and, optionally, the MT-32 ROMs' folder, with macOS's
-// own panel or the in-game browser (PickerScene); START saves both (game_data,
+// into that data folder) and, optionally, the MT-32 ROMs' folder, with the
+// system's file dialogs (app/FileDialog.h); START saves both (game_data,
 // mt32_roms) and starts the game.
-// --scene picker or COVERT_FORCE_PICKER=1 shows that screen anyway, and makes it
-// use the in-game browser on macOS too (tests: scripted runs never open the
-// panel); COVERT_PICKER_DIR sets the folder the browser opens in.
+// --scene picker or COVERT_FORCE_PICKER=1 shows that screen anyway. Scripted
+// runs never open a dialog: COVERT_TEST_PICK gives the paths "chosen" instead
+// (and COVERT_IMPORT_THREAD=1 imports on a thread there too, to see the
+// progress, with COVERT_SCRIPT_TICK_MS=N to let N ms pass per tick);
+// COVERT_PICKER_DIR sets the folder the in-game browser opens in
+// (where there's no dialog, or with COVERT_FILE_DIALOG=builtin).
 //
 // One frame of work is Runner::step(). The desktop calls it in a loop; in a browser
 // (Emscripten), which can't run a blocking loop, emscripten_set_main_loop calls it
 // once per animation frame. The timing is the same: fixed 70 ticks per second.
 #include <SDL.h>
 
+#include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -139,7 +147,21 @@ struct Script {
     std::optional<fs::path> shot;
     long ticks = -1;
     std::multimap<long, ScriptKey> keys;
+    int uiWidth = 1280, uiHeight = 800;   // --ui-size: the window, in points, for the setup screen's shot
+    float uiRatio = 1;                    // pixels per point
 };
+
+// "1280x800" or "1280x800@2".
+void parseUiSize(const std::string& s, Script& script) {
+    int w = 0, h = 0;
+    float r = 1;
+    const int n = std::sscanf(s.c_str(), "%dx%d@%f", &w, &h, &r);
+    if (n >= 2 && w > 0 && h > 0) {
+        script.uiWidth = w;
+        script.uiHeight = h;
+        if (n == 3 && r > 0) script.uiRatio = r;
+    }
+}
 
 // "T:KEY" tokens; KEY may carry modifiers: "40:Alt+Q", "50:Shift+Tab", "60:Ctrl+C".
 Script parseScript(const std::string& input) {
@@ -204,6 +226,9 @@ public:
 #else
         (void)fullscreen;
 #endif
+        if (headless) screen_.setHeadlessSize(script_.uiWidth, script_.uiHeight, script_.uiRatio);
+        if (const char* ms = std::getenv("COVERT_SCRIPT_TICK_MS"); ms && scripted_)
+            tickDelayMs_ = static_cast<Uint32>(std::max(0, std::atoi(ms)));
         if (data) {
             startGame(std::move(*data));
         } else {
@@ -252,6 +277,7 @@ public:
         int steps = 0;
         if (scripted_) {
             steps = 1;      // deterministic: one tick per frame
+            if (tickDelayMs_ > 0) SDL_Delay(tickDelayMs_);   // (COVERT_SCRIPT_TICK_MS: real time passes)
         } else {
             Uint64 now = SDL_GetPerformanceCounter();
             acc_ += now - last_;
@@ -275,12 +301,28 @@ public:
             sound_->engine().select(wantedSound());
             sound_->engine().setMt32CleanMixing(app_->settings.mt32CleanMixing);
         }
-        scene_->draw(frame_);
-        if (scripted_ && tick_ >= script_.ticks) {
-            writeBmp(*script_.shot, frame_.image, frame_.palette);
-            return false;
+        const bool shotNow = scripted_ && tick_ >= script_.ticks;
+        if (scene_->fullResolution()) {
+            // Covert Reaction's own screens: true colour at the window's pixel size
+            // (headless: only for the shot).
+            if (!headless_ || shotNow) {
+                const SDL_Point size = screen_.outputSize();
+                if (canvas_.width() != size.x || canvas_.height() != size.y) canvas_.resize(size.x, size.y);
+                const bool changed = scene_->drawCanvas(canvas_);
+                if (shotNow) {
+                    writeImage(*script_.shot, canvas_);
+                    return false;
+                }
+                screen_.presentCanvas(canvas_, changed);
+            }
+        } else {
+            scene_->draw(frame_);
+            if (shotNow) {
+                writeBmp(*script_.shot, frame_.image, frame_.palette);
+                return false;
+            }
+            screen_.present(frame_.image, frame_.palette);
         }
-        screen_.present(frame_.image, frame_.palette);
         if (auto nxt = scene_->next(); nxt) scene_ = std::move(nxt);
         return scene_ && !scene_->quit;
     }
@@ -339,6 +381,8 @@ private:
     std::unique_ptr<Scene> scene_;
     SetupScene* setup_ = nullptr;       // scene_ while it's the first-run setup screen
     Frame frame_;
+    Canvas canvas_;                     // for fullResolution() scenes
+    Uint32 tickDelayMs_ = 0;            // scripted runs: COVERT_SCRIPT_TICK_MS per tick
     Uint64 freq_ = 0, tickLen_ = 0, last_ = 0, acc_ = 0;
     long tick_ = 0;
 };
@@ -380,10 +424,17 @@ int main(int argc, char** argv) {
         else if (a == "--shot") script.shot = arg();
         else if (a == "--ticks") script.ticks = std::stol(arg());
         else if (a == "--input") input = arg();
+        else if (a == "--ui-size") parseUiSize(arg(), script);
         else if (a == "--sound") sound.device = arg();
         else if (a == "--mt32-roms") sound.mt32Roms = arg();
     }
     if (!input.empty()) script.keys = parseScript(input).keys;
+#ifdef _WIN32
+    // Per-monitor DPI: window sizes in points, the drawable in pixels (as on
+    // macOS), so the setup screen draws sharp at 150% and 200%.
+    SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitorv2");
+    SDL_SetHint(SDL_HINT_WINDOWS_DPI_SCALING, "1");
+#endif
     // Scripted runs are headless: no video or audio at all, just the event queue,
     // so tests never open windows or dialogs on the desktop.
     const bool headless = script.shot.has_value();
@@ -441,20 +492,17 @@ int main(int argc, char** argv) {
         data = GameData::locate(dataDir, candidates);
         if (data) std::fprintf(stderr, "game data: %s\n", data->dir().string().c_str());
     }
-    // The setup screen: on macOS it chooses with the system's folder panel (no
-    // folder permission prompts), except in tests (COVERT_FORCE_PICKER, scripted
-    // runs), which keep the in-game browser.
+    // The setup screen chooses with the system's file dialogs (on macOS its open
+    // panel needs no folder permission prompts), never in scripted runs.
     SetupConfig setup;
-#ifdef __APPLE__
-    setup.nativePanel = !headless && !forcePicker;
-#endif
+    setup.dialogs = !headless;
     setup.autoRomDirs = [romArg = sound.mt32Roms](const fs::path& game) {
         return audio::mt32RomDirs(romArg, game, userRomDirs());
     };
     if (const char* env = std::getenv("COVERT_PICKER_DIR"); env && *env) setup.browserStart = env;
     // The game files chosen are imported into the per-user folder's data (formats/GameImport.h).
     if (auto user = userDataDir(); !user.empty()) setup.importDir = user / "data";
-    setup.syncImport = headless;
+    setup.syncImport = headless && !envFlag("COVERT_IMPORT_THREAD");
     if (!data) {
         // Not found: it shows what was tried (--data, or the saved folder).
         std::fprintf(stderr, "game data not found: showing the setup screen\n");
