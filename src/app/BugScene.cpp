@@ -31,8 +31,8 @@ using Ev = WiretapEvent::Kind;
 
 // SDL keys to the codes get_key() gives bug_frame. The keypad digits act as
 // the arrows they are with Num Lock off; so do the number row's digits, the
-// keypad on the letters (7 8 9 / U I O / J K L) and arrow chords (Up+Right =
-// PgUp ...), for keyboards without a keypad.
+// keypad on the letters (7 8 9 / U I O / J K L), for keyboards without a
+// keypad (app/Keypad.h).
 int dosKey(const SDL_Keysym& k) {
     using namespace bugkeys;
     if (k.mod & KMOD_ALT) {
@@ -90,8 +90,6 @@ public:
             menu_->handle(e, app_.mouse(e));
             return;
         }
-        if (e.type == SDL_KEYUP) chords_.keyUp(e.key.keysym.sym);
-        if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_LOST) chords_.reset();
         if (e.type != SDL_KEYDOWN) return;
         if (paused_) {                       // get_key(): any key resumes
             if (isCharKey(e.key.keysym)) {
@@ -100,7 +98,7 @@ public:
             }
             return;
         }
-        const int k = dosKey(chords_.keyDown(e.key.keysym));
+        const int k = dosKey(e.key.keysym);
         if (k != bugkeys::kNone && keys_.size() < 15) keys_.push_back(k);   // the BIOS buffer
     }
 
@@ -298,7 +296,6 @@ private:
     std::deque<WiretapEvent> pending_;
     std::deque<int> keys_;
     std::optional<Menu> menu_;
-    ArrowChords chords_;   // two arrows at once = a diagonal (app/Keypad.h)
     MenuKind menuKind_ = MenuKind::Message;
     int wait_ = 0;
     bool paused_ = false, finished_ = false;

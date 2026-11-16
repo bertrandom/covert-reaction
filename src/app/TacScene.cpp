@@ -7,8 +7,6 @@
 //   keypad 1-9 (and the digit keys)            walk; with Shift: dive
 //   arrows, Home End PgUp PgDn                 dive (as in the original: the grey
 //                                              keys give no digit)
-//   two arrows at once (Up+Right ...)          dive diagonally, for keyboards
-//                                              without Home End PgUp PgDn (app/Keypad.h)
 //   keypad 5 or '5'                            sneak on / off
 //   7 8 9 / U I O / J K L                      the keypad on the letters, for
 //                                              keyboards without one: walk,
@@ -104,26 +102,11 @@ public:
             return;
         }
         if (e.type == SDL_KEYUP) {
-            const SDL_Keycode up = e.key.keysym.sym;
-            if (isArrowKey(up)) {
-                // Two arrows held = a diagonal: releasing one goes on the other way.
-                auto still = chords_.keyUp(up);
-                if (held_ && heldArrows_) {
-                    if (still) held_->sym = *still;
-                    else held_.reset();
-                }
-            } else if (held_ && up == heldKey_) {
-                held_.reset();
-            }
-            return;
-        }
-        if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
-            chords_.reset();
-            held_.reset();
+            if (held_ && e.key.keysym.sym == heldKey_) held_.reset();
             return;
         }
         if (e.type != SDL_KEYDOWN || e.key.repeat || isModifier(e.key.keysym.sym)) return;
-        SDL_Keysym key = chords_.keyDown(e.key.keysym);
+        SDL_Keysym key = e.key.keysym;
         // While Max moves (TAC's NumLock on), the number row and 7 8 9 / U I O /
         // J K L are the keypad: walk, with Shift dive, I (5) sneak. Not while
         // typing a message (NumLock off), nor with Ctrl / Alt / Cmd.
@@ -134,7 +117,6 @@ public:
         tac_.pushKey(code);
         held_ = key;
         heldKey_ = e.key.keysym.sym;
-        heldArrows_ = isArrowKey(e.key.keysym.sym);
         nextRepeat_ = static_cast<double>(tick_) + 17.5;   // typematic delay 250 ms
     }
 
@@ -162,7 +144,6 @@ public:
             opt.fillColor = static_cast<std::uint8_t>(req.fill);
             menu_.emplace(app_.fonts.font(1), req.text, req.x, req.y, opt);
             held_.reset();
-            chords_.reset();
         }
         if (tac_.quitRequested()) quit = true;
         if (tac_.finished() && !reported_) {
@@ -194,9 +175,7 @@ private:
     Tac tac_;
     std::optional<Menu> menu_;
     std::optional<SDL_Keysym> held_;
-    ArrowChords chords_;
     SDL_Keycode heldKey_ = SDLK_UNKNOWN;   // the physical key behind held_
-    bool heldArrows_ = false;   // held_ comes from the arrow keys (maybe a chord)
     double nextRepeat_ = 0;
     long tick_ = 0;
     bool reported_ = false, left_ = false;
