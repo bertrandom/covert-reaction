@@ -222,7 +222,7 @@ GameFiles collect(const fs::path& source, GameSource& kind, const ImportProgress
         if (gameDir(files, out, progress, 0.1, 0.9)) return out;
     } else {
         kind = GameSource::Unknown;
-        fail("not a release of the game this knows (GOG's installers, eXoDOS's zip, the floppy disks)");
+        fail("not a file of the game's releases (GOG's installers, eXoDOS's zip, the floppy disks)");
     }
     fail(std::string(describeGameSource(kind)) + ", but without Covert Action's files in it");
 }

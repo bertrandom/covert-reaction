@@ -9,6 +9,8 @@
 #include <iterator>
 #include <map>
 #include <string>
+#include <thread>
+#include <chrono>
 
 #include "Tool.h"
 #include "formats/GameImport.h"
@@ -64,11 +66,15 @@ REACTION_COMMAND_NO_DATA(
         }
         if (pos.size() != 2) return 2;
         std::printf("%s: %s\n", pos[0].c_str(), describeGameSource(detectGameSource(pos[0])));
+        // (As the setup screen runs it: on a thread, polled.)
+        ImportJob job(pos[0], pos[1]);
         std::string last;
-        const ImportResult r = importGame(pos[0], pos[1], [&](double f, const std::string& stage) {
-            if (!quiet && stage != last) std::fprintf(stderr, "  %3d%%  %s\n", static_cast<int>(f * 100), stage.c_str());
-            last = stage;
-        });
+        while (!job.done()) {
+            if (const std::string s = job.stage(); !quiet && s != last && !s.empty())
+                std::fprintf(stderr, "  %3d%%  %s\n", static_cast<int>(job.progress() * 100), s.c_str()), last = s;
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        const ImportResult& r = job.result();
         if (!r.ok) {
             std::fprintf(stderr, "%s: %s\n", pos[0].c_str(), r.error.c_str());
             return 1;
