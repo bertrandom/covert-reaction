@@ -46,7 +46,10 @@ class ByteWriter {
 public:
     void u8(std::uint8_t v) { b_.push_back(v); }
     void s8(std::int8_t v) { u8(static_cast<std::uint8_t>(v)); }
-    void u16(std::uint16_t v) { b_.push_back(v & 0xFF); b_.push_back(static_cast<std::uint8_t>(v >> 8)); }
+    void u16(std::uint16_t v) {
+        b_.push_back(static_cast<std::uint8_t>(v & 0xFF));
+        b_.push_back(static_cast<std::uint8_t>(v >> 8));
+    }
     void s16(std::int16_t v) { u16(static_cast<std::uint16_t>(v)); }
     void str(const std::string& s, std::size_t n) {
         for (std::size_t i = 0; i < n; ++i) u8(i < s.size() ? static_cast<std::uint8_t>(s[i]) : 0);

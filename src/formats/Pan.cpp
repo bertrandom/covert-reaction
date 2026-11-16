@@ -16,7 +16,7 @@ class PanStream {
 public:
     explicit PanStream(std::span<const std::uint8_t> d) : d_(d) {}
 
-    std::uint8_t getc() { return pos_ < d_.size() ? d_[pos_++] : (++pos_, 0); }
+    std::uint8_t getc() { return pos_ < d_.size() ? d_[pos_++] : (++pos_, std::uint8_t{0}); }
     int word() {
         const int lo = getc();
         return static_cast<std::int16_t>(lo | getc() << 8);

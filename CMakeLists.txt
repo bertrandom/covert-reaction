@@ -85,7 +85,9 @@ if(NOT EMSCRIPTEN)
   target_link_libraries(covert-reaction PRIVATE Threads::Threads)
 endif()
 if(TARGET SDL2::SDL2main)
-  target_link_libraries(covert-reaction PRIVATE SDL2::SDL2main)
+  # SDL2main uses SDL2's functions, so SDL2 must come after it on the link line
+  # (static linkers, e.g. mingw-w64's, resolve left to right).
+  target_link_libraries(covert-reaction PRIVATE SDL2::SDL2main ${REACTION_SDL2})
 endif()
 target_compile_options(covert-reaction PRIVATE ${REACTION_WARNINGS})
 

@@ -82,6 +82,10 @@ vcpkg install sdl2
 cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake && cmake --build build --config Release
 ```
 
+Cross-compiling for Windows from macOS or Linux works with mingw-w64 (`brew install
+mingw-w64`) and the official SDL2 "devel mingw" package; see
+`cmake/mingw-w64-x86_64.cmake`. Put `SDL2.dll` next to `covert-reaction.exe`.
+
 On macOS the result is `build/Covert Reaction.app` (bundle identifier
 `org.bert.covertreaction`); elsewhere `build/covert-reaction`. The app isn't
 code-signed: it runs on the Mac that built it, but sharing it would need signing
