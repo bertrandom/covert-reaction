@@ -39,6 +39,20 @@ fs::path homeDir() {
 #endif
 }
 
+bool needsPermission([[maybe_unused]] const fs::path& dir) {
+#ifdef __APPLE__
+    const fs::path d = dir.lexically_normal();
+    if (d.parent_path() == fs::path("/Volumes")) return true;
+    const fs::path home = homeDir();
+    if (home.empty() || d.parent_path() != home.lexically_normal()) return false;
+    static const char* const kProtected[] = {"Desktop", "Documents", "Downloads", "Pictures",
+                                             "Movies", "Music", "Library"};
+    for (const char* name : kProtected)
+        if (d.filename() == name) return true;
+#endif
+    return false;
+}
+
 std::vector<Entry> subfolders(const fs::path& dir) {
     std::vector<Entry> out;
     if (dir.empty()) return out;

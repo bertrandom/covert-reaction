@@ -151,7 +151,9 @@ floppies both work. It looks, in order, in:
    `Contents/Resources`), and `resources/Covert` in this repository
 5. `Covert` in the per-user folder
 
-It doesn't search the disk. If none of these has the game, the window opens on a folder browser: pick the folder with
+It doesn't search the disk. If none of these has the game, it asks: on macOS
+with the system's own folder panel ("Use This Folder"), which needs none of
+macOS's folder permissions; on Windows and Linux the window opens on a folder browser: pick the folder with
 `TEXT.DTA` (folders that hold the game are marked "<- game files"; Enter opens a
 folder or takes a marked one, Backspace goes up, U uses the current folder, Esc
 quits; the mouse wheel and clicks work too). The choice is saved as `game_data`

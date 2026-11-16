@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 project(CovertReaction VERSION 0.1.0 LANGUAGES CXX)
+if(APPLE)
+  enable_language(OBJCXX)   # (before any subproject: src/app/MacFolderPanel.mm)
+endif()
 
 # Covert Action, reimplemented on SDL2. Portable C++20: builds on macOS, Linux and
 # Windows, and for the web with Emscripten (emcmake cmake ...). Game data is NOT
@@ -97,7 +100,16 @@ target_link_libraries(reaction_core PUBLIC mt32emu nuked_opl3)
 
 # The game application (SDL2 window, input, audio).
 file(GLOB_RECURSE REACTION_APP_SOURCES CONFIGURE_DEPENDS src/app/*.cpp)
+if(APPLE AND NOT EMSCRIPTEN)
+  # The game-folder question uses macOS's own open panel (Objective-C++, enabled
+  # at the top).
+  list(APPEND REACTION_APP_SOURCES src/app/MacFolderPanel.mm)
+  set_source_files_properties(src/app/MacFolderPanel.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+endif()
 add_executable(covert-reaction ${REACTION_APP_SOURCES})
+if(APPLE AND NOT EMSCRIPTEN)
+  target_link_libraries(covert-reaction PRIVATE "-framework AppKit")
+endif()
 target_link_libraries(covert-reaction PRIVATE reaction_core ${REACTION_SDL2})
 # The city loop runs GAME's program on a thread of its own (app/GameThread.h).
 if(NOT EMSCRIPTEN)

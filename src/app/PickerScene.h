@@ -43,7 +43,10 @@ private:
     void open(int index);
     void use();
     void choose(const std::filesystem::path& dir);
-    bool valid(int index);
+    // Whether item `index` holds the game. Unless `ask`, folders macOS guards
+    // (folders::needsPermission) count as not checked yet, so drawing the list
+    // never triggers its permission prompts; opening or choosing one does.
+    bool valid(int index, bool ask = false);
     void moveTo(int index);
     void say(std::string text, std::uint8_t color);
     int rowAt(int x, int y) const;

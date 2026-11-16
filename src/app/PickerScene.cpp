@@ -92,10 +92,11 @@ void PickerScene::goUp() {
     enter(cur_.parent_path(), from);
 }
 
-bool PickerScene::valid(int index) {
+bool PickerScene::valid(int index, bool ask) {
     if (index < 0 || index >= static_cast<int>(items_.size())) return false;
     Item& it = items_[static_cast<std::size_t>(index)];
     if (it.kind != Kind::Folder) return false;
+    if (it.valid < 0 && !ask && gs::needsPermission(it.path)) return false;
     if (it.valid < 0) it.valid = GameData::isGameDir(it.path) ? 1 : 0;
     return it.valid == 1;
 }
@@ -104,13 +105,13 @@ void PickerScene::open(int index) {
     if (index < 0 || index >= static_cast<int>(items_.size())) return;
     const Item& it = items_[static_cast<std::size_t>(index)];
     if (it.kind == Kind::Up) return goUp();
-    if (valid(index)) return choose(it.path);
+    if (valid(index, true)) return choose(it.path);
     const fs::path p = it.path;
     enter(p);
 }
 
 void PickerScene::use() {
-    if (valid(sel_)) return choose(items_[static_cast<std::size_t>(sel_)].path);
+    if (valid(sel_, true)) return choose(items_[static_cast<std::size_t>(sel_)].path);
     if (curValid_) return choose(cur_);
     if (cur_.empty()) return say("Choose a drive first.", kRed);
     std::string missing;

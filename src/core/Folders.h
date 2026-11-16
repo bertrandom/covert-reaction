@@ -16,6 +16,12 @@ namespace fs = std::filesystem;
 // The home folder from the environment (HOME; USERPROFILE on Windows).
 fs::path homeDir();
 
+// macOS asks the user before an app first reads inside these: the home folder's
+// Desktop, Documents, Downloads, Pictures, Movies, Music and Library, and other
+// volumes (/Volumes/...). The browser doesn't look inside them until the user
+// opens or chooses one. Always false elsewhere.
+bool needsPermission(const fs::path& dir);
+
 // ---- The folder browser ----------------------------------------------------
 
 struct Entry {

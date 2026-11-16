@@ -45,6 +45,7 @@ EM_JS(void, reaction_js_exit, (int status), {
 #endif
 
 #include "app/App.h"
+#include "app/MacFolderPanel.h"
 #include "app/PickerScene.h"
 #include "app/Scenes.h"
 #include "app/Screen.h"
@@ -408,6 +409,42 @@ int main(int argc, char** argv) {
         data = GameData::locate(dataDir, candidates);
         if (data) std::fprintf(stderr, "game data: %s\n", data->dir().string().c_str());
     }
+#ifdef __APPLE__
+    // Not found on macOS: ask with the system's open panel (no folder permission
+    // prompts), until the player picks a folder with the game or cancels.
+    // COVERT_FORCE_PICKER (tests) and scripted runs keep the in-game browser.
+    if (!data && !headless && !forcePicker) {
+        fs::path start;
+        std::error_code ec;
+        for (fs::path p = savedDir; !p.empty(); p = p.parent_path()) {
+            if (fs::is_directory(p, ec)) { start = p; break; }
+            if (p == p.parent_path()) break;
+        }
+        for (;;) {
+            auto dir = macChooseFolder(start, "Choose the folder with Sid Meier's Covert Action (1990): the one "
+                                              "that contains TEXT.DTA, from GOG's release or the original disks.");
+            if (!dir) {
+                SDL_Quit();
+                return 0;
+            }
+            if (GameData::isGameDir(*dir)) {
+                rememberGameData(*dir);
+                data.emplace(*dir);
+                std::fprintf(stderr, "game data: %s (chosen)\n", dir->string().c_str());
+                break;
+            }
+            std::string missing;
+            for (const auto& m : GameData::missingFiles(*dir)) missing += (missing.empty() ? "" : ", ") + m;
+            if (!macAlert("That folder doesn't have Covert Action's files",
+                          "Covert Reaction needs the original game's files. Missing here: " + missing + ".",
+                          "Choose Again", "Quit")) {
+                SDL_Quit();
+                return 0;
+            }
+            start = *dir;
+        }
+    }
+#endif
     // Not found: ask, in COVERT_PICKER_DIR, or near the folder saved before, or
     // in the home folder (PickerScene's default).
     fs::path pickerStart;
