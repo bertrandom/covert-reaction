@@ -1,11 +1,13 @@
 // The in-game folder browser the setup screen (SetupScene) opens to choose the
-// game files' folder (the one with TEXT.DTA) or the MT-32 ROMs' folder, where
+// game files (the folder with TEXT.DTA, or one of the releases' installers,
+// archives or disk images, which the setup screen imports) or the MT-32 ROMs'
+// folder, where
 // the system's own panel isn't used (Windows, Linux; macOS in tests). It runs
 // before the game files are loaded, so it draws with the built-in 8x8 font
 // (core/BuiltinFont.h) in the game's palette, and it needs no App.
 //
 // Keys: Up/Down/PgUp/PgDn/Home/End move, Enter opens the selected folder (or
-// takes it, if it holds what's asked for), Backspace goes up, U uses the
+// takes it, if it holds what's asked for) or takes the selected file, Backspace goes up, U uses the
 // folder (the selected one if it's marked, else the current one), Esc goes
 // back without a choice (`quit`). The mouse: the wheel scrolls, a click
 // selects, a second click opens.
@@ -33,7 +35,7 @@ public:
     void handle(const SDL_Event& e) override;
     void draw(Frame& frame) override;
 
-    // The folder the player chose, once chosen. It holds what's asked for if it
+    // The folder (or, for the game files, the file) the player chose, once chosen. It holds what's asked for if it
     // was taken with Enter; U takes any folder (the setup screen says what's
     // wrong with it, as it does for the system's panel).
     const std::optional<std::filesystem::path>& chosen() const { return chosen_; }
@@ -42,7 +44,7 @@ public:
     static bool holds(Mode mode, const std::filesystem::path& dir);
 
 private:
-    enum class Kind { Up, Folder };
+    enum class Kind { Up, Folder, File };   // (File: an installer, archive or disk image)
     struct Item {
         Kind kind;
         std::string label;   // for display (ASCII)

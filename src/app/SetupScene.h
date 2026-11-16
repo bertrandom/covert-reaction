@@ -1,5 +1,8 @@
-// The setup screen: where the game files are (the folder with TEXT.DTA) and,
-// optionally, the MT-32 ROMs. Shown at start-up when the game files aren't
+// The setup screen: where the game files are and, optionally, the MT-32 ROMs.
+// The game files are chosen as a folder that holds them or as one of the
+// releases' installers, archives or disk images, and imported either way into
+// the per-user folder's `data` (SetupConfig::importDir; formats/GameImport.h),
+// which the game then uses. Shown at start-up when the game files aren't
 // found (first run, or the saved folder is gone), and from the main menu's
 // Options ("Game files and ROMs..."). It runs before the game files are loaded,
 // so it draws with the built-in 8x8 font (core/BuiltinFont.h), as PickerScene.
@@ -9,7 +12,9 @@
 // Options). Keys: Up/Down or Tab/Shift+Tab move between the buttons, Enter or
 // Space presses one, Esc quits (cancels). The mouse: hovering selects a
 // button, a click presses it. "Choose..." opens the system's folder panel on
-// macOS, else the in-game browser (PickerScene), then comes back here.
+// macOS, else the in-game browser (PickerScene), then comes back here; a game
+// source chosen is imported at once (on a thread: the row shows the progress,
+// then the result).
 #pragma once
 
 #include <filesystem>
@@ -23,6 +28,7 @@
 #include "app/Scene.h"
 #include "app/Screen.h"
 #include "audio/Synth.h"
+#include "formats/GameImport.h"
 
 namespace reaction {
 
@@ -36,6 +42,10 @@ struct SetupConfig {
     bool nativePanel = false;             // macOS: the system's folder panel instead of PickerScene
     std::filesystem::path browserStart;   // PickerScene's first folder for the game files (COVERT_PICKER_DIR)
     bool inGame = false;                  // from the Options: "Done" / "Cancel"
+    // Where the chosen game files are imported (the per-user folder's `data`).
+    // Empty: no import, the folder chosen is used as it is.
+    std::filesystem::path importDir;
+    bool syncImport = false;              // import without a thread (scripted runs: reproducible)
 };
 
 class SetupScene : public Scene {
@@ -47,13 +57,15 @@ public:
     SetupScene(const Screen& screen, SetupConfig config, Done done = {});
 
     void handle(const SDL_Event& e) override;
+    void tick() override;
     void draw(Frame& frame) override;
     std::unique_ptr<Scene> next() override;
 
     bool accepted() const { return accepted_; }   // START / Done
     const std::filesystem::path& gameDir() const { return game_; }
     const std::filesystem::path& romDir() const { return roms_; }
-    bool gameChanged() const { return game_ != config_.gameDir; }
+    bool gameChanged() const { return game_ != config_.gameDir || imported_; }
+    bool importing() const { return job_ != nullptr; }
 
 private:
     enum Button { kChooseGame, kChooseRoms, kStart, kQuit, kButtons };
@@ -62,6 +74,7 @@ private:
     void press(int button);
     void choose(PickerScene::Mode mode);
     void take(PickerScene::Mode mode, const std::filesystem::path& dir);
+    void finishImport();   // the import job is done: take its result
     bool enabled(int button) const;
     void focusNext(int step);
     int buttonAt(int x, int y) const;
@@ -78,6 +91,10 @@ private:
     bool accepted_ = false, cancelled_ = false;
     std::unique_ptr<PickerScene> picker_;    // the in-game browser, while it's open
     PickerScene::Mode pickerMode_ = PickerScene::Mode::GameFiles;
+    std::unique_ptr<ImportJob> job_;         // the import under way
+    std::filesystem::path importFrom_;       // what the last import was from
+    std::string importError_;                // why it failed (empty: it didn't)
+    bool imported_ = false;                  // the game files were imported here
 };
 
 }  // namespace reaction

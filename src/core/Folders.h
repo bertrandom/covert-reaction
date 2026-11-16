@@ -31,6 +31,9 @@ struct Entry {
 
 // The subfolders of `dir` (hidden ones skipped), sorted by name ignoring case.
 std::vector<Entry> subfolders(const fs::path& dir);
+// The files in `dir` whose extension is one of `extensions` (lower case, with
+// the dot; case ignored), hidden ones skipped, sorted the same way.
+std::vector<Entry> filesWithExtensions(const fs::path& dir, const std::vector<std::string>& extensions);
 
 // Windows: the drives that exist (C:\, D:\, ...), the browser's top level.
 // Elsewhere: empty (the top is "/").

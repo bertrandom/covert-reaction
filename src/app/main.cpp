@@ -11,11 +11,13 @@
 // is saved as a BMP and the program exits.
 //
 // Finding the game files: --data, COVERT_DATA, the folder saved in settings.ini
-// (game_data), the bundle and per-user Covert folders (bundleCandidates). There is
-// no search of the disk: if all fail, the window opens on SetupScene, where the
-// player chooses the game folder (and, optionally, the MT-32 ROMs' folder) with
-// macOS's own folder panel or the in-game browser (PickerScene); START saves
-// both (game_data, mt32_roms) and starts the game.
+// (game_data), the per-user folder's data (where the setup screen imports the game),
+// the bundle and per-user Covert folders (bundleCandidates). There is no search
+// of the disk: if all fail, the window opens on SetupScene, where the player
+// chooses the game (an installer, an archive, disk images or a folder: imported
+// into that data folder) and, optionally, the MT-32 ROMs' folder, with macOS's
+// own panel or the in-game browser (PickerScene); START saves both (game_data,
+// mt32_roms) and starts the game.
 // --scene picker or COVERT_FORCE_PICKER=1 shows that screen anyway, and makes it
 // use the in-game browser on macOS too (tests: scripted runs never open the
 // panel); COVERT_PICKER_DIR sets the folder the browser opens in.
@@ -434,6 +436,7 @@ int main(int argc, char** argv) {
             std::fprintf(stderr, "--data %s: not the game files\n", dataDir->string().c_str());
         std::vector<fs::path> candidates;
         if (!savedDir.empty()) candidates.push_back(savedDir);
+        if (auto user = userDataDir(); !user.empty()) candidates.push_back(user / "data");   // (imported)
         for (auto& c : bundleCandidates()) candidates.push_back(std::move(c));
         data = GameData::locate(dataDir, candidates);
         if (data) std::fprintf(stderr, "game data: %s\n", data->dir().string().c_str());
@@ -449,6 +452,9 @@ int main(int argc, char** argv) {
         return audio::mt32RomDirs(romArg, game, userRomDirs());
     };
     if (const char* env = std::getenv("COVERT_PICKER_DIR"); env && *env) setup.browserStart = env;
+    // The game files chosen are imported into the per-user folder's data (formats/GameImport.h).
+    if (auto user = userDataDir(); !user.empty()) setup.importDir = user / "data";
+    setup.syncImport = headless;
     if (!data) {
         // Not found: it shows what was tried (--data, or the saved folder).
         std::fprintf(stderr, "game data not found: showing the setup screen\n");

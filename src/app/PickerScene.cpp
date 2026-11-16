@@ -8,6 +8,7 @@
 #include "core/BuiltinFont.h"
 #include "core/GameData.h"
 #include "core/Folders.h"
+#include "formats/GameImport.h"
 #include "formats/McgaPalette.h"
 #include "formats/TextWindow.h"
 
@@ -32,10 +33,10 @@ constexpr int kUseX = 6, kUseW = 8 * 18 + 5, kExitW = 8 * 9 + 5, kExitX = 315 - 
 
 // The help at the top, per mode (two title lines, then four).
 constexpr const char* kGameHeader[] = {
-    "Choose the game files' folder:",
+    "Choose the game files:",
     "Sid Meier's Covert Action (1990).",
-    "The folder with TEXT.DTA, from GOG's",
-    "release or the original disks.",
+    "A folder with TEXT.DTA, or a GOG",
+    "installer, eXoDOS zip or disk images.",
     "Folders that hold the game files are",
     "marked in green.",
 };
@@ -85,6 +86,9 @@ void PickerScene::enter(const fs::path& dir, const fs::path& select) {
         list = gs::subfolders(cur_);
     }
     for (auto& e : list) items_.push_back({Kind::Folder, bf::fromUtf8(e.name), std::move(e.path)});
+    if (mode_ == Mode::GameFiles && !cur_.empty())   // the releases' files, after the folders
+        for (auto& e : gs::filesWithExtensions(cur_, importExtensions()))
+            items_.push_back({Kind::File, bf::fromUtf8(e.name), std::move(e.path)});
     curValid_ = !cur_.empty() && holds(mode_, cur_);
     sel_ = top_ = 0;
     if (!select.empty())
@@ -120,6 +124,10 @@ void PickerScene::open(int index) {
     if (index < 0 || index >= static_cast<int>(items_.size())) return;
     const Item& it = items_[static_cast<std::size_t>(index)];
     if (it.kind == Kind::Up) return goUp();
+    if (it.kind == Kind::File) {
+        chosen_ = it.path;
+        return;
+    }
     if (valid(index, true)) {
         chosen_ = it.path;
         return;
@@ -129,7 +137,9 @@ void PickerScene::open(int index) {
 }
 
 void PickerScene::use() {
-    if (valid(sel_, true)) chosen_ = items_[static_cast<std::size_t>(sel_)].path;
+    if (sel_ < static_cast<int>(items_.size()) && items_[static_cast<std::size_t>(sel_)].kind == Kind::File)
+        chosen_ = items_[static_cast<std::size_t>(sel_)].path;
+    else if (valid(sel_, true)) chosen_ = items_[static_cast<std::size_t>(sel_)].path;
     else if (cur_.empty()) say("Choose a drive first.", kRed);
     else chosen_ = cur_;   // (the setup screen says what it lacks)
 }
@@ -221,12 +231,13 @@ void PickerScene::draw(Frame& frame) {
         const std::uint8_t c = isSel ? kBlack : ok ? kGreen : kWhite;
         std::string label = it.kind == Kind::Up ? std::string("..") : it.label;
         if (it.kind == Kind::Folder && !cur_.empty()) label += "/";
+        const std::uint8_t c2 = it.kind == Kind::File && !isSel ? kCyan : c;
         if (ok) {
             bf::drawText(img, kTextX, y, bf::fitRight(label, kNameCols - 14), c);
             bf::drawText(img, kTextX + (kNameCols - 13) * 8, y, roms ? "<- MT-32 ROMs" : "<- game files",
                          isSel ? kBlack : kGreen);
         } else {
-            bf::drawText(img, kTextX, y, bf::fitRight(label, kNameCols), c);
+            bf::drawText(img, kTextX, y, bf::fitRight(label, kNameCols), c2);
         }
     }
     if (top_ > 0) bf::drawText(img, kArrowX, kRowY, std::string(1, bf::kArrowUp), kWhite);
@@ -241,6 +252,8 @@ void PickerScene::draw(Frame& frame) {
     if (status.empty()) {
         if (valid(sel_)) status = what + " found: press Enter or U.", statusColor = kGreen;
         else if (curValid_) status = what + " here: press U to use them.", statusColor = kGreen;
+        else if (sel_ < static_cast<int>(items_.size()) && items_[static_cast<std::size_t>(sel_)].kind == Kind::File)
+            status = "Enter: import this file", statusColor = kCyan;
         else status = "Enter: open  Backspace: up  Esc: back", statusColor = kGrey;
     }
     bf::drawText(img, kListX, kStatusY, bf::fitRight(status, 39), statusColor);

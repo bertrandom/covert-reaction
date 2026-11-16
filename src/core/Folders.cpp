@@ -75,6 +75,27 @@ std::vector<Entry> subfolders(const fs::path& dir) {
     return out;
 }
 
+std::vector<Entry> filesWithExtensions(const fs::path& dir, const std::vector<std::string>& extensions) {
+    std::vector<Entry> out;
+    if (dir.empty()) return out;
+    std::error_code ec;
+    fs::directory_iterator it(dir, fs::directory_options::skip_permission_denied, ec);
+    for (; !ec && it != fs::directory_iterator(); it.increment(ec)) {
+        std::error_code ec2;
+        if (!it->is_regular_file(ec2)) continue;
+        std::string name = toUtf8(it->path().filename());
+        if (name.empty() || name[0] == '.') continue;
+        const std::string ext = lower(toUtf8(it->path().extension()));
+        if (std::find(extensions.begin(), extensions.end(), ext) == extensions.end()) continue;
+        out.push_back({std::move(name), it->path()});
+    }
+    std::sort(out.begin(), out.end(), [](const Entry& a, const Entry& b) {
+        const std::string la = lower(a.name), lb = lower(b.name);
+        return la != lb ? la < lb : a.name < b.name;
+    });
+    return out;
+}
+
 std::vector<Entry> drives() {
     std::vector<Entry> out;
 #ifdef _WIN32

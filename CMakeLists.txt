@@ -142,7 +142,7 @@ if(APPLE AND NOT EMSCRIPTEN)
 endif()
 add_executable(covert-reaction ${REACTION_APP_SOURCES})
 if(APPLE AND NOT EMSCRIPTEN)
-  target_link_libraries(covert-reaction PRIVATE "-framework AppKit")
+  target_link_libraries(covert-reaction PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
 endif()
 target_link_libraries(covert-reaction PRIVATE reaction_core ${REACTION_SDL2})
 # The city loop runs GAME's program on a thread of its own (app/GameThread.h).

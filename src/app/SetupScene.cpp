@@ -1,5 +1,6 @@
 #include "app/SetupScene.h"
 
+#include <cstdio>
 #include <system_error>
 #include <utility>
 
@@ -44,9 +45,9 @@ constexpr Rect kRects[] = {
 
 constexpr const char* kHelp[] = {
     "Covert Reaction needs the files of",
-    "Sid Meier's Covert Action (1990): the",
-    "folder with TEXT.DTA, from GOG's",
-    "release or the original disks. MT-32",
+    "Sid Meier's Covert Action (1990): a",
+    "GOG installer, eXoDOS zip, the disks",
+    "or its folder (they're copied). MT-32",
     "ROMs are optional: they play the",
     "Roland MT-32 music (else the AdLib).",
 };
@@ -90,7 +91,7 @@ void SetupScene::refresh() {
     if (!enabled(focus_)) focus_ = kChooseGame;
 }
 
-bool SetupScene::enabled(int button) const { return button != kStart || gameOk_; }
+bool SetupScene::enabled(int button) const { return !job_ && (button != kStart || gameOk_); }
 
 void SetupScene::focusNext(int step) {
     for (int i = 0; i < kButtons; ++i) {
@@ -124,7 +125,7 @@ void SetupScene::press(int button) {
 void SetupScene::choose(PickerScene::Mode mode) {
     const bool roms = mode == PickerScene::Mode::Mt32Roms;
     // Where to start: near the folder chosen so far; for the ROMs, else next to the game.
-    fs::path start = existing(roms ? roms_ : game_);
+    fs::path start = existing(roms ? roms_ : !importFrom_.empty() ? importFrom_.parent_path() : game_);
     if (start.empty() && roms && gameOk_) start = game_.parent_path();
     if (!roms && !config_.browserStart.empty() && !config_.nativePanel) start = config_.browserStart;
 #ifdef REACTION_MAC_PANEL
@@ -132,9 +133,12 @@ void SetupScene::choose(PickerScene::Mode mode) {
         const char* message =
             roms ? "Choose the folder containing your MT-32 (or CM-32L) control ROM and PCM ROM files, "
                    "e.g. MT32_CONTROL.ROM and MT32_PCM.ROM."
-                 : "Choose the folder with Sid Meier's Covert Action (1990): the one that contains TEXT.DTA, "
-                   "from GOG's release or the original disks.";
-        if (auto dir = macChooseFolder(start, message)) take(mode, *dir);
+                 : "Choose Sid Meier's Covert Action (1990): GOG's installer (.exe, .pkg or .sh), eXoDOS's .zip, "
+                   "the original disks (a .7z or a disk image), or a folder that holds the game. Its files are "
+                   "copied into Covert Reaction's own folder.";
+        auto dir = roms || config_.importDir.empty() ? macChooseFolder(start, message)
+                                                     : macChooseFileOrFolder(start, message, importExtensions());
+        if (dir) take(mode, *dir);
         return;
     }
 #endif
@@ -145,14 +149,49 @@ void SetupScene::choose(PickerScene::Mode mode) {
 
 void SetupScene::take(PickerScene::Mode mode, const fs::path& dir) {
     const bool wasOk = gameOk_;
-    if (mode == PickerScene::Mode::GameFiles) game_ = dir;
-    else roms_ = dir;
+    if (mode == PickerScene::Mode::GameFiles && !config_.importDir.empty()) {
+        std::error_code ec;
+        if (fs::equivalent(dir, config_.importDir, ec) && GameData::isGameDir(dir)) {
+            game_ = config_.importDir;   // (the copy imported before)
+        } else {
+            // Import it (a folder too): the game then uses its own copy.
+            importFrom_ = dir;
+            importError_.clear();
+            job_ = std::make_unique<ImportJob>(dir, config_.importDir, !config_.syncImport);
+            if (job_->done()) finishImport();
+            return;
+        }
+    } else if (mode == PickerScene::Mode::GameFiles) {
+        game_ = dir;
+    } else {
+        roms_ = dir;
+    }
     refresh();
     if (mode == PickerScene::Mode::GameFiles && gameOk_ && !wasOk) focus_ = kStart;
 }
 
+void SetupScene::finishImport() {
+    const ImportResult r = job_->result();
+    job_.reset();
+    if (r.ok) {
+        std::fprintf(stderr, "imported %zu files from %s (%s)\n", r.files, folders::toUtf8(importFrom_).c_str(),
+                     describeGameSource(r.source));
+        game_ = config_.importDir;
+        imported_ = true;
+    } else {
+        std::fprintf(stderr, "import from %s failed: %s\n", folders::toUtf8(importFrom_).c_str(), r.error.c_str());
+        importError_ = r.error;
+    }
+    refresh();
+    focus_ = r.ok && gameOk_ ? kStart : kChooseGame;
+}
+
+void SetupScene::tick() {
+    if (job_ && job_->done()) finishImport();
+}
+
 void SetupScene::handle(const SDL_Event& e) {
-    if (accepted_ || cancelled_) return;
+    if (accepted_ || cancelled_ || job_) return;
     if (picker_) {
         picker_->handle(e);
         if (picker_->chosen()) {
@@ -216,7 +255,17 @@ void SetupScene::draw(Frame& frame) {
     {
         std::string l1 = "Not chosen", l2;
         std::uint8_t c1 = kGrey, c2 = kGreen;
-        if (!game_.empty()) {
+        if (job_) {
+            l1 = "Importing " + bf::fitLeft(displayName(importFrom_), kCols - 10);
+            c1 = kCyan;
+            l2 = bf::fitRight(std::to_string(static_cast<int>(job_->progress() * 100)) + "%  " + job_->stage(), kCols);
+            c2 = kYellow;
+        } else if (!importError_.empty()) {
+            l1 = bf::fitLeft(displayName(importFrom_), kCols);
+            c1 = kCyan;
+            l2 = bf::fitRight(importError_, kCols);
+            c2 = kRed;
+        } else if (!game_.empty()) {
             l1 = bf::fitLeft(displayName(game_), kCols);
             c1 = kCyan;
             if (!isDir(game_)) {
@@ -229,6 +278,7 @@ void SetupScene::draw(Frame& frame) {
                 c2 = kRed;
             } else {
                 l2 = "Covert Action's files: OK";
+                if (imported_) l1 = "From " + bf::fitLeft(displayName(importFrom_), kCols - 5);
             }
         }
         row(kGameY, "Game files", l1, c1, l2, c2);
