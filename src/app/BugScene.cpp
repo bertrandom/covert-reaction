@@ -16,6 +16,7 @@
 #include <optional>
 #include <string>
 
+#include "app/Keypad.h"
 #include "app/Menu.h"
 #include "app/Scenes.h"
 #include "formats/McgaPalette.h"
@@ -29,7 +30,8 @@ namespace {
 using Ev = WiretapEvent::Kind;
 
 // SDL keys to the codes get_key() gives bug_frame. The keypad digits act as
-// the arrows they are with Num Lock off.
+// the arrows they are with Num Lock off; so do the number row's digits and
+// arrow chords (Up+Right = PgUp ...), for keyboards without a keypad.
 int dosKey(const SDL_Keysym& k) {
     using namespace bugkeys;
     if (k.mod & KMOD_ALT) {
@@ -40,7 +42,7 @@ int dosKey(const SDL_Keysym& k) {
         default: return kNone;
         }
     }
-    switch (k.sym) {
+    switch (digitAsKeypad(k.sym)) {
     case SDLK_UP: case SDLK_KP_8: return kUp;
     case SDLK_PAGEUP: case SDLK_KP_9: return kPgUp;
     case SDLK_RIGHT: case SDLK_KP_6: return kRight;
@@ -87,6 +89,8 @@ public:
             menu_->handle(e, app_.mouse(e));
             return;
         }
+        if (e.type == SDL_KEYUP) chords_.keyUp(e.key.keysym.sym);
+        if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_LOST) chords_.reset();
         if (e.type != SDL_KEYDOWN) return;
         if (paused_) {                       // get_key(): any key resumes
             if (isCharKey(e.key.keysym)) {
@@ -95,7 +99,7 @@ public:
             }
             return;
         }
-        const int k = dosKey(e.key.keysym);
+        const int k = dosKey(chords_.keyDown(e.key.keysym));
         if (k != bugkeys::kNone && keys_.size() < 15) keys_.push_back(k);   // the BIOS buffer
     }
 
@@ -293,6 +297,7 @@ private:
     std::deque<WiretapEvent> pending_;
     std::deque<int> keys_;
     std::optional<Menu> menu_;
+    ArrowChords chords_;   // two arrows at once = a diagonal (app/Keypad.h)
     MenuKind menuKind_ = MenuKind::Message;
     int wait_ = 0;
     bool paused_ = false, finished_ = false;
