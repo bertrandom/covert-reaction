@@ -103,3 +103,13 @@ case-sensitive Linux file system all work.
 The engine (`src/core`, `src/formats`, `src/game`) has no SDL dependency, so tools
 and tests can use it without a window. The screen is the original 320x200 256-colour
 frame, shown at 4:3 with nearest-neighbour scaling; Alt+Enter toggles full screen.
+
+## License
+
+Covert Redux is free software under the GNU General Public License, version 3 or
+(at your option) any later version; see [LICENSE](LICENSE). Third-party libraries
+keep their own licenses.
+
+The license covers this project's code only. Covert Action itself (its game files,
+and the MT-32 ROMs if you use them) belongs to its owners and is not included:
+you supply your own copy.
