@@ -140,8 +140,8 @@ endif()
 # The game application (SDL2 window, input, audio).
 file(GLOB_RECURSE REACTION_APP_SOURCES CONFIGURE_DEPENDS src/app/*.cpp)
 if(APPLE AND NOT EMSCRIPTEN)
-  # The game-folder question uses macOS's own open panel (Objective-C++, enabled
-  # at the top).
+  # The setup screen's file dialogs use macOS's own open panel (Objective-C++,
+  # enabled at the top).
   list(APPEND REACTION_APP_SOURCES src/app/MacFolderPanel.mm)
   set_source_files_properties(src/app/MacFolderPanel.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 endif()
@@ -196,6 +196,8 @@ if(APPLE)
     VERBATIM)
 elseif(WIN32)
   set_target_properties(covert-reaction PROPERTIES WIN32_EXECUTABLE ON)
+  # The setup screen's file dialogs (app/FileDialog.cpp: IFileOpenDialog, COM).
+  target_link_libraries(covert-reaction PRIVATE ole32 uuid shell32)
 elseif(EMSCRIPTEN)
   # build-web/index.html (+ index.js, index.wasm): the page in web/shell.html asks
   # for the player's game files, keeps them (and the saves) in IndexedDB, then calls

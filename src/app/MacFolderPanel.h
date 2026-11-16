@@ -1,6 +1,6 @@
-// macOS: the setup screen (SetupScene) asks for the game and the MT-32 ROMs'
-// folder with the system's own open panel (NSOpenPanel) instead of the in-game
-// browser. The panel runs outside the app, so it needs none of macOS's folder
+// macOS: the setup screen (SetupScene, through app/FileDialog.h) asks for the
+// game and the MT-32 ROMs' folder with the system's own open panel
+// (NSOpenPanel). The panel runs outside the app, so it needs none of macOS's folder
 // permissions (Desktop, Documents, Downloads...): what the player picks is
 // granted to the app.
 #pragma once
