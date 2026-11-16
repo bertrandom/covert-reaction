@@ -15,7 +15,7 @@ scenes sharing one `World`.
 
 ## Phases
 
-1. **Engine and formats** (in progress)
+1. **Engine and formats**
    - [x] skeleton: CMake/SDL2, indexed 320x200 frame, game-data lookup, `reaction-tool`
    - [x] keyed text files (`TEXT.DTA`, `CLUES.TXT`, `PLOT.TXT`, `PROSE.DTA`)
    - [x] world tables, `crimeN.dta`/`worldN.dta`, saved-game layout
@@ -39,7 +39,7 @@ scenes sharing one `World`.
 4. **Mini-games**, each self-contained and playable in practice mode:
    [x] CODE (code breaking), [x] BUG (wiretaps), [x] CHASE (car chase),
    [x] TAC (break-ins). Their generators are byte-identical to the original's C
-   (`tests/msc-*`); hooking them to a real case comes with the city loop.
+   (`tests/msc-*`); in a case, what they find changes the case (phase 5).
 5. **The city loop** (GAME): travel, CIA office, intelligence screens, messages and
    decoding, time and events, suspects and arrests.
    [x] the world simulation (src/game/Sim*, `tests/msc-game`),
@@ -64,8 +64,11 @@ scenes sharing one `World`.
    MasterMind clue, vacation, Hall of Fame, career, promotion, retirement and the
    continue/save menu (src/game/EndCase.*, src/app/EndCaseScene.cpp), [x] the next
    case's briefing and generate_case; [x] hooked to the city loop (both ways).
-7. **Modern extras**, behind options: window scaling and full screen (done),
-   remappable keys, save anywhere, a faster pace, higher-resolution text.
+7. **Modern extras**, behind options: [x] window scaling and full screen,
+   [x] the Options menu (keypad on letters, copy protection, sound device,
+   animations, MT-32 clean mixing), [ ] joystick / gamepad (the original's
+   joystick paths aren't ported), [ ] remappable keys, [ ] save anywhere,
+   [ ] a faster pace, [ ] higher-resolution text.
    [x] a web build (Emscripten/WebAssembly): the player picks their own game
    files, kept in the browser with the saves (README.md, "Web").
 
