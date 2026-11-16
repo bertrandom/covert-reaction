@@ -19,6 +19,8 @@ class Synth : public DeviceSink {
 public:
     // Renders `frames` stereo frames (interleaved L R) at the synth's sample rate.
     virtual void render(std::int16_t* out, int frames) = 0;
+    // MT-32 only: mix every partial in phase (no cancelling, see Mt32.cpp).
+    virtual void setCleanMixing(bool) {}
 };
 
 // AdLib: an OPL2 (emulated by Nuked-OPL3 in its OPL2-compatible mode).

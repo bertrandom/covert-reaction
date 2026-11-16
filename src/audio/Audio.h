@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <atomic>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -47,6 +48,8 @@ public:
 
     // play_sound(n, a, b) (the caller checks options & 4, as the programs do).
     void play(int n, int a = 0, int b = 0);
+    // The Options menu's MT-32 clean mixing (any thread; applied on the audio thread).
+    void setMt32CleanMixing(bool on) { cleanMixing_ = on; }
 
     // Renders interleaved stereo 16-bit frames at sampleRate().
     void render(std::int16_t* out, int frames);
@@ -82,6 +85,8 @@ private:
     std::string setting_, status_;     // guarded by mu_
 
     Unit cur_;                         // the audio thread's
+    std::atomic<bool> cleanMixing_{false};
+    int appliedMixing_ = -1;           // the audio thread's: what cur_.synth has
     double untilTick_ = 0;             // PIT clocks to the next timer interrupt
 };
 

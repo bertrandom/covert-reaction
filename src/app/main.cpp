@@ -213,7 +213,10 @@ public:
             ++tick_;
         }
         // The Options menu may have changed the device: switch at once.
-        if (sound_) sound_->engine().select(wantedSound());
+        if (sound_) {
+            sound_->engine().select(wantedSound());
+            sound_->engine().setMt32CleanMixing(app_.settings.mt32CleanMixing);
+        }
         scene_->draw(frame_);
         if (scripted_ && tick_ >= script_.ticks) {
             writeBmp(*script_.shot, frame_.image, frame_.palette);

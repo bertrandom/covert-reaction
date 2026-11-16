@@ -138,13 +138,13 @@ REACTION_COMMAND("sound-events",
 
 REACTION_COMMAND("sound-wav",
               "sound-wav DEVICE OUT.wav N[,A,B][@SECONDS] [MORE...] [--seconds S] [--rate HZ] "
-              "[--mt32-roms DIR] [--keep-init]: render play_sound calls on a device (auto, mt32, adlib, "
+              "[--mt32-roms DIR] [--keep-init] [--clean-mixing]: render play_sound calls on a device (auto, mt32, adlib, "
               "speaker) to a WAV file, and print its levels",
               [](const GameData& d, const std::vector<std::string>& args) {
                   if (args.size() < 3) throw std::runtime_error("usage: sound-wav DEVICE OUT.wav N ...");
                   double seconds = 30;
                   int rate = 48000;
-                  bool keepInit = false;
+                  bool keepInit = false, clean = false;
                   std::optional<std::filesystem::path> roms;
                   std::vector<Play> plays;
                   for (std::size_t i = 2; i < args.size(); ++i) {
@@ -152,10 +152,12 @@ REACTION_COMMAND("sound-wav",
                       else if (args[i] == "--rate" && i + 1 < args.size()) rate = std::stoi(args[++i]);
                       else if (args[i] == "--mt32-roms" && i + 1 < args.size()) roms = args[++i];
                       else if (args[i] == "--keep-init") keepInit = true;
+                      else if (args[i] == "--clean-mixing") clean = true;   // the Options setting
                       else plays.push_back(parsePlay(args[i]));
                   }
                   AudioEngine eng(d, mt32RomDirs(roms, d.dir()), rate);
                   eng.select(args[0]);
+                  eng.setMt32CleanMixing(clean);
                   std::fprintf(stderr, "device: %s: %s\n", deviceName(eng.device()), eng.status().c_str());
                   std::vector<std::int16_t> warm(static_cast<std::size_t>(rate) * 2 * 3);
                   // COVERT starts the driver long before the first sound: skip the

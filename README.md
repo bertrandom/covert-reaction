@@ -85,6 +85,7 @@ settings, saved in `settings.ini` in the per-user folder:
 | Keypad on 789/UIO/JKL | 7 8 9 / U I O / J K L act as the numeric keypad in TAC and BUG (Shift dives in TAC); BUG also takes the number row | On |
 | Copy protection | The leader line-up after the briefing counts; a wrong answer means a practice mission | Off |
 | Sound | Automatic (MT-32 if its ROMs are found, else AdLib), Roland MT-32, AdLib, PC speaker or Off | Automatic |
+| MT-32 clean mixing | Mixes all of the MT-32's partials in phase. The real chip (and the emulator) adds half of them in opposite phase, which can silence a two-partial sound such as TAC's gunshot while the music holds partials; Off is the faithful sound | Off |
 | Full screen | Desktop only; Alt+Enter also switches it | Off |
 
 Scripted test runs (`--shot`) ignore the saved settings and use the defaults.

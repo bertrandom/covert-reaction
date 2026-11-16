@@ -23,6 +23,10 @@ struct Settings {
     // so changes this). The game follows this setting where the original turns
     // the bit back on (a fresh start, a new case).
     bool animations = true;
+    // MT-32: mix every partial in phase. The real chip (and Munt) adds half of
+    // them in opposite phase, which can cancel a two-partial sound such as TAC's
+    // gunshot when the music holds partials; off is the faithful sound.
+    bool mt32CleanMixing = false;
     // Desktop only: start in full screen (Alt+Enter also changes it).
     bool fullscreen = false;
 

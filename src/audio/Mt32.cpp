@@ -102,9 +102,10 @@ public:
         // MT-32 does (libmt32emu's "semi-confirmed" emulation; it depends on which
         // partials happen to be free). Covert Action's gunshot is such a timbre: in
         // a break-in, once the score has used partials, some shots are silent.
-        // REACTION_MT32_NICE_MIXING=1 mixes every partial in phase instead.
-        if (const char* e = std::getenv("REACTION_MT32_NICE_MIXING"); e && *e && *e != '0')
-            synth_.setNicePartialMixingEnabled(true);
+        // The Options menu's "MT-32 clean mixing" (setCleanMixing) mixes every
+        // partial in phase instead; REACTION_MT32_NICE_MIXING=1 forces it on.
+        if (const char* e = std::getenv("REACTION_MT32_NICE_MIXING"); e && *e && *e != '0') forceClean_ = true;
+        synth_.setNicePartialMixingEnabled(forceClean_);
         src_ = std::make_unique<MT32Emu::SampleRateConverter>(synth_, rate,
                                                               MT32Emu::SamplerateConversionQuality_GOOD);
         parser_ = std::make_unique<MT32Emu::DefaultMidiStreamParser>(synth_);
@@ -124,12 +125,14 @@ public:
         parser_->parseStream(&byte, 1);
     }
 
+    void setCleanMixing(bool on) override { synth_.setNicePartialMixingEnabled(on || forceClean_); }
     void render(std::int16_t* out, int frames) override {
         src_->getOutputSamples(out, static_cast<unsigned>(frames));
         rendered_ += static_cast<std::uint64_t>(frames);
     }
 
 private:
+    bool forceClean_ = false;
     const MT32Emu::ROMImage* load(const Mt32Rom& rom) {
         if (rom.files.empty() || rom.files.size() > 2) return nullptr;
         for (const auto& f : rom.files) {

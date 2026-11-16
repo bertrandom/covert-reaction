@@ -149,6 +149,11 @@ void AudioEngine::render(std::int16_t* out, int frames) {
         cur_.driver->setSink(cur_.synth.get());
         cur_.driver->init();   // COVERT's drv_sound100() at start-up
         untilTick_ = 0;
+        appliedMixing_ = -1;
+    }
+    if (const int want = cleanMixing_ ? 1 : 0; want != appliedMixing_) {
+        cur_.synth->setCleanMixing(want != 0);
+        appliedMixing_ = want;
     }
     for (const Cmd& c : cmds) cur_.driver->play(c.n, c.a, c.b);
     while (frames > 0) {
