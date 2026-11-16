@@ -242,7 +242,11 @@ Task<void> Tac::lib_play() {
     const int keepFace = popup_face;
     for (const LibStep& s : steps) {
         switch (s.kind) {
-        case LibStep::Kind::Draw: s.draw(*this); break;
+        case LibStep::Kind::Draw: {
+            LibCanvas c{gpage(), *gfx_.font, faces_, gfx_.fillcolor};
+            s.draw(c);
+            break;
+        }
         case LibStep::Kind::Key: co_await wait_key_or_button(); break;
         case LibStep::Kind::Menu: co_await show_menu(s.text, s.x, s.y); break;
         case LibStep::Kind::Retrace: co_await wait_retrace(s.n); break;

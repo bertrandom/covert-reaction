@@ -22,6 +22,7 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -84,7 +85,8 @@ struct WiretapEvent {
         Sound,       // play_sound(a) (only emitted with sound on)
         Wait,        // wait_retrace(a)
         Message,     // text_window(text, 100, 51h) with fillcolor a; waits for a key
-        Intercept,   // show_intercepted_info(a): describe_new_info(org, city, a, 1)
+        Intercept,   // show_intercepted_info(a): describe_new_info(org, city, a, 1); b = the
+                     // intercept hook's script (-1: none)
         QuitPrompt,  // Alt-Q: "Are you sure you want to Quit?" (Yes ends the game)
         Pause,       // Alt-P: black screen, "PAUSED" (window fillcolor a), any key
     };
@@ -107,6 +109,12 @@ public:
     static const std::uint8_t kTunes[5][17];
 
     explicit Wiretap(const WiretapSetup& setup);
+
+    // show_intercepted_info(amount) during a case: runs describe_new_info on the
+    // case's tables right there (with this program's random(), see
+    // game/BugCase.h) and returns an id for what it showed, given back in the
+    // Intercept event's b. Unset (practice): nothing.
+    std::function<int(int amount)> intercept;
 
     // main() from randomize() on: build_board() over the board picture (page 0;
     // the traces are read from its pixels).

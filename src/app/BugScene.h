@@ -6,6 +6,7 @@
 
 #include "app/App.h"
 #include "app/Scene.h"
+#include "game/BugCase.h"
 #include "game/Wiretap.h"
 
 namespace redux {
@@ -14,6 +15,9 @@ namespace redux {
 // gives the scene to switch to.
 using BugDone = std::function<std::unique_ptr<Scene>(App&, const WiretapResult&)>;
 
-std::unique_ptr<Scene> makeBugScene(App& app, const WiretapSetup& setup, BugDone onDone);
+// hooks: a case's (show_intercepted_info's describe_new_info on its tables);
+// nullptr in practice.
+std::unique_ptr<Scene> makeBugScene(App& app, const WiretapSetup& setup, BugDone onDone,
+                                    std::shared_ptr<BugCaseHooks> hooks = nullptr);
 
 }  // namespace redux

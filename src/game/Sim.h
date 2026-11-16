@@ -152,10 +152,10 @@ public:
     // The screens drawing the simulation (nullptr: none, events are only listed).
     void setUi(SimUi* ui) { ui_ = ui; }
     SimUi* ui() const { return ui_; }
-    // The library as TAC.EXE links it: MSGTEXT.C without GAME_MSGTEXT
-    // (load_message_text leaves orgs[].flags alone), TAC's persons[-1] and its
-    // neighbours of msgs[] (nullptr: GAME's).
-    void setTacLibrary(const Person& personM1, SimNeighbours* neighbours) {
+    // The library as another program (TAC.EXE, BUG.EXE) links it: MSGTEXT.C
+    // without GAME_MSGTEXT (load_message_text leaves orgs[].flags alone), and
+    // that program's persons[-1] and neighbours of msgs[] (nullptr: GAME's).
+    void setProgramLibrary(const Person& personM1, SimNeighbours* neighbours) {
         tacLibrary_ = true;
         personM1_ = personM1;
         neighbours_ = neighbours;
@@ -341,7 +341,7 @@ private:
     std::vector<SimEvent> events_;
     bool caseOver_ = false;
     Person personM1_;                               // persons[-1]
-    bool tacLibrary_ = false;                       // see setTacLibrary
+    bool tacLibrary_ = false;                       // see setProgramLibrary
     SimNeighbours* neighbours_ = nullptr;
     Suspect suspectOut_;                            // suspects[] past the table
     Plot plotOut_;                                  // plots[] outside the table

@@ -3,8 +3,6 @@
 
 #include <utility>
 
-#include "formats/TextWindow.h"
-#include "game/Paper.h"
 
 namespace redux {
 
@@ -36,108 +34,10 @@ TacSetup::Person toTac(const Person& p) {
     return t;
 }
 
-std::string oneLine(const std::string& s) {
-    std::string o;
-    for (char c : s) o += c == '\n' ? '|' : c;
-    return o;
-}
 
 }  // namespace
 
 // ---------------------------------------------------------------- the screen
-
-// The library's drawing calls and waits, recorded as Tac::LibSteps.
-class TacCaseHooks::Ui : public SimUi {
-public:
-    explicit Ui(TacCaseHooks& h) : h_(h) {}
-
-    int event(const SimEvent& e) override {
-        using K = SimEvent::Kind;
-        switch (e.kind) {
-        case K::Notice:
-            h_.trace.push_back("notice " + oneLine(e.text));
-            step(Tac::LibStep::Kind::Menu, e.text, e.x, e.y);
-            break;
-        case K::Wait: step(Tac::LibStep::Kind::Key); break;
-        case K::Popup:
-            // TAC's draw_intercept_popup; drawing the portrait clears face_shown
-            h_.trace.push_back("popup " + std::to_string(e.index) + " " + oneLine(e.text));
-            step(Tac::LibStep::Kind::Popup, e.text, 0, 0, e.index);
-            if (e.index > -1) h_.sim_->globals().faceShown = -1;
-            break;
-        case K::Dossier: h_.trace.push_back("dossier " + std::to_string(e.index)); break;
-        case K::Clue:
-            h_.trace.push_back(std::string(e.title.empty() ? "clue " : "  related ") + std::to_string(e.index) + " " +
-                               oneLine(e.text));
-            break;
-        case K::NewInfo: h_.trace.push_back("newinfo " + std::to_string(e.index) + " " + oneLine(e.text)); break;
-        default: break;
-        }
-        return -1;
-    }
-    void retrace(int n) override { step(Tac::LibStep::Kind::Retrace, {}, 0, 0, n); }
-    void pageFrame(const std::string& title, int color) override {
-        draw([title, color](Tac& t) {
-            drawPageFrame(t.gpage(), *t.gfx_.font, t.faces_, title, static_cast<std::uint8_t>(color));
-            t.gfx_.fillcolor = 15;
-        });
-    }
-    void text(const std::string& s, int x, int y, int c) override {
-        draw([s, x, y, c](Tac& t) { t.gfx_.textTransparent(s, x, y, c); });
-    }
-    void textOpaque(const std::string& s, int x, int y, int c) override {
-        draw([s, x, y, c](Tac& t) { t.gfx_.text(s, x, y, c); });
-    }
-    void line(int x1, int y1, int x2, int y2, int c) override {
-        draw([=](Tac& t) { t.gfx_.line(x1, y1, x2, y2, c); });
-    }
-    void wrapped(const std::string& s, int width, int x, int y, int c) override {
-        draw([s, width, x, y, c](Tac& t) {
-            drawWrappedText(t.gpage(), *t.gfx_.font, s, width, x, y, static_cast<std::uint8_t>(c));
-        });
-    }
-    void portrait(int face, int x, int y) override {
-        draw([=](Tac& t) { drawPortrait(t.gpage(), t.faces_, face, x, y); });
-        h_.sim_->globals().faceShown = -1;   // draw_face_parts
-    }
-    void sprite(int n, int x, int y) override {
-        draw([=](Tac& t) { t.faces_.draw(t.gpage(), n, x, y); });
-    }
-    void cardPanel(int x, int y) override {
-        draw([=](Tac& t) { drawCardPanel(t.gpage(), x, y); });
-    }
-    void bevelBox(int x, int y, int w, int hh, int c) override {
-        draw([=](Tac& t) {
-            drawBevelBox(t.gpage(), x, y, w, hh, static_cast<std::uint8_t>(c));
-            t.gfx_.fillcolor = c;
-        });
-    }
-    void fillRect(int x, int y, int w, int hh, int c) override {
-        draw([=](Tac& t) { t.gfx_.fillRect(t.gfx_.gpage, x, y, w, hh, c); });
-    }
-    // (the master plan's draw_text_centered)
-    void textCentered(const std::string& s, int x, int y, int c) {
-        draw([s, x, y, c](Tac& t) { t.gfx_.textCentered(s, x, y, c); });
-    }
-
-    void step(Tac::LibStep::Kind k, std::string text = {}, int x = 0, int y = 0, int n = 0) {
-        Tac::LibStep s;
-        s.kind = k;
-        s.text = std::move(text);
-        s.x = x;
-        s.y = y;
-        s.n = n;
-        h_.tac_->libSteps.push_back(std::move(s));
-    }
-    void draw(std::function<void(Tac&)> f) {
-        Tac::LibStep s;
-        s.draw = std::move(f);
-        h_.tac_->libSteps.push_back(std::move(s));
-    }
-
-private:
-    TacCaseHooks& h_;
-};
 
 // msgs[-1] and msgs[128] in TAC's DGROUP (msgs at A1E6h): msgs[-1] is
 // room_noise[21..23], doors_open (.flags), show_ok, num_persons and tac_mode
@@ -187,8 +87,9 @@ struct TacCaseHooks::Bind {
 };
 
 TacCaseHooks::TacCaseHooks(World& world, const GameData& data, Career& career)
-    : w_(world), data_(data), career_(career), ui_(std::make_unique<Ui>(*this)),
-      nb_(std::make_unique<Neighbours>(*this)) {}
+    : w_(world), data_(data), career_(career), nb_(std::make_unique<Neighbours>(*this)) {
+    ui_.trace = &trace;
+}
 
 TacCaseHooks::~TacCaseHooks() = default;
 
@@ -196,7 +97,8 @@ void TacCaseHooks::push(Tac& t) {
     tac_ = &t;
     if (!sim_) {
         sim_ = std::make_unique<Sim>(w_, t.rng_, data_, career_);
-        sim_->setUi(ui_.get());
+        sim_->setUi(&ui_);
+        ui_.sim = sim_.get();
         // persons[-1]: the end of work_rp {3, 0, 0, 319, 199, 0, 15, 4, 0} and work_page (06EAh)
         Person m1;
         m1.org = 0;
@@ -207,8 +109,9 @@ void TacCaseHooks::push(Tac& t) {
         m1.roles = 4;
         m1.points = 0;
         m1.fate = 0x06EA;
-        sim_->setTacLibrary(m1, nb_.get());
+        sim_->setProgramLibrary(m1, nb_.get());
     }
+    ui_.out = &t.libSteps;
     for (std::size_t i = 0; i < t.persons.size() && i < 64; ++i) w_.persons[i] = toWorld(t.persons[i]);
     auto& h = w_.hdr;
     gameDifficulty_ = h.difficulty;
@@ -293,63 +196,9 @@ int TacCaseHooks::revealRandomClue(Tac& t, int n, int org, int city) {
     return b.sim().revealRandomClue(n, org, city);
 }
 
-// PERSON.C show_master_plan(org, reveal).
 void TacCaseHooks::showMasterPlan(Tac& t, int org, int reveal) {
     Bind b(*this, t);
-    Sim& sim = b.sim();
-    auto& h = w_.hdr;
-    auto& tb = sim.globals().textBuf;
-    trace.push_back("show_master_plan " + std::to_string(org));
-    if (org == 0) {
-        h.seenOrgs = static_cast<std::int16_t>(h.seenOrgs | 1);
-        ui_->pageFrame("Master Plan", 9);
-        int y = 0x20;
-        tb.clear();
-        for (int i = 0; i < 5; ++i) tb += "--SECRET--";
-        ui_->text(tb, 12, 0x10, 14);
-        ui_->text(tb, 12, 0xBC, 14);
-        for (int i = 0; i < sim.activeSuspects(); ++i) {
-            if (sim.suspect(i).flags & 0x100) continue;
-            const int x = (i & 3) * 0x48 + 0x1C;
-            if (i == 4) y += 0x50;
-            const int p = sim.suspect(i).person;
-            if ((sim.person(p).known & 0x81) != 0x80) ui_->portrait(sim.person(p).id, x, y);
-            tb.clear();
-            if (sim.person(p).fate == -1) tb = "ARRESTED";
-            if (sim.person(p).fate == -2) tb = "IN HIDING";
-            if (sim.person(p).fate == -3) tb = " TURNED";
-            ui_->text(tb, x - 1, y + 0x10, 5);
-            ui_->text(tb, x - 2, y + 0x10, 12);
-            tb = sim.suspect(i).name.str();
-            ui_->textCentered(tb, x + 0x19, y + 0x38, 12);
-            y ^= 8;
-        }
-    } else {
-        h.seenOrgs = static_cast<std::int16_t>(static_cast<std::uint16_t>(h.seenOrgs) | (1u << (org & 15)));
-        ui_->pageFrame("Personnel File", 9);
-        tb = w_.orgs[static_cast<std::size_t>(org & 15)].name.str();
-        tb += " Action Team";
-        ui_->text(tb, 0x50, 0x10, 5);
-        int y = 0x20;
-        bool none = true;
-        for (int i = 1; i < h.numPersons && i < 64; ++i) {
-            Person& p = sim.person(i);
-            if (p.org == org && (p.flags & 0x7FFF)) {
-                if (reveal) p.known |= 0x0E;
-                tb.clear();
-                sim.appendPersonName(i);
-                if (p.known & 8) {
-                    tb += ", ";
-                    tb += w_.cities[static_cast<std::size_t>(p.city & 15)].name.str();
-                }
-                ui_->text(tb, 0x50, y, 12);
-                y += 8;
-                none = false;
-            }
-        }
-        if (none) ui_->text("(No activity)", 0x50, y, 12);
-    }
-    ui_->step(Tac::LibStep::Kind::Key);
+    libShowMasterPlan(b.sim(), ui_, org, reveal);
 }
 
 // ---------------------------------------------------------------- env.sve

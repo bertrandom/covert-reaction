@@ -254,7 +254,7 @@ void Wiretap::boardStatus(int update) {
                         if (!setup_.practice) {
                             // show_intercepted_info(8)
                             emit(WiretapEvent::Kind::Palette, 4);
-                            emit(WiretapEvent::Kind::Intercept, 8);
+                            emit(WiretapEvent::Kind::Intercept, 8, intercept ? intercept(8) : -1);
                             emit(WiretapEvent::Kind::Palette, ticks_ & 3);
                         }
                     }
@@ -281,7 +281,8 @@ void Wiretap::boardStatus(int update) {
             if (!carTracer_) {
                 if (!setup_.practice) {
                     emit(WiretapEvent::Kind::Palette, 4);
-                    emit(WiretapEvent::Kind::Intercept, origDifficulty_ << 4);
+                    emit(WiretapEvent::Kind::Intercept, origDifficulty_ << 4,
+                         intercept ? intercept(origDifficulty_ << 4) : -1);
                     emit(WiretapEvent::Kind::Palette, ticks_ & 3);
                 }
                 msg = "Phone taps completed.\n";

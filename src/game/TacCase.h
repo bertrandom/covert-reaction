@@ -27,6 +27,7 @@
 
 #include "core/GameData.h"
 #include "game/Career.h"
+#include "game/LibScreen.h"
 #include "game/Sim.h"
 #include "game/Tac.h"
 #include "game/World.h"
@@ -65,7 +66,6 @@ public:
     static int knownSite(const World& w, int org, int city);
 
 private:
-    class Ui;
     class Neighbours;
     struct Bind;
 
@@ -76,7 +76,7 @@ private:
     const GameData& data_;
     Career& career_;
     std::unique_ptr<Sim> sim_;
-    std::unique_ptr<Ui> ui_;
+    LibRecorder ui_;
     std::unique_ptr<Neighbours> nb_;
     Tac* tac_ = nullptr;
     int gameDifficulty_ = 0;

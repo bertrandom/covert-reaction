@@ -36,6 +36,7 @@
 #include "formats/Font.h"
 #include "formats/McgaPalette.h"
 #include "game/Face.h"
+#include "game/LibScreen.h"
 #include "game/Rng.h"
 #include "game/TacBuilding.h"
 #include "game/TacTask.h"
@@ -183,17 +184,9 @@ public:
     std::vector<TacSetup::Person> persons;
 
     // What a library routine called through the hooks drew and waited for, in
-    // order; lib_play replays it on the screen (g_gfx's page) when the hook
-    // returns. Draw runs a drawing call, Key is wait_key_or_button, Menu
-    // show_menu(text, x, y) (TAC's, which the library's calls link to), Retrace
-    // wait_retrace(n), Popup TAC's draw_intercept_popup with text_buf = text and
-    // face_shown (popup_face) = n.
-    struct LibStep {
-        enum class Kind { Draw, Key, Menu, Retrace, Popup } kind = Kind::Draw;
-        std::function<void(Tac&)> draw;
-        std::string text;
-        int x = 0, y = 0, n = 0;
-    };
+    // order (game/LibScreen.h); lib_play replays it on the screen (g_gfx's page)
+    // when the hook returns, with TAC's show_menu (which the library's calls link
+    // to) and TAC's draw_intercept_popup for a Popup step.
     std::vector<LibStep> libSteps;
     // the library's drawing surface: g_gfx's page, font 1, the face sprites
     // (draw_face's icons, loaded by load_tac_sprites)

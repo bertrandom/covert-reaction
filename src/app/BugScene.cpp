@@ -73,8 +73,12 @@ bool isCharKey(const SDL_Keysym& k) {
 
 class BugScene : public Scene {
 public:
-    BugScene(App& app, const WiretapSetup& setup, BugDone onDone)
-        : app_(app), onDone_(std::move(onDone)), logic_(setup), palette_(mcgaPalette(palettes::kGame)) {
+    BugScene(App& app, const WiretapSetup& setup, BugDone onDone, std::shared_ptr<BugCaseHooks> hooks)
+        : app_(app), onDone_(std::move(onDone)), logic_(setup), palette_(mcgaPalette(palettes::kGame)),
+          hooks_(std::move(hooks)) {
+        // During a case, show_intercepted_info runs describe_new_info on the
+        // case's tables (game/BugCase.h); the scene replays what it showed.
+        if (hooks_) logic_.intercept = [this](int amount) { return hooks_->intercept(logic_, amount); };
         // main(): camera.pic (the intercept popup's frame) is grabbed first; then
         // load_bug_sprites leaves bugs.pic on page 2 (chip_page), and board.pic
         // goes on screen.
@@ -91,6 +95,10 @@ public:
             return;
         }
         if (e.type != SDL_KEYDOWN) return;
+        if (scriptKey_) {                    // wait_key_or_button: any key
+            if (isCharKey(e.key.keysym)) scriptKey_ = false;
+            return;
+        }
         if (paused_) {                       // get_key(): any key resumes
             if (isCharKey(e.key.keysym)) {
                 paused_ = false;
@@ -109,6 +117,7 @@ public:
             return;
         }
         if (paused_ || finished_) return;
+        if (runScript()) return;
         if (wait_ > 0 && --wait_ > 0) return;
         for (;;) {
             if (pending_.empty()) {
@@ -135,7 +144,7 @@ public:
                 wait_ = ev.a;
                 return;
             }
-            if (menu_ || paused_) return;
+            if (menu_ || paused_ || !script_.empty()) return;
         }
     }
 
@@ -214,9 +223,14 @@ private:
         case Ev::Wait:        // (handled by tick)
             break;
         case Ev::Intercept:
-            // show_intercepted_info -> describe_new_info(org, city, amount, 1)
-            // (GAMELIB CLUE.C) isn't ported: it needs the case. Practice runs
-            // never get here.
+            // show_intercepted_info: the screen to the back page, what
+            // describe_new_info(org, city, amount, 1) drew and waited for, the
+            // screen back (practice runs never get here)
+            if (hooks_ && ev.b >= 0) {
+                back_ = screen_;
+                for (const LibStep& st : hooks_->script(ev.b)) script_.push_back(st);
+                script_.push_back(LibStep{LibStep::Kind::Retrace, {}, {}, 0, 0, -1});   // (end: restore)
+            }
             break;
         case Ev::Message: {
             TextWindowOptions opt;
@@ -274,6 +288,43 @@ private:
         menu_.emplace(app_.fonts.font(1), std::move(text), x, y, opt);
     }
 
+    // Plays the intercept's steps until one waits; true while it does.
+    bool runScript() {
+        while (!script_.empty()) {
+            if (scriptKey_ || menu_) return true;
+            const LibStep st = std::move(script_.front());
+            script_.pop_front();
+            switch (st.kind) {
+            case LibStep::Kind::Draw: {
+                LibCanvas c{screen_, app_.fonts.font(1), hooks_->faces(), libFill_};
+                st.draw(c);
+                break;
+            }
+            case LibStep::Kind::Key:   // wait_key_or_button (then flush_input)
+                keys_.clear();
+                scriptKey_ = true;
+                return true;
+            case LibStep::Kind::Menu: {
+                TextWindowOptions opt;
+                if (!(st.y & 1)) libFill_ = 5;
+                opt.fillColor = static_cast<std::uint8_t>(libFill_);
+                openMenu(MenuKind::Message, st.text, st.x, st.y, opt);
+                return true;
+            }
+            case LibStep::Kind::Retrace:
+                if (st.n < 0) {
+                    screen_ = back_;   // drv_copy_rect(back_page -> g_gfx)
+                    keys_.clear();
+                    break;
+                }
+                wait_ = st.n;
+                return true;
+            case LibStep::Kind::Popup: break;   // (BUG's popup is recorded as drawing)
+            }
+        }
+        return false;
+    }
+
     void closeMenu(int result) {
         if (menuKind_ == MenuKind::Quit) {
             menu_.reset();
@@ -296,6 +347,11 @@ private:
     std::deque<WiretapEvent> pending_;
     std::deque<int> keys_;
     std::optional<Menu> menu_;
+    std::shared_ptr<BugCaseHooks> hooks_;
+    std::deque<LibStep> script_;       // an intercept being shown
+    Image back_;                       // back_page meanwhile
+    int libFill_ = 15;                 // g_gfx->fillcolor for the library's drawing
+    bool scriptKey_ = false;
     MenuKind menuKind_ = MenuKind::Message;
     int wait_ = 0;
     bool paused_ = false, finished_ = false;
@@ -317,8 +373,9 @@ std::unique_ptr<Scene> backToMenu(App& app, const WiretapResult&) { return makeS
 
 }  // namespace
 
-std::unique_ptr<Scene> makeBugScene(App& app, const WiretapSetup& setup, BugDone onDone) {
-    return std::make_unique<BugScene>(app, setup, std::move(onDone));
+std::unique_ptr<Scene> makeBugScene(App& app, const WiretapSetup& setup, BugDone onDone,
+                                    std::shared_ptr<BugCaseHooks> hooks) {
+    return std::make_unique<BugScene>(app, setup, std::move(onDone), std::move(hooks));
 }
 
 REDUX_SCENE("bug", [](App& app) {

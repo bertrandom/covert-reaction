@@ -144,12 +144,14 @@ std::unique_ptr<Scene> startBug(App& app, std::shared_ptr<CityEnv> env, int prog
     WiretapSetup s = WiretapSetup::fromEnv(app.game.world.hdr, program);
     s.practice = false;
     s.seed = gameSeed();
-    return makeBugScene(app, s, [env](App& a, const WiretapResult& r) -> std::unique_ptr<Scene> {
+    auto hooks = std::make_shared<BugCaseHooks>(app.game.world, app.data, app.game.career);
+    return makeBugScene(app, s, [env, hooks](App& a, const WiretapResult& r) -> std::unique_ptr<Scene> {
+        for (const auto& line : hooks->trace) std::fprintf(stderr, "bug lib: %s\n", line.c_str());
         (*env)[8] = r.envProgress();
         (*env)[9] = r.envAlarms();
         (*env)[15] = 0;
         return resumeGame(a, env);
-    });
+    }, hooks);
 }
 
 std::unique_ptr<Scene> startCode(App& app, std::shared_ptr<CityEnv> env) {
