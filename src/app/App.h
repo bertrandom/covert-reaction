@@ -4,6 +4,7 @@
 #include "app/Screen.h"
 #include "core/GameData.h"
 #include "formats/Font.h"
+#include "game/Career.h"
 
 namespace redux {
 
@@ -11,6 +12,8 @@ struct App {
     const GameData& data;
     Screen& screen;
     FontSet fonts;
+    // The game in progress: the original's tables, the career, the random numbers.
+    GameState game{};
 
     // The mouse position of an event, in 320x200 frame coordinates.
     SDL_Point mouse(const SDL_Event& e) const {

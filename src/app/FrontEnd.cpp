@@ -5,6 +5,7 @@
 #include "app/FrontEnd.h"
 #include "app/Scenes.h"
 #include "app/Menu.h"
+#include "app/NewCharScenes.h"
 #include "formats/McgaPalette.h"
 #include "formats/Pan.h"
 #include "formats/Pic.h"
@@ -31,16 +32,22 @@ public:
     void tick() override {
         menu_->tick();
         auto r = menu_->result();
-        if (!r) return;
+        if (!r || next_) return;
         if (notice_) {           // a "not ported yet" notice was closed
             notice_ = false;
             openMain();
             return;
         }
         // FINAL.C: -1 (Esc) and 0 create a new character.
+        int sel = *r < 0 ? 0 : *r;
+        if (sel == 0 || sel == 3) {
+            // The menu comes back over the screen the Hall of Fame leaves.
+            auto back = [this](const Frame& last) { return makeMainMenuSceneOver(app_, last.image); };
+            next_ = sel == 0 ? makeScene(app_, "new-character") : makeHallOfFameScene(app_, std::nullopt, back);
+            return;
+        }
         static const char* what[] = {"Creating a character", "Loading a saved game",
                                      "Practising a skill", "The Hall of Fame"};
-        int sel = *r < 0 ? 0 : *r;
         std::string text = std::string(what[sel]) + "\nisn't ported yet.\n";
         TextWindowOptions opt;
         opt.showOk = true;
@@ -53,6 +60,8 @@ public:
         f.image = background_;
         menu_->draw(f.image);
     }
+
+    std::unique_ptr<Scene> next() override { return std::move(next_); }
 
 private:
     void openMain() {
@@ -67,6 +76,7 @@ private:
     Palette palette_;
     std::optional<Menu> menu_;
     bool notice_ = false;
+    std::unique_ptr<Scene> next_;
 };
 
 // One full-screen animation (play_title_pan): any key or click skips it, Esc also
@@ -144,6 +154,10 @@ std::unique_ptr<Scene> makeTitleScene(App& app) { return std::make_unique<TitleS
 std::unique_ptr<Scene> makeMainMenuScene(App& app) {
     Image bg(320, 200, 0);
     return std::make_unique<MainMenuScene>(app, std::move(bg));
+}
+
+std::unique_ptr<Scene> makeMainMenuSceneOver(App& app, Image background) {
+    return std::make_unique<MainMenuScene>(app, std::move(background));
 }
 
 REDUX_SCENE("title", makeTitleScene);
