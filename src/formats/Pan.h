@@ -48,6 +48,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "core/Image.h"
@@ -113,8 +114,13 @@ public:
     Image& backPage() { return back_; }
     // The palette to show frame() with: the file's, else the game palette.
     Palette palette() const;
-    // Sounds the last step started, in the order the original plays them.
+    // Sounds the last step started, in the order the original plays them
+    // (anim_flush_sounds at the end of anim_advance).
     const std::vector<int>& sounds() const { return sounds_; }
+    // Every sound the steps since the last call started (all the frames an
+    // advance() ran, in order), and forgets them: a scene plays them with
+    // App::sound, which keeps play_sound's options & 4 check.
+    std::vector<int> takeSounds() { return std::exchange(pending_, {}); }
 
     int frameTicks() const { return frameTicks_; }
     double framePeriod() const;  // seconds per frame
@@ -179,7 +185,7 @@ private:
     std::int16_t waitCount_ = 0;
     bool done_ = false;
     int presentMode_ = 2;  // 2: first frame, then 1, 0
-    std::vector<int> queued_, sounds_;
+    std::vector<int> queued_, sounds_, pending_;
     int shown_ = 0;
     double clock_ = 0;
 };

@@ -221,6 +221,7 @@ bool PanPlayer::step() {
     // anim_flush_sounds plays the queue from its end.
     sounds_.assign(queued_.rbegin(), queued_.rend());
     queued_.clear();
+    pending_.insert(pending_.end(), sounds_.begin(), sounds_.end());
     return true;
 }
 

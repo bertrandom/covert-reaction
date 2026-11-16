@@ -33,15 +33,16 @@ std::string frameName(int i) {
 
 }  // namespace
 
-REACTION_COMMAND("pan", "pan NAME OUTDIR [frames]: play a .PAN, writing each frame to OUTDIR (default 300 frames)",
+REACTION_COMMAND("pan", "pan NAME OUTDIR [frames [VAR0]]: play a .PAN, writing each frame to OUTDIR (default 300 frames; VAR0: set_scene_var(0, VAR0) first)",
               [](const GameData& d, const std::vector<std::string>& args) {
-                  if (args.size() < 2) throw std::runtime_error("usage: pan NAME OUTDIR [frames]");
+                  if (args.size() < 2) throw std::runtime_error("usage: pan NAME OUTDIR [frames [VAR0]]");
                   const int maxFrames = args.size() > 2 ? std::stoi(args[2]) : 300;
                   PanFile file = PanFile::parse(d.read(args[0]));
                   describe(args[0], file);
                   const std::filesystem::path out = args[1];
                   std::filesystem::create_directories(out);
                   PanPlayer player(std::move(file));
+                  if (args.size() > 3) player.setVar(0, std::stoi(args[3]));
                   const Palette pal = player.palette();
                   int n = 0;
                   while (n < maxFrames && player.step()) {
