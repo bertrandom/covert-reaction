@@ -145,22 +145,13 @@ floppies both work. It looks, in order, in:
 1. `--data <folder>` on the command line
 2. the `COVERT_DATA` environment variable
 3. the folder saved as `game_data` in `settings.ini` (see
-   [Saved games and settings](#saved-games-and-settings)): the one found or chosen
-   on an earlier start
+   [Saved games and settings](#saved-games-and-settings)): the one chosen on an
+   earlier start
 4. a folder named `Covert` next to the program or next to the macOS app (or in its
    `Contents/Resources`), and `resources/Covert` in this repository
 5. `Covert` in the per-user folder
-6. likely install places: the home folder, `Documents`, `Games`, `Desktop` and
-   `Downloads`, the program's own folder; `/Applications` (GOG's macOS app bundle),
-   CrossOver bottles and Steam on macOS; `Program Files`, `C:\GOG Games`, GOG
-   Galaxy, Steam and the roots of `C:` and `D:` on Windows; `~/.local/share`,
-   `/usr/share/games`, `/usr/local/share/games`, `~/GOG Games`, Steam and Wine's
-   `drive_c` on Linux; DOSBox-style folders (`~/dosbox`, `~/DOS`, ...) - each for a
-   folder named like the game (`Covert`, `COVERTAC`, `Covert Action`, `Sid Meier's
-   Covert Action`, ...), at most two levels down. A folder found this way is saved
-   as `game_data`, so later starts don't search.
 
-If none has the game, the window opens on a folder browser: pick the folder with
+It doesn't search the disk. If none of these has the game, the window opens on a folder browser: pick the folder with
 `TEXT.DTA` (folders that hold the game are marked "<- game files"; Enter opens a
 folder or takes a marked one, Backspace goes up, U uses the current folder, Esc
 quits; the mouse wheel and clicks work too). The choice is saved as `game_data`
@@ -265,7 +256,7 @@ Kept on purpose:
 
 | Folder | What it is |
 |---|---|
-| `src/core` | basics: finding (or searching for) and reading game files, images and palettes, settings, the built-in 8x8 font |
+| `src/core` | basics: finding and reading game files, images and palettes, settings, the built-in 8x8 font |
 | `src/formats` | the original file formats: pictures, fonts, text windows, animations, catalogs |
 | `src/game` | the game logic, ported from the original: case generation, the simulation, the mini-games, end of case, saved games |
 | `src/audio` | the sound drivers, ported, and the emulated MT-32, AdLib and PC speaker |

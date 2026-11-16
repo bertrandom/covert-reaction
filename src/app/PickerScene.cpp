@@ -6,7 +6,7 @@
 
 #include "core/BuiltinFont.h"
 #include "core/GameData.h"
-#include "core/GameSearch.h"
+#include "core/Folders.h"
 #include "formats/McgaPalette.h"
 #include "formats/TextWindow.h"
 
@@ -14,7 +14,7 @@ namespace reaction {
 
 namespace fs = std::filesystem;
 namespace bf = builtin_font;
-namespace gs = game_search;
+namespace gs = folders;
 
 namespace {
 

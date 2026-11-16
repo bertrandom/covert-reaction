@@ -1,10 +1,6 @@
-// Finding an installed copy of the game without being told where it is, and the
-// file-system side of the folder browser shown when that fails (PickerScene).
-//
-// The search tries a fixed list of likely install places (home, Documents,
-// /Applications, Program Files, GOG and Steam folders, Wine and DOSBox drives, ...)
-// for folders with likely names ("Covert Action", COVERT, ...), going at most two
-// levels into a matching folder or a *.app bundle. It never sweeps the disk.
+// The file-system side of the folder browser shown when the game files aren't
+// found (PickerScene): listing folders and drives, tidying and converting paths.
+
 #pragma once
 
 #include <filesystem>
@@ -13,23 +9,12 @@
 #include <string_view>
 #include <vector>
 
-namespace reaction::game_search {
+namespace reaction::folders {
 
 namespace fs = std::filesystem;
 
-struct Places {
-    fs::path home;                  // the user's home folder (empty: unknown)
-    std::vector<fs::path> appDirs;  // the program's folder, the folder holding the .app, ...
-};
-
 // The home folder from the environment (HOME; USERPROFILE on Windows).
 fs::path homeDir();
-
-// The folders the search looks into, in order (only those that exist).
-std::vector<fs::path> searchBases(const Places& places);
-
-// The first game folder found in or just below the search bases.
-std::optional<fs::path> search(const Places& places);
 
 // ---- The folder browser ----------------------------------------------------
 
@@ -54,4 +39,4 @@ bool isRoot(const fs::path& dir);
 std::string toUtf8(const fs::path& p);
 fs::path fromUtf8(std::string_view s);
 
-}  // namespace reaction::game_search
+}  // namespace reaction::folders

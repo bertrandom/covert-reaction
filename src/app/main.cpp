@@ -11,9 +11,8 @@
 // is saved as a BMP and the program exits.
 //
 // Finding the game files: --data, COVERT_DATA, the folder saved in settings.ini
-// (game_data), the bundle and per-user Covert folders (bundleCandidates), then a
-// search of likely install places (core/GameSearch.h; a find is saved as
-// game_data). If all fail, the window opens on PickerScene, a folder browser, and
+// (game_data), the bundle and per-user Covert folders (bundleCandidates). There is
+// no search of the disk: if all fail, the window opens on PickerScene, a folder browser, and
 // the game starts once a folder with the game files is chosen (saved too).
 // --scene picker or COVERT_FORCE_PICKER=1 shows that screen anyway (tests);
 // COVERT_PICKER_DIR sets the folder it opens in.
@@ -52,7 +51,7 @@ EM_JS(void, reaction_js_exit, (int status), {
 #include "app/Sound.h"
 #include "app/UserFiles.h"
 #include "core/GameData.h"
-#include "core/GameSearch.h"
+#include "core/Folders.h"
 #include "core/Settings.h"
 
 namespace fs = std::filesystem;
@@ -81,27 +80,12 @@ std::vector<fs::path> bundleCandidates() {
 }
 
 #ifndef __EMSCRIPTEN__
-// The program's own folders, for the search: the executable's, and the one
-// holding the macOS .app (SDL's base path is then <app>/Contents/Resources/).
-std::vector<fs::path> appDirs() {
-    std::vector<fs::path> out;
-    if (char* base = SDL_GetBasePath()) {
-        fs::path b(base);
-        SDL_free(base);
-        out.push_back(b.lexically_normal());
-        const fs::path n = game_search::tidy(b);
-        if (n.filename() == "Resources" && n.parent_path().filename() == "Contents")
-            out.push_back(n.parent_path().parent_path().parent_path());
-    }
-    return out;
-}
-
 // game_data in settings.ini (the rest of the file is kept as it is).
 void rememberGameData(const fs::path& dir) {
     const fs::path file = userFile("settings.ini");
     if (file.empty()) return;
     Settings s = Settings::load(file);
-    s.gameData = game_search::toUtf8(dir);
+    s.gameData = folders::toUtf8(dir);
     if (!s.save(file)) std::fprintf(stderr, "can't write %s\n", file.string().c_str());
 }
 
@@ -408,7 +392,7 @@ int main(int argc, char** argv) {
 #else
     // The folder saved in settings.ini (read in scripted runs too: only this key).
     const Settings saved = Settings::load(userFile("settings.ini"));
-    const fs::path savedDir = saved.gameData.empty() ? fs::path() : game_search::fromUtf8(saved.gameData);
+    const fs::path savedDir = saved.gameData.empty() ? fs::path() : folders::fromUtf8(saved.gameData);
     bool forcePicker = envFlag("COVERT_FORCE_PICKER");
     if (sceneName == "picker") {
         forcePicker = true;
@@ -422,13 +406,7 @@ int main(int argc, char** argv) {
         if (!savedDir.empty()) candidates.push_back(savedDir);
         for (auto& c : bundleCandidates()) candidates.push_back(std::move(c));
         data = GameData::locate(dataDir, candidates);
-        if (data) {
-            std::fprintf(stderr, "game data: %s\n", data->dir().string().c_str());
-        } else if (auto found = game_search::search({game_search::homeDir(), appDirs()})) {
-            std::fprintf(stderr, "game data: %s (found by the search)\n", found->string().c_str());
-            rememberGameData(*found);
-            data.emplace(*found);
-        }
+        if (data) std::fprintf(stderr, "game data: %s\n", data->dir().string().c_str());
     }
     // Not found: ask, in COVERT_PICKER_DIR, or near the folder saved before, or
     // in the home folder (PickerScene's default).
