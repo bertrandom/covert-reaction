@@ -36,6 +36,16 @@ bool GameData::isGameDir(const fs::path& dir) {
                        [&](std::string_view m) { return d.exists(m); });
 }
 
+std::vector<std::string> GameData::missingFiles(const fs::path& dir) {
+    std::vector<std::string> out;
+    std::error_code ec;
+    const bool isDir = fs::is_directory(dir, ec);
+    GameData d(dir);
+    for (std::string_view m : kMarkers)
+        if (!isDir || !d.exists(m)) out.emplace_back(m);
+    return out;
+}
+
 std::optional<GameData> GameData::locate(const std::optional<fs::path>& explicitDir,
                                          const std::vector<fs::path>& extraCandidates) {
     std::vector<fs::path> candidates;

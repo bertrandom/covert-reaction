@@ -34,6 +34,9 @@ public:
 
     // True if `dir` looks like a Covert Action directory.
     static bool isGameDir(const std::filesystem::path& dir);
+    // The marker files (TEXT.DTA, TITLE2.PAN, FACES.PIC) that `dir` lacks:
+    // empty for a game directory, all of them for a missing folder.
+    static std::vector<std::string> missingFiles(const std::filesystem::path& dir);
 
 private:
     std::filesystem::path dir_;

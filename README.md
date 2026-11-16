@@ -144,9 +144,29 @@ floppies both work. It looks, in order, in:
 
 1. `--data <folder>` on the command line
 2. the `COVERT_DATA` environment variable
-3. a folder named `Covert` next to the program or next to the macOS app (or in its
+3. the folder saved as `game_data` in `settings.ini` (see
+   [Saved games and settings](#saved-games-and-settings)): the one found or chosen
+   on an earlier start
+4. a folder named `Covert` next to the program or next to the macOS app (or in its
    `Contents/Resources`), and `resources/Covert` in this repository
-4. `Covert` in the per-user folder (see [Saved games and settings](#saved-games-and-settings))
+5. `Covert` in the per-user folder
+6. likely install places: the home folder, `Documents`, `Games`, `Desktop` and
+   `Downloads`, the program's own folder; `/Applications` (GOG's macOS app bundle),
+   CrossOver bottles and Steam on macOS; `Program Files`, `C:\GOG Games`, GOG
+   Galaxy, Steam and the roots of `C:` and `D:` on Windows; `~/.local/share`,
+   `/usr/share/games`, `/usr/local/share/games`, `~/GOG Games`, Steam and Wine's
+   `drive_c` on Linux; DOSBox-style folders (`~/dosbox`, `~/DOS`, ...) - each for a
+   folder named like the game (`Covert`, `COVERTAC`, `Covert Action`, `Sid Meier's
+   Covert Action`, ...), at most two levels down. A folder found this way is saved
+   as `game_data`, so later starts don't search.
+
+If none has the game, the window opens on a folder browser: pick the folder with
+`TEXT.DTA` (folders that hold the game are marked "<- game files"; Enter opens a
+folder or takes a marked one, Backspace goes up, U uses the current folder, Esc
+quits; the mouse wheel and clicks work too). The choice is saved as `game_data`
+and the game starts. `--scene picker` or `COVERT_FORCE_PICKER=1` shows the browser
+anyway, and `COVERT_PICKER_DIR` sets the folder it opens in (for testing). The web
+build has its own page for this (see [Web](#web)).
 
 File names are matched case-insensitively.
 
@@ -245,7 +265,7 @@ Kept on purpose:
 
 | Folder | What it is |
 |---|---|
-| `src/core` | basics: finding and reading game files, images and palettes, settings |
+| `src/core` | basics: finding (or searching for) and reading game files, images and palettes, settings, the built-in 8x8 font |
 | `src/formats` | the original file formats: pictures, fonts, text windows, animations, catalogs |
 | `src/game` | the game logic, ported from the original: case generation, the simulation, the mini-games, end of case, saved games |
 | `src/audio` | the sound drivers, ported, and the emulated MT-32, AdLib and PC speaker |
@@ -296,3 +316,9 @@ libraries; none of their code is in this repository:
 | [Munt](https://github.com/munt/munt) libmt32emu | 2.8.4 | LGPL-2.1-or-later | the MT-32 / CM-32L emulation |
 | [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3) | 765ec96 (2024) | LGPL-2.1-or-later | the AdLib's OPL2 |
 | SDL2 | system | zlib | window, input, audio output |
+
+Included in the source:
+
+| Code | Version | License | Used for |
+|---|---|---|---|
+| [font8x8](https://github.com/dhepper/font8x8) (Daniel Hepper, after Marcel Sondaar and IBM's VGA fonts), `font8x8_basic.h`, in `src/core/BuiltinFont.cpp` | 8e279d2 (2019) | public domain | the 8x8 font of the screen that asks for the game files (the game's own fonts are game files) |

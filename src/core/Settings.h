@@ -32,6 +32,9 @@ struct Settings {
     bool mt32CleanMixing = false;
     // Desktop only: start in full screen (Alt+Enter also changes it).
     bool fullscreen = false;
+    // Desktop only: the game files' folder, as UTF-8 (empty: not chosen yet). Set
+    // when the start-up search finds the game or the player picks its folder.
+    std::string gameData;
 
     static Settings load(const std::filesystem::path& file);
     bool save(const std::filesystem::path& file) const;   // false if it can't be written

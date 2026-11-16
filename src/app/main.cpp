@@ -1,6 +1,6 @@
 // Covert Reaction: entry point. Finds the game data, opens the window and runs scenes.
 //
-//   covert-reaction [--data DIR] [--scene NAME] [--shot FILE --ticks N] [--input "T:KEY ..."]
+//   covert-reaction [--data DIR] [--scene NAME|picker] [--shot FILE --ticks N] [--input "T:KEY ..."]
 //                [--sound auto|mt32|adlib|speaker|none] [--mt32-roms DIR]
 //
 // --sound overrides the Options menu's sound device for this run; --mt32-roms
@@ -9,6 +9,14 @@
 // --shot/--ticks/--input script a run for testing: KEYs (SDL key names, e.g.
 // "Down", "Return") are injected at the given ticks, and after N ticks the frame
 // is saved as a BMP and the program exits.
+//
+// Finding the game files: --data, COVERT_DATA, the folder saved in settings.ini
+// (game_data), the bundle and per-user Covert folders (bundleCandidates), then a
+// search of likely install places (core/GameSearch.h; a find is saved as
+// game_data). If all fail, the window opens on PickerScene, a folder browser, and
+// the game starts once a folder with the game files is chosen (saved too).
+// --scene picker or COVERT_FORCE_PICKER=1 shows that screen anyway (tests);
+// COVERT_PICKER_DIR sets the folder it opens in.
 //
 // One frame of work is Runner::step(). The desktop calls it in a loop; in a browser
 // (Emscripten), which can't run a blocking loop, emscripten_set_main_loop calls it
@@ -38,11 +46,14 @@ EM_JS(void, reaction_js_exit, (int status), {
 #endif
 
 #include "app/App.h"
+#include "app/PickerScene.h"
 #include "app/Scenes.h"
 #include "app/Screen.h"
 #include "app/Sound.h"
 #include "app/UserFiles.h"
 #include "core/GameData.h"
+#include "core/GameSearch.h"
+#include "core/Settings.h"
 
 namespace fs = std::filesystem;
 using namespace reaction;
@@ -68,6 +79,37 @@ std::vector<fs::path> bundleCandidates() {
     if (auto user = userDataDir(); !user.empty()) out.push_back(user / "Covert");
     return out;
 }
+
+#ifndef __EMSCRIPTEN__
+// The program's own folders, for the search: the executable's, and the one
+// holding the macOS .app (SDL's base path is then <app>/Contents/Resources/).
+std::vector<fs::path> appDirs() {
+    std::vector<fs::path> out;
+    if (char* base = SDL_GetBasePath()) {
+        fs::path b(base);
+        SDL_free(base);
+        out.push_back(b.lexically_normal());
+        const fs::path n = game_search::tidy(b);
+        if (n.filename() == "Resources" && n.parent_path().filename() == "Contents")
+            out.push_back(n.parent_path().parent_path().parent_path());
+    }
+    return out;
+}
+
+// game_data in settings.ini (the rest of the file is kept as it is).
+void rememberGameData(const fs::path& dir) {
+    const fs::path file = userFile("settings.ini");
+    if (file.empty()) return;
+    Settings s = Settings::load(file);
+    s.gameData = game_search::toUtf8(dir);
+    if (!s.save(file)) std::fprintf(stderr, "can't write %s\n", file.string().c_str());
+}
+
+bool envFlag(const char* name) {
+    const char* v = std::getenv(name);
+    return v && *v && std::string(v) != "0";
+}
+#endif
 
 // Shows a fatal error: a message box on the desktop, the page in a browser (the
 // web shell defines Module.reactionError), and stderr everywhere.
@@ -138,39 +180,33 @@ void pushKey(ScriptKey sk) {
 
 // Everything a run owns, so a frame can be one call (the browser's main loop
 // can't keep these as locals of a loop that never returns).
+//
+// Without the game files the run starts on PickerScene (no App yet); the game
+// itself (App, sound, the first scene) starts once a folder is chosen.
 class Runner {
 public:
-    Runner(GameData data, const std::string& sceneName, Script script, bool headless, SoundArgs sound)
-        : data_(std::move(data)),
-          script_(std::move(script)),
+    // `data`: the game files, or nullopt to ask for them first (PickerScene,
+    // opening in `pickerStart`).
+    Runner(std::optional<GameData> data, std::string sceneName, Script script, bool headless, SoundArgs sound,
+           bool fullscreen = false, const fs::path& pickerStart = {})
+        : script_(std::move(script)),
           scripted_(script_.shot.has_value()),
-          screen_("Covert Reaction", 3, headless),
-          app_{data_, screen_, FontSet::load(data_)} {
-        if (!headless) {   // scripted runs keep the defaults, so they stay reproducible
-            app_.settingsFile = userFile("settings.ini");
-            app_.settings = Settings::load(app_.settingsFile);
+          headless_(headless),
+          sceneName_(std::move(sceneName)),
+          soundArgs_(std::move(sound)),
+          screen_("Covert Reaction", 3, headless) {
 #ifndef __EMSCRIPTEN__
-            if (app_.settings.fullscreen) screen_.setFullscreen(true);
+        if (!headless && fullscreen) screen_.setFullscreen(true);
+#else
+        (void)fullscreen;
 #endif
+        if (data) {
+            startGame(std::move(*data));
+        } else {
+            auto picker = std::make_unique<PickerScene>(screen_, pickerStart);
+            picker_ = picker.get();
+            scene_ = std::move(picker);
         }
-        // Sound (never in scripted runs). The device opens now on the desktop; a
-        // browser only lets a page play sound after a click or a key.
-        if (!headless) {
-            soundDevice_ = sound.device;
-            std::vector<fs::path> extra;
-            if (auto dir = userDataDir(); !dir.empty()) {
-                extra.push_back(dir);
-                extra.push_back(dir / "MT32");
-            }
-            sound_ = std::make_unique<SoundOut>(data_, audio::mt32RomDirs(sound.mt32Roms, data_.dir(), extra),
-                                                wantedSound());
-            app_.audio = &sound_->engine();
-#ifndef __EMSCRIPTEN__
-            sound_->open();
-#endif
-        }
-        scene_ = makeScene(app_, sceneName);
-        if (!scene_) throw std::runtime_error("unknown scene: " + sceneName);
         freq_ = SDL_GetPerformanceFrequency();
         tickLen_ = freq_ / kTicksPerSecond;
         last_ = SDL_GetPerformanceCounter();
@@ -189,12 +225,24 @@ public:
                      (e.key.keysym.mod & KMOD_ALT)) {
                 screen_.toggleFullscreen();
 #ifndef __EMSCRIPTEN__
-                app_.settings.fullscreen = screen_.fullscreen();
-                app_.saveSettings();
+                if (app_) {
+                    app_->settings.fullscreen = screen_.fullscreen();
+                    app_->saveSettings();
+                }
 #endif
             }
             else
                 scene_->handle(e);
+        }
+        // The game files' folder was just chosen: keep it, start the game.
+        if (picker_ && picker_->chosen()) {
+            const fs::path dir = *picker_->chosen();
+            picker_ = nullptr;
+            std::fprintf(stderr, "game data: %s (chosen)\n", dir.string().c_str());
+#ifndef __EMSCRIPTEN__
+            rememberGameData(dir);
+#endif
+            startGame(GameData(dir));
         }
         int steps = 0;
         if (scripted_) {
@@ -209,14 +257,14 @@ public:
         for (int n = 0; n < steps; ++n) {
             auto [lo, hi] = script_.keys.equal_range(tick_);
             for (auto it = lo; it != hi; ++it) pushKey(it->second);
-            app_.syncAnimations();   // options bit 8 = Settings::animations (App.h)
+            if (app_) app_->syncAnimations();   // options bit 8 = Settings::animations (App.h)
             scene_->tick();
             ++tick_;
         }
         // The Options menu may have changed the device: switch at once.
         if (sound_) {
             sound_->engine().select(wantedSound());
-            sound_->engine().setMt32CleanMixing(app_.settings.mt32CleanMixing);
+            sound_->engine().setMt32CleanMixing(app_->settings.mt32CleanMixing);
         }
         scene_->draw(frame_);
         if (scripted_ && tick_ >= script_.ticks) {
@@ -229,16 +277,52 @@ public:
     }
 
 private:
-    std::string wantedSound() const { return soundDevice_.empty() ? app_.settings.sound : soundDevice_; }
+    // The game proper: App, settings, sound and the first scene.
+    void startGame(GameData data) {
+        data_.emplace(std::move(data));
+        app_.reset(new App{*data_, screen_, FontSet::load(*data_)});
+        if (!headless_) {   // scripted runs keep the defaults, so they stay reproducible
+            app_->settingsFile = userFile("settings.ini");
+            app_->settings = Settings::load(app_->settingsFile);
+#ifndef __EMSCRIPTEN__
+            if (app_->settings.fullscreen) screen_.setFullscreen(true);
+#endif
+        }
+        // Sound (never in scripted runs). The device opens now on the desktop; a
+        // browser only lets a page play sound after a click or a key.
+        if (!headless_) {
+            soundDevice_ = soundArgs_.device;
+            std::vector<fs::path> extra;
+            if (auto dir = userDataDir(); !dir.empty()) {
+                extra.push_back(dir);
+                extra.push_back(dir / "MT32");
+            }
+            sound_ = std::make_unique<SoundOut>(*data_, audio::mt32RomDirs(soundArgs_.mt32Roms, data_->dir(), extra),
+                                                wantedSound());
+            app_->audio = &sound_->engine();
+#ifndef __EMSCRIPTEN__
+            sound_->open();
+#endif
+        }
+        scene_ = makeScene(*app_, sceneName_);
+        if (!scene_) throw std::runtime_error("unknown scene: " + sceneName_);
+    }
 
-    GameData data_;
+    std::string wantedSound() const { return soundDevice_.empty() ? app_->settings.sound : soundDevice_; }
+
     Script script_;
     bool scripted_;
+    bool headless_;
+    std::string sceneName_;
+    SoundArgs soundArgs_;
+    // Declared in the order they're built; destroyed in reverse (scenes first).
+    std::optional<GameData> data_;
     Screen screen_;
-    App app_;
+    std::unique_ptr<App> app_;
     std::string soundDevice_;
     std::unique_ptr<SoundOut> sound_;   // before scene_: outlives the scenes that play sounds
     std::unique_ptr<Scene> scene_;
+    PickerScene* picker_ = nullptr;     // scene_ while it's the picker
     Frame frame_;
     Uint64 freq_ = 0, tickLen_ = 0, last_ = 0, acc_ = 0;
     long tick_ = 0;
@@ -296,6 +380,8 @@ int main(int argc, char** argv) {
     // click or key) must not stop the game.
     if (!headless && SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
         std::fprintf(stderr, "no audio: %s\n", SDL_GetError());
+#ifdef __EMSCRIPTEN__
+    // The page (web/shell.html) has its own way to ask for the files.
     auto data = GameData::locate(dataDir, bundleCandidates());
     if (!data) {
         const char* msg =
@@ -307,8 +393,6 @@ int main(int argc, char** argv) {
         return 1;
     }
     std::fprintf(stderr, "game data: %s\n", data->dir().string().c_str());
-
-#ifdef __EMSCRIPTEN__
     gHeadless = headless;
     try {
         gRunner = std::make_unique<Runner>(std::move(*data), sceneName, std::move(script), headless, std::move(sound));
@@ -322,9 +406,52 @@ int main(int argc, char** argv) {
     emscripten_set_main_loop(webFrame, 0, true);
     return 0;
 #else
+    // The folder saved in settings.ini (read in scripted runs too: only this key).
+    const Settings saved = Settings::load(userFile("settings.ini"));
+    const fs::path savedDir = saved.gameData.empty() ? fs::path() : game_search::fromUtf8(saved.gameData);
+    bool forcePicker = envFlag("COVERT_FORCE_PICKER");
+    if (sceneName == "picker") {
+        forcePicker = true;
+        sceneName = "start";
+    }
+    std::optional<GameData> data;
+    if (!forcePicker) {
+        if (dataDir && !GameData::isGameDir(*dataDir))
+            std::fprintf(stderr, "--data %s: not the game files\n", dataDir->string().c_str());
+        std::vector<fs::path> candidates;
+        if (!savedDir.empty()) candidates.push_back(savedDir);
+        for (auto& c : bundleCandidates()) candidates.push_back(std::move(c));
+        data = GameData::locate(dataDir, candidates);
+        if (data) {
+            std::fprintf(stderr, "game data: %s\n", data->dir().string().c_str());
+        } else if (auto found = game_search::search({game_search::homeDir(), appDirs()})) {
+            std::fprintf(stderr, "game data: %s (found by the search)\n", found->string().c_str());
+            rememberGameData(*found);
+            data.emplace(*found);
+        }
+    }
+    // Not found: ask, in COVERT_PICKER_DIR, or near the folder saved before, or
+    // in the home folder (PickerScene's default).
+    fs::path pickerStart;
+    if (!data) {
+        std::fprintf(stderr, "game data not found: showing the folder browser\n");
+        std::error_code ec;
+        if (const char* env = std::getenv("COVERT_PICKER_DIR"); env && *env) {
+            pickerStart = env;
+        } else {
+            for (fs::path p = savedDir; !p.empty(); p = p.parent_path()) {
+                if (fs::is_directory(p, ec)) {
+                    pickerStart = p;
+                    break;
+                }
+                if (p == p.parent_path()) break;
+            }
+        }
+    }
     int status = 0;
     try {
-        Runner runner(std::move(*data), sceneName, std::move(script), headless, std::move(sound));
+        Runner runner(std::move(data), sceneName, std::move(script), headless, std::move(sound), saved.fullscreen,
+                      pickerStart);
         while (runner.step()) {}
     } catch (const std::exception& ex) {
         reportError(ex.what(), headless);
