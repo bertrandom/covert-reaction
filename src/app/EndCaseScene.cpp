@@ -4,6 +4,7 @@
 // the original's screens in its order, built on ScriptScene.
 #include <memory>
 
+#include "app/CityLoop.h"
 #include "app/EndCase.h"
 #include "app/FrontEnd.h"
 #include "app/LoadGame.h"
@@ -43,15 +44,8 @@ std::vector<Step> storySteps(const TextDb& plot, const std::string& key) {
 
 // ---------------------------------------------------------------- the next case
 
-// TODO(city loop): GAME's start of a new case (ENV[1] = 0: mission_briefing,
-// then the city loop). Until the city loop exposes its entry, a notice says
-// where the case starts and the main menu follows.
-std::unique_ptr<Scene> startCityForNewCase(App& app, const Frame& last) {
-    const auto& w = app.game.world;
-    std::string text = "Your case begins in\n" + w.cities[static_cast<std::size_t>(w.hdr.hereCity) & 15].name.str() +
-                       ".\nThe city loop\nisn't ported yet.\n";
-    return noticeThen(app, last, text, [&app](const Frame& f) { return mainMenu(app, f); });
-}
+// GAME's start of a new case (ENV[1] = 0: mission_briefing, then the city loop).
+std::unique_ptr<Scene> startCityForNewCase(App& app, const Frame& last) { return makeCityNewCaseScene(app, last); }
 
 // FINAL main after case_intro_story: generate_case (with case_briefing's line-up
 // when it asks for one), save_env, then GAME. A wrong face sends the original to

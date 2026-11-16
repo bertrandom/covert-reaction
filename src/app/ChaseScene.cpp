@@ -48,6 +48,7 @@
 #include "formats/McgaPalette.h"
 #include "formats/Pic.h"
 #include "formats/TextWindow.h"
+#include "app/MiniGames.h"
 #include "game/Chase.h"
 #include "game/World.h"
 
@@ -674,6 +675,10 @@ std::unique_ptr<Scene> makePracticeChaseScene(App& app, int mode) {
 }
 
 }  // namespace
+
+std::unique_ptr<Scene> makeChaseScene(App& app, const ChaseSetup& setup, ChaseDone onDone) {
+    return std::make_unique<ChaseScene>(app, setup, std::move(onDone));
+}
 
 REDUX_SCENE("chase", [](App& app) { return makePracticeChaseScene(app, 14); });
 REDUX_SCENE("chase-escape", [](App& app) { return makePracticeChaseScene(app, 6); });

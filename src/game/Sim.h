@@ -271,6 +271,10 @@ public:
     int capturedScreen(bool agree);                // captured_screen: 7 (escape) or 0 (exchanged)
     bool prisonerExchange(bool agree);             // prisoner_exchange (the menu's answer)
 
+    // draw_wrapped_text(width, x, y, color) of text_buf: drawn by the UI, laid out
+    // here; returns the y below.
+    int drawWrapped(int width, int x, int y, int color);
+
     // CITY.C show_prose: a prose.dta passage appended to text_buf, wrapped at `width`.
     void showProse(const char* key, int width, const std::string& rplc = {}, int n = 0);
 
@@ -297,8 +301,6 @@ private:
     void teletype(const char* title) { emit(SimEvent::Kind::Teletype, title); }
     int notice(const std::string& s, int x = 16, int y = 21, unsigned flags = 0);   // show_menu(s, x, y)
     void waitKey() { emit(SimEvent::Kind::Wait); }
-    // draw_wrapped_text(width, x, y, color) of text_buf: drawn by the UI, laid out here.
-    int drawWrapped(int width, int x, int y, int color);
     void endCase();
     int rnd(int n) { return static_cast<std::int16_t>(rng_.below(n)); }
     Locations loc() { return Locations(w_, rng_, career_.mm); }

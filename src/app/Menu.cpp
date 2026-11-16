@@ -5,7 +5,7 @@ namespace redux {
 Menu::Menu(const Font& font, std::string text, int x, int y, TextWindowOptions opt)
     : font_(&font), text_(std::move(text)), x_(x), y_(y), opt_(opt),
       layout_(layoutTextWindow(font, text_, x, y)), sel_(opt.selected) {
-    if (layout_.items <= 0 || layout_.firstItem < 0 || opt_.showOk) sel_ = -1;
+    if (layout_.items <= 0 || layout_.firstItem < 0 || opt_.showOk || opt_.noSelect) sel_ = -1;
     else if (sel_ < 0 || sel_ >= layout_.items) sel_ = 0;
 }
 
@@ -27,7 +27,7 @@ void Menu::choose(int item) {
 
 void Menu::handle(const SDL_Event& e, SDL_Point mouse) {
     if (flash_ >= 0 || done_) return;
-    const bool hasItems = layout_.items > 0 && layout_.firstItem >= 0 && !opt_.showOk;
+    const bool hasItems = layout_.items > 0 && layout_.firstItem >= 0 && !opt_.showOk && !opt_.noSelect;
     if (e.type == SDL_KEYDOWN) {
         switch (e.key.keysym.sym) {
         case SDLK_DOWN:

@@ -30,6 +30,7 @@
 
 #include "app/Keypad.h"
 #include "app/Menu.h"
+#include "app/MiniGames.h"
 #include "app/Scenes.h"
 #include "game/Tac.h"
 
@@ -94,7 +95,10 @@ int tacKey(const SDL_Keysym& k, bool numlock) {
 
 class TacScene : public Scene {
 public:
-    TacScene(App& app, TacSetup setup) : app_(app), tac_(app.data, app.fonts, std::move(setup)) { tac_.start(); }
+    TacScene(App& app, TacSetup setup, std::shared_ptr<TacHooks> hooks = {}, TacDone onDone = {})
+        : app_(app), tac_(app.data, app.fonts, std::move(setup), std::move(hooks)), onDone_(std::move(onDone)) {
+        tac_.start();
+    }
 
     void handle(const SDL_Event& e) override {
         if (menu_) {
@@ -165,6 +169,7 @@ public:
     std::unique_ptr<Scene> next() override {
         if (!tac_.finished() || !reported_ || left_) return nullptr;
         left_ = true;
+        if (onDone_) return onDone_(app_, tac_.result());
         auto s = makeScene(app_, "main-menu");
         if (!s) quit = true;
         return s;
@@ -173,6 +178,7 @@ public:
 private:
     App& app_;
     Tac tac_;
+    TacDone onDone_;
     std::optional<Menu> menu_;
     std::optional<SDL_Keysym> held_;
     SDL_Keycode heldKey_ = SDLK_UNKNOWN;   // the physical key behind held_
@@ -205,6 +211,10 @@ TacSetup practiceSetup() {
 }
 
 }  // namespace
+
+std::unique_ptr<Scene> makeTacScene(App& app, TacSetup setup, std::shared_ptr<TacHooks> hooks, TacDone onDone) {
+    return std::make_unique<TacScene>(app, std::move(setup), std::move(hooks), std::move(onDone));
+}
 
 REDUX_SCENE("tac", [](App& app) {
     TacSetup s = practiceSetup();

@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <memory>
 
+#include "app/CityLoop.h"
 #include "app/DosKey.h"
 #include "app/FrontEnd.h"
 #include "app/Menu.h"
@@ -373,16 +374,14 @@ private:
 };
 
 // The end of FINAL's start-up: generate_case (with case_briefing's leader line-up
-// when it asks for one), then GAME would take over -- the city loop isn't ported
-// yet, so a notice says where the case starts.
+// when it asks for one), then GAME: the mission briefing and the city loop.
 std::unique_ptr<Scene> caseNotPorted(App& app, const Frame& last) {
     auto& g = app.game;
     CaseResult res = CaseGenerator(g.world, g.rng, app.data, caseSetupFor(g)).generate();
+    g.storeCareer();
     auto startNotice = [&app](const Frame& f) -> std::unique_ptr<Scene> {
-        const auto& w = app.game.world;
-        std::string text = "Your case begins in\n" + w.cities[static_cast<std::size_t>(w.hdr.hereCity) & 15].name.str() +
-                           ".\nThe city loop\nisn't ported yet.\n";
-        return std::make_unique<NoticeScene>(app, f, text);
+        app.game.storeCareer();
+        return makeCityNewCaseScene(app, f);
     };
     if (!res.faceCheck) return startNotice(last);
     return makeLeaderFacesScene(app, res.lineup, [&app, startNotice](bool passed, const Frame& f) -> std::unique_ptr<Scene> {

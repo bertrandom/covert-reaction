@@ -3,6 +3,7 @@
 // Game". The files and their format are src/game/SaveGame.*.
 #include <memory>
 
+#include "app/CityLoop.h"
 #include "app/EndCase.h"
 #include "app/FrontEnd.h"
 #include "app/LoadGame.h"
@@ -22,21 +23,10 @@ std::shared_ptr<Slots> readSlots(const App& app) {
     return std::make_shared<Slots>(savegame::readSlots(userDataDir(), app.data.dir()));
 }
 
-// TODO(city loop): GAME resumed from a saved game (FINAL main: ENV[0] = 0,
-// ENV[1] = 1, ENV[7] = 0, ENV[15] = 0, save_env, then GAME's main with
-// ENV[1] != 0: difficulty = ENV+50h, last_exit = 0, draw_status_bar,
-// advance_time(0), the city loop in here_city). Until the city loop exposes that
-// entry, a notice, then the main menu.
-std::unique_ptr<Scene> resumeCityLoop(App& app, const Frame& last) {
-    const auto& w = app.game.world;
-    std::string text = "Game loaded: " + w.cities[static_cast<std::size_t>(w.hdr.hereCity) & 15].name.str() +
-                       ".\nThe city loop\nisn't ported yet.\n";
-    return std::make_unique<ScriptScene>(app, last, [text, &app](ScriptScene& s) {
-        s.insert({ScriptScene::menuStep(text, 96, 90), ScriptScene::finishStep([&app](const Frame& f) {
-                      return makeMainMenuSceneOver(app, f.image);
-                  })});
-    });
-}
+// GAME resumed from a saved game (FINAL main: ENV[0] = 0, ENV[1] = 1, ENV[7] = 0,
+// ENV[15] = 0, save_env, then GAME's main with ENV[1] != 0: difficulty =
+// ENV+50h, last_exit = 0, draw_status_bar, advance_time(0), the city loop).
+std::unique_ptr<Scene> resumeCityLoop(App& app, const Frame& last) { return makeCityResumeScene(app, last); }
 
 }  // namespace
 

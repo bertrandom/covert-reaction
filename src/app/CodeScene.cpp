@@ -31,6 +31,7 @@
 
 #include "app/FrontEnd.h"
 #include "app/Menu.h"
+#include "app/MiniGames.h"
 #include "app/Scenes.h"
 #include "formats/McgaPalette.h"
 #include "formats/TextWindow.h"
@@ -437,6 +438,10 @@ std::unique_ptr<Scene> makePracticeCodeScene(App& app) {
 }
 
 }  // namespace
+
+std::unique_ptr<Scene> makeCodeScene(App& app, const CodeSetup& setup, CodeDone onDone) {
+    return std::make_unique<CodeScene>(app, setup, std::move(onDone));
+}
 
 REDUX_SCENE("code", makePracticeCodeScene);
 

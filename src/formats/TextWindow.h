@@ -36,6 +36,7 @@ struct TextWindowOptions {
     int selected = -1;            // highlighted item (text_window's default_sel), -1: none
     unsigned disabled = 0;        // bit n: item n is drawn with '^' for its leading space
     bool showOk = false;          // the "OK" button in the bottom-right corner (show_ok)
+    bool noSelect = false;        // menu_flag (Menu): items aren't highlighted or chosen
     // Odd y: no bevel, the box is filled with this (the port's fillcolor);
     // white (15) switches to dark text. Even y always draws the colour-5 bevel box.
     std::uint8_t fillColor = 5;

@@ -108,6 +108,9 @@ public:
     bool finished() const { return done_; }
 
     const Image& frame() const { return view_; }
+    // Page 2 (the back page the background is drawn on, at its (0, 0)): a game may
+    // draw on it before the first step (text_window's portrait).
+    Image& backPage() { return back_; }
     // The palette to show frame() with: the file's, else the game palette.
     Palette palette() const;
     // Sounds the last step started, in the order the original plays them.
