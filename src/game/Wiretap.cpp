@@ -79,6 +79,7 @@ WiretapResult Wiretap::result() const {
     WiretapResult r;
     r.progress = progress_;
     r.alarms = alarms_;
+    r.sound = sound_;
     return r;
 }
 

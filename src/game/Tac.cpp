@@ -272,7 +272,8 @@ void Tac::play_tune(int n) {
 }
 
 Task<void> Tac::tac_main() {
-    options = (setup_.practice ? 0x20u : 0u) | (setup_.female ? 2u : 0u) | (setup_.sound ? 4u : 0u);
+    options = (setup_.otherOptions & ~0x26u & 0xFFFFu) | (setup_.practice ? 0x20u : 0u) | (setup_.female ? 2u : 0u) |
+              (setup_.sound ? 4u : 0u);
     if (setup_.env0 == 7) tac_mode = 1;
     if (setup_.env0 == 8) tac_mode = 2;
     if (setup_.env0 == 10) tac_mode = 3;
@@ -374,6 +375,7 @@ Task<void> Tac::tac_main() {
     result_.env13 = (mission_flags & 4) == 0;
     result_.minutes = frame_count / 60;
     result_.gameSpeed = game_speed;
+    result_.options = options;
     result_.roomsSeen = setup_.roomsSeen;
     for (int i = 0; i <= map_.nRooms; i++)
         if (room(i).flags & 2) result_.roomsSeen |= std::uint32_t{1} << i;

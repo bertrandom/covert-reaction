@@ -50,7 +50,8 @@ struct TacSetup {
     bool practice = true;       // options & 20h (forces tac_mode 0 and the building on alert)
     bool female = false;        // options & 2: spritesf.pic and equip1.pic (else sprites.pic, equip1m.pic)
     bool sound = true;          // options & 4
-    int difficulty = 1;         // env +3Ah: the case's difficulty (orig_difficulty), 0-3
+    unsigned otherOptions = 0;  // the options word's other bits (kept, and saved back)
+    int difficulty = 1;        // env +3Ah: the case's difficulty (orig_difficulty), 0-3
     int skillLevels = 0x0555;   // env +4Eh env_flags: bits 0-1 the skill, 8-9 the game speed
     int alertLevel = 0;         // env +48h (break-ins and practice); for the others the game's value
     int org = 4, city = 0;      // env +22h / +20h: the building's organization and city
@@ -87,6 +88,7 @@ struct TacResult {
     int env13 = 0;              // ENV[13] (mission_flags & 4) == 0
     int minutes = 0;            // ENV[15] frame_count / 60
     int gameSpeed = 1;          // back into env_flags bits 8-9
+    unsigned options = 0;       // env +24h, as save_env writes it (Alt-S toggles kept)
     std::uint32_t roomsSeen = 0;
     int photos = 0, bugs = 0;
     std::vector<TacSetup::Person> persons;   // persons[] as TAC left them (known/found bits)

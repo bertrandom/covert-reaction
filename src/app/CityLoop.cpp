@@ -129,13 +129,12 @@ std::unique_ptr<Scene> startChase(App& app, std::shared_ptr<CityEnv> env, int pr
         (*env)[9] = static_cast<std::uint8_t>(r.outcome);
         (*env)[10] = static_cast<std::uint8_t>(r.score);
         (*env)[13] = 1;
-        if (r.buildingReached >= 0) {
-            (*env)[14] = static_cast<std::uint8_t>(r.buildingReached);
-            hh.hereOrg = static_cast<std::int16_t>(r.buildingReached);
-        }
+        // check_building_reached writes only ENV[0Eh] (GAME reads it after being
+        // chased, last_exit 6); here_org stays what GAME saved.
+        if (r.buildingReached >= 0) (*env)[14] = static_cast<std::uint8_t>(r.buildingReached);
         (*env)[15] = static_cast<std::uint8_t>(r.minutes);
         hh.skillLevels = static_cast<std::int16_t>(r.envFlags);
-        hh.options = static_cast<std::int16_t>(r.options);
+        // (CHASE doesn't save env.sve: an Alt-S there lasts for the chase only)
         return resumeGame(a, env);
     });
 }
@@ -150,6 +149,9 @@ std::unique_ptr<Scene> startBug(App& app, std::shared_ptr<CityEnv> env, int prog
         (*env)[8] = r.envProgress();
         (*env)[9] = r.envAlarms();
         (*env)[15] = 0;
+        // save_env("env.sve") keeps BUG's options: its Alt-S stays in the city
+        auto& o = a.game.world.hdr.options;
+        o = static_cast<std::int16_t>(r.sound ? (o | 4) : (o & ~4));
         return resumeGame(a, env);
     }, hooks);
 }
@@ -166,7 +168,7 @@ std::unique_ptr<Scene> startCode(App& app, std::shared_ptr<CityEnv> env) {
     return makeCodeScene(app, s, [env](App& a, const CodeOutcome& r) {
         (*env)[9] = static_cast<std::uint8_t>(r.result);
         (*env)[15] = static_cast<std::uint8_t>(r.elapsed);
-        a.game.world.hdr.options = static_cast<std::int16_t>(r.options);
+        // (CODE writes back ENV[0], [9], [15] only: its Alt-S lasts for the puzzle)
         return resumeGame(a, env);
     });
 }

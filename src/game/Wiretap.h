@@ -56,6 +56,7 @@ struct WiretapSetup {
 struct WiretapResult {
     int progress = 0;         // phones tapped / tracer circuits done (0 after an alarm)
     int alarms = 0;
+    bool sound = true;        // options & 4 as save_env writes it (after Alt-S toggles)
     bool quitGame = false;    // Alt-Q, Yes: exit() without saving the env (ENV[0] = FFh)
     // The env bytes: ENV[8] = progress * 5, ENV[9] = alarms, ENV[0] = 11h in
     // practice (back to FINAL) else 0 (back to GAME).

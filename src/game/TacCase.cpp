@@ -218,6 +218,7 @@ TacSetup TacCaseHooks::setupFrom(const World& w, int program, int env12, std::ui
     s.practice = false;
     s.female = h.options & 2;
     s.sound = h.options & 4;
+    s.otherOptions = static_cast<std::uint16_t>(h.options);
     s.difficulty = h.difficulty;
     s.skillLevels = h.skillLevels;
     s.alertLevel = h.var48;
@@ -252,6 +253,7 @@ TacSetup TacCaseHooks::setupFrom(const World& w, int program, int env12, std::ui
 void TacCaseHooks::applyResult(World& w, const TacResult& r) {
     auto& h = w.hdr;
     h.skillLevels = static_cast<std::int16_t>((h.skillLevels & ~0x300) | (r.gameSpeed & 3) << 8);
+    h.options = static_cast<std::int16_t>(r.options);   // save_env: TAC's Alt-S stays in the city
     for (std::size_t i = 0; i < r.persons.size() && i < 64; ++i) w.persons[i] = toWorld(r.persons[i]);
     h.seenOrgs = static_cast<std::int16_t>(r.knownPlans);
     w.cityClueCount[0] = static_cast<std::int16_t>(r.cityClueCount0);
