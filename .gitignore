@@ -1,4 +1,5 @@
 /build/
+/build-*/
 # The original game's files: provided by the player, never committed
 /resources/
 .DS_Store
