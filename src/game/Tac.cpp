@@ -1015,7 +1015,9 @@ Task<void> Tac::fire_gun(int who, int flag) {
         play_tune(0);
     } else if (hit) {
         color = hit_colors[clamp(hit, 0, 4)];
-        // (hit_flash_image is never loaded: the image call draws nothing)
+        // hit_flash_image (DGROUP a058) is equip_images[14] (the array starts at
+        // a03c): the 15th image equipment_screen cuts from equip2.pic
+        gfx_.image(gfx_.gpage, 4, 1, &equip_images[14]);
         gfx_.recolor(gfx_.gpage, 4, 1, 16, 16, 1, color);
     }
 }
