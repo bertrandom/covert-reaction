@@ -160,7 +160,14 @@ SetupScene::SetupScene(const Screen& screen, SetupConfig config, Done done)
         buttons_.push_back({Action::ChooseGameFile, "Choose installer or archive…"});
         buttons_.push_back({Action::ChooseGameFolder, "Choose folder…"});
     }
-    buttons_.push_back({Action::ChooseRoms, "Choose folder…"});
+    if (config_.romImportDir.empty()) {
+        buttons_.push_back({Action::ChooseRoms, "Choose folder…"});
+    } else if (kind == dialogs::Kind::None || dialogs::takesFileOrFolder(kind)) {
+        buttons_.push_back({Action::ChooseRoms, "Choose…"});
+    } else {
+        buttons_.push_back({Action::ChooseRomFile, "Choose archive…"});
+        buttons_.push_back({Action::ChooseRomFolder, "Choose folder…"});
+    }
     buttons_.push_back({Action::ClearRoms, "Clear"});
     buttons_.push_back({Action::Quit, config_.inGame ? "Cancel" : "Quit"});
     buttons_.push_back({Action::Start, config_.inGame ? "Done" : "START", true});
@@ -189,8 +196,14 @@ void SetupScene::refresh() {
 bool SetupScene::enabled(Action a) const {
     if (job_) return false;
     if (a == Action::Start) return gameOk_;
-    if (a == Action::ClearRoms) return !roms_.empty();
+    if (a == Action::ClearRoms) return !roms_.empty() || !romError_.empty();
     return true;
+}
+
+int SetupScene::romChooseIndex() const {
+    for (Action a : {Action::ChooseRoms, Action::ChooseRomFile, Action::ChooseRomFolder})
+        if (const int i = indexOf(a); i >= 0) return i;
+    return 0;
 }
 
 int SetupScene::indexOf(Action a) const {
@@ -221,11 +234,15 @@ void SetupScene::press(Action a) {
     case Action::ChooseGame:
     case Action::ChooseGameFile:
     case Action::ChooseGameFolder:
-    case Action::ChooseRoms: choose(a); break;
+    case Action::ChooseRoms:
+    case Action::ChooseRomFile:
+    case Action::ChooseRomFolder: choose(a); break;
     case Action::ClearRoms:
         roms_.clear();
+        romError_.clear();
+        romFrom_.clear();
         refresh();
-        focus_ = indexOf(Action::ChooseRoms);
+        focus_ = romChooseIndex();
         break;
     case Action::Start: accepted_ = true; break;
     case Action::Quit:
@@ -236,10 +253,10 @@ void SetupScene::press(Action a) {
 }
 
 void SetupScene::choose(Action a) {
-    const bool roms = a == Action::ChooseRoms;
+    const bool roms = a == Action::ChooseRoms || a == Action::ChooseRomFile || a == Action::ChooseRomFolder;
     const PickerScene::Mode mode = roms ? PickerScene::Mode::Mt32Roms : PickerScene::Mode::GameFiles;
     // Where to start: near what was chosen so far; for the ROMs, else next to the game.
-    fs::path start = existing(roms ? roms_ : !importFrom_.empty() ? importFrom_.parent_path() : game_);
+    fs::path start = existing(roms ? (!romFrom_.empty() ? romFrom_.parent_path() : roms_) : !importFrom_.empty() ? importFrom_.parent_path() : game_);
     if (start.empty() && roms && gameOk_) start = game_.parent_path();
 
     std::optional<fs::path> picked;
@@ -265,10 +282,20 @@ void SetupScene::choose(Action a) {
     r.filterName = "Covert Action releases";
     switch (a) {
     case Action::ChooseRoms:
-        r.pick = dialogs::Pick::Folder;
-        r.title = "Choose the folder with your MT-32 ROMs";
-        r.message = "Choose the folder containing your MT-32 (or CM-32L) control ROM and PCM ROM files, "
-                    "e.g. MT32_CONTROL.ROM and MT32_PCM.ROM.";
+    case Action::ChooseRomFile:
+    case Action::ChooseRomFolder:
+        r.extensions = audio::mt32RomExtensions();
+        r.filterName = "MT-32 ROMs";
+        r.pick = config_.romImportDir.empty() || a == Action::ChooseRomFolder ? dialogs::Pick::Folder
+                 : a == Action::ChooseRomFile                                 ? dialogs::Pick::File
+                                                                              : dialogs::Pick::FileOrFolder;
+        r.title = r.pick == dialogs::Pick::Folder ? "Choose the folder with your MT-32 ROMs"
+                                                  : "Choose your MT-32 ROMs";
+        r.message = config_.romImportDir.empty()
+                        ? "Choose the folder containing your MT-32 (or CM-32L) control ROM and PCM ROM files, "
+                          "e.g. MT32_CONTROL.ROM and MT32_PCM.ROM."
+                        : "Choose your MT-32 (or CM-32L) control and PCM ROMs: a .zip or .7z that holds them, "
+                          "a folder, or one of the ROM files. They are copied into Covert Reaction's own folder.";
         break;
     case Action::ChooseGameFile:
         r.pick = dialogs::Pick::File;
@@ -309,6 +336,20 @@ void SetupScene::take(PickerScene::Mode mode, const fs::path& path) {
         }
     } else if (mode == PickerScene::Mode::GameFiles) {
         game_ = path;
+    } else if (!config_.romImportDir.empty()) {
+        // Copy the best pair into the per-user folder (a few MB: no thread).
+        const audio::Mt32ImportResult r = audio::importMt32Roms(path, config_.romImportDir);
+        romFrom_ = path;
+        if (r.ok) {
+            std::fprintf(stderr, "imported the MT-32 ROMs (%s) from %s\n", r.roms->describe().c_str(),
+                         folders::toUtf8(path).c_str());
+            roms_ = config_.romImportDir;
+            romError_.clear();
+        } else {
+            std::fprintf(stderr, "MT-32 ROM import from %s failed: %s\n", folders::toUtf8(path).c_str(),
+                         r.error.c_str());
+            romError_ = r.error;
+        }
     } else {
         roms_ = path;
     }
@@ -529,7 +570,7 @@ float SetupScene::paint(Canvas* cv, float W, float H, float top) {
             float game = 0, roms = 0;
             for (const Button& b : buttons_) {
                 if (b.action == Action::Quit || b.action == Action::Start) continue;
-                float& g = b.action == Action::ChooseRoms || b.action == Action::ClearRoms ? roms : game;
+                float& g = isRomAction(b.action) ? roms : game;
                 g += buttonWidth(b, pt(kButtonPx)) + (g > 0 ? pt(kButtonGap) : 0);
             }
             widest = std::max(game, roms);
@@ -677,13 +718,21 @@ float SetupScene::paint(Canvas* cv, float W, float H, float top) {
 
     // ---- The MT-32 ROMs.
     {
-        Card card{Status::Empty, "MT-32 ROMs", "Optional", {}, {}, false,
-                  {static_cast<std::size_t>(indexOf(Action::ChooseRoms)), static_cast<std::size_t>(indexOf(Action::ClearRoms))}};
-        if (!roms_.empty()) {
+        Card card{Status::Empty, "MT-32 ROMs", "Optional", {}, {}, false, {}};
+        for (std::size_t i = 0; i < buttons_.size(); ++i)
+            if (isRomAction(buttons_[i].action)) card.buttons.push_back(i);
+        if (!romError_.empty()) {
+            card.status = Status::Warning;
+            card.lines.emplace_back("No MT-32 ROMs taken from " + fileName(romFrom_) + ": " + romError_ + ".",
+                                    color::kAmber);
+            if (romSet_) card.lines.emplace_back("Still using " + romSet_->describe(), color::kText2);
+            card.detail = displayPath(romFrom_);
+        } else if (!roms_.empty()) {
             card.detail = displayPath(roms_);
             if (romSet_) {
                 card.status = Status::Ok;
                 card.lines.emplace_back(romSet_->describe(), color::kText);
+                if (!romFrom_.empty()) card.detail = "Copied from " + displayPath(romFrom_);
             } else if (!isDir(roms_)) {
                 card.status = Status::Warning;
                 card.lines.emplace_back("That folder is gone: the music plays on the AdLib.", color::kAmber);

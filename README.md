@@ -141,9 +141,10 @@ copyrighted game files: never publish or share it.
 Covert Reaction needs the files of the original game: `TEXT.DTA`, `TITLE2.PAN`,
 `FACES.PIC` and so on. You give it any of the game's releases, as you have it,
 and it copies the game out of it into its own **data folder**, the per-user
-folder's `data` (`~/Library/Application Support/Covert Reaction/data` on macOS,
-`%APPDATA%\Covert Reaction\data` on Windows, `~/.local/share/Covert Reaction/data`
-on Linux). These all work, told apart by their content, not their names:
+folder's `data/game` (`~/Library/Application Support/Covert Reaction/data/game` on
+macOS, `%APPDATA%\Covert Reaction\data\game` on Windows,
+`~/.local/share/Covert Reaction/data/game` on Linux). The MT-32 ROMs, if you give
+it some, go next to it in `data/mt32`. These all work, told apart by their content, not their names:
 
 - GOG's Windows installer (`setup_sid_meiers_covert_action_*.exe`, Inno Setup)
 - GOG's macOS installer (`.pkg`)
@@ -189,9 +190,13 @@ the game's. It has two cards:
 - **MT-32 ROMs** (optional): the ROM set found in the chosen folder (e.g. "MT-32
   Control v1.07 + MT-32 PCM ROM"), a warning if that folder has no usable
   control + PCM pair, a set found anyway in the usual places (see
-  [Sound](#sound)), or "Not needed: the music plays on the AdLib". **Choose
-  folder…** asks for the folder with your ROM files (they're used where they
-  are); **Clear** goes back to looking in the usual places.
+  [Sound](#sound)), or "Not needed: the music plays on the AdLib". **Choose…**
+  (on Windows and Linux **Choose archive…** and **Choose folder…**) takes a
+  `.zip` or `.7z` of ROMs (archive.org's MAME-named set and the "legacy"
+  `MT32_CONTROL.ROM` / `MT32_PCM.ROM` zip both work), a folder (zips inside it
+  are opened too), or one ROM file. The best control + PCM pair in it is
+  copied into `data/mt32`; nothing else is. **Clear** goes back to looking in
+  the usual places.
 
 **START** (greyed until the game files are there) saves both folders
 (`game_data`, `mt32_roms` in `settings.ini`) and starts the game; **Quit**
@@ -292,18 +297,19 @@ downloads them. Put your own dumps in one of these places (the first found wins)
 1. `--mt32-roms <folder>` on the command line
 2. the `COVERT_MT32_ROMS` environment variable
 3. the folder saved as `mt32_roms` in `settings.ini`: the one chosen on the
-   setup screen (MT-32 ROMs › **Choose folder…**, at the first start or from Options ›
-   Game files and ROMs...)
+   setup screen (MT-32 ROMs › **Choose…**, at the first start or from Options ›
+   Game files and ROMs...), which is `data/mt32` in the per-user folder
 4. the game folder, or an `MT32`, `MT32/roms`, `mt32-roms` or `roms` folder in it
    or next to it
-5. the per-user folder, or `MT32` in it
+5. the per-user folder, or `MT32` or `data/mt32` in it
 
 The ROMs are recognized by their contents, so any file names work (Munt/DOSBox
 names such as `MT32_CONTROL.ROM`, MAME names such as `mt32_ctrl_1_07.rom`, split
 halves). With several sets, the original MT-32 is preferred (control ROM 1.07
 first), then the CM-32L. `reaction-tool sound-roms` lists what it finds (with
 the `mt32_roms` folder from `--settings <file>`, or from `settings.ini` in
-`COVERT_REACTION_USER_DIR`).
+`COVERT_REACTION_USER_DIR`); `reaction-tool import-roms SOURCE OUTDIR` does
+what the setup screen's ROM import does.
 
 ### Saved games and settings
 

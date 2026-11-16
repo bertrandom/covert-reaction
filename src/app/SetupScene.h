@@ -1,7 +1,7 @@
 // The setup screen: where the game files are and, optionally, the MT-32 ROMs.
 // The game files are chosen as a folder that holds them or as one of the
 // releases' installers, archives or disk images, and imported either way into
-// the per-user folder's `data` (SetupConfig::importDir; formats/GameImport.h),
+// the per-user folder's `data/game` (SetupConfig::importDir; formats/GameImport.h),
 // which the game then uses. Shown at start-up when the game files aren't
 // found (first run, or the saved folder is gone), and from the main menu's
 // Options ("Game files and ROMs...").
@@ -53,9 +53,13 @@ struct SetupConfig {
     bool dialogs = true;
     std::filesystem::path browserStart;   // PickerScene's first folder for the game files (COVERT_PICKER_DIR)
     bool inGame = false;                  // from the Options: "Done" / "Cancel"
-    // Where the chosen game files are imported (the per-user folder's `data`).
+    // Where the chosen game files are imported (the per-user folder's `data/game`).
     // Empty: no import, the folder chosen is used as it is.
     std::filesystem::path importDir;
+    // Where the chosen MT-32 ROMs are copied (the per-user folder's `data/mt32`: the
+    // best control + PCM pair, from a folder, a zip or a 7z; audio::importMt32Roms).
+    // Empty: the folder chosen is used as it is.
+    std::filesystem::path romImportDir;
     bool syncImport = false;              // import without a thread (scripted runs: reproducible)
 };
 
@@ -82,7 +86,7 @@ public:
     bool importing() const { return job_ != nullptr; }
 
 private:
-    enum class Action { ChooseGame, ChooseGameFile, ChooseGameFolder, ChooseRoms, ClearRoms, Quit, Start };
+    enum class Action { ChooseGame, ChooseGameFile, ChooseGameFolder, ChooseRoms, ChooseRomFile, ChooseRomFolder, ClearRoms, Quit, Start };
     struct Button {
         Action action;
         std::string label;
@@ -97,6 +101,11 @@ private:
     void finishImport();   // the import job is done: take its result
     bool enabled(Action a) const;
     int indexOf(Action a) const;
+    // The ROM card's buttons; the first of its choose buttons.
+    static bool isRomAction(Action a) {
+        return a == Action::ChooseRoms || a == Action::ChooseRomFile || a == Action::ChooseRomFolder || a == Action::ClearRoms;
+    }
+    int romChooseIndex() const;
     void focusNext(int step);
     int buttonAt(float x, float y) const;   // canvas pixels
     // Lays the screen out for a canvas of `w` x `h` and, with `canvas`, draws
@@ -121,6 +130,8 @@ private:
     PickerScene::Mode pickerMode_ = PickerScene::Mode::GameFiles;
     std::unique_ptr<ImportJob> job_;         // the import under way
     std::filesystem::path importFrom_;       // what the last import was from
+    std::string romError_;                   // why the last ROM import failed (empty: it didn't)
+    std::filesystem::path romFrom_;          // what the ROMs were last imported from
     std::string importError_;                // why it failed (empty: it didn't)
     ImportResult lastImport_{};              // the last import that worked
     bool imported_ = false;                  // the game files were imported here

@@ -25,6 +25,16 @@ void migrateFromCovertRedux(const std::filesystem::path& dir) {
 
 }  // namespace
 
+std::filesystem::path importedGameDir() {
+    const auto dir = userDataDir();
+    return dir.empty() ? std::filesystem::path() : dir / "data" / "game";
+}
+
+std::filesystem::path importedRomDir() {
+    const auto dir = userDataDir();
+    return dir.empty() ? std::filesystem::path() : dir / "data" / "mt32";
+}
+
 std::filesystem::path userDataDir() {
     static const std::filesystem::path dir = [] {
         std::filesystem::path p;

@@ -14,7 +14,7 @@
 // else a 24-bit BMP.
 //
 // Finding the game files: --data, COVERT_DATA, the folder saved in settings.ini
-// (game_data), the per-user folder's data (where the setup screen imports the game),
+// (game_data), the per-user folder's data/game (where the setup screen imports the game),
 // the bundle and per-user Covert folders (bundleCandidates). There is no search
 // of the disk: if all fail, the window opens on SetupScene, where the player
 // chooses the game (an installer, an archive, disk images or a folder: imported
@@ -98,6 +98,7 @@ std::vector<fs::path> userRomDirs() {
     if (auto dir = userDataDir(); !dir.empty()) {
         out.push_back(dir);
         out.push_back(dir / "MT32");
+        out.push_back(dir / "data" / "mt32");   // (imported by the setup screen)
     }
     return out;
 }
@@ -487,7 +488,7 @@ int main(int argc, char** argv) {
             std::fprintf(stderr, "--data %s: not the game files\n", dataDir->string().c_str());
         std::vector<fs::path> candidates;
         if (!savedDir.empty()) candidates.push_back(savedDir);
-        if (auto user = userDataDir(); !user.empty()) candidates.push_back(user / "data");   // (imported)
+        if (auto user = userDataDir(); !user.empty()) candidates.push_back(importedGameDir());   // (imported)
         for (auto& c : bundleCandidates()) candidates.push_back(std::move(c));
         data = GameData::locate(dataDir, candidates);
         if (data) std::fprintf(stderr, "game data: %s\n", data->dir().string().c_str());
@@ -501,7 +502,8 @@ int main(int argc, char** argv) {
     };
     if (const char* env = std::getenv("COVERT_PICKER_DIR"); env && *env) setup.browserStart = env;
     // The game files chosen are imported into the per-user folder's data (formats/GameImport.h).
-    if (auto user = userDataDir(); !user.empty()) setup.importDir = user / "data";
+    setup.importDir = importedGameDir();     // (empty without a per-user folder: no import)
+    setup.romImportDir = importedRomDir();
     setup.syncImport = headless && !envFlag("COVERT_IMPORT_THREAD");
     if (!data) {
         // Not found: it shows what was tried (--data, or the saved folder).

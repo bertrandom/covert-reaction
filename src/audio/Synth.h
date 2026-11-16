@@ -49,6 +49,21 @@ struct Mt32Roms {
 std::optional<Mt32Roms> findMt32Roms(const std::vector<std::filesystem::path>& dirs,
                                      std::vector<std::string>* log = nullptr);
 
+// Copies the best control + PCM pair (as findMt32Roms picks it) from `source`
+// into `dest` (the setup screen: the per-user folder's `data/mt32`), named after
+// libmt32emu's ids (ctrl_mt32_1_07.rom...). `source`: a folder (searched to a
+// few levels), a zip or a 7z (e.g. archive.org's ROM sets), or one ROM file (the
+// ROMs next to it then). Archives inside a folder or an archive are opened too.
+// `dest` is replaced only if a pair was found; `source` may be inside it.
+struct Mt32ImportResult {
+    bool ok = false;
+    std::optional<Mt32Roms> roms;   // as found in `dest`
+    std::string error;              // why not, for the player
+};
+Mt32ImportResult importMt32Roms(const std::filesystem::path& source, const std::filesystem::path& dest);
+// The file extensions a ROM chooser offers: .zip .7z .rom .bin.
+const std::vector<std::string>& mt32RomExtensions();
+
 // MT-32: libmt32emu (Munt). Throws std::runtime_error if the ROMs won't load.
 std::unique_ptr<Synth> makeMt32Synth(const Mt32Roms& roms, int sampleRate);
 

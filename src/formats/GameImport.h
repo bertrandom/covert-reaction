@@ -1,5 +1,5 @@
 // Importing the original game from any of its releases into a folder of its own
-// (the setup screen puts it in the per-user folder's `data`): a C++ port of
+// (the setup screen puts it in the per-user folder's `data/game`): a C++ port of
 // covert-decomp's tools/extract_game.py. The source's format is told from its
 // content, not its name:
 //  - GOG's Windows installer (Inno Setup .exe)
@@ -72,7 +72,7 @@ struct ImportResult {
 };
 
 // Imports the game from `source` (a file or a folder) into `dest` (e.g. the
-// per-user folder's `data`). The files are written to a new folder next to
+// per-user folder's `data/game`). The files are written to a new folder next to
 // `dest` (`dest` + ".new"), which must then hold the game's data files
 // (GameData::isGameDir); only then does it replace `dest`. A failed import
 // leaves `dest` as it was. `source` may be `dest` itself, or inside it.

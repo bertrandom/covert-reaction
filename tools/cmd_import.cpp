@@ -110,3 +110,19 @@ REACTION_COMMAND_NO_DATA("archive-ls", "archive-ls FILE [OUTDIR]: list (or unpac
                              }
                              return 0;
                          });
+
+#include "audio/Synth.h"
+
+REACTION_COMMAND_NO_DATA("import-roms", "import-roms SOURCE OUTDIR: the best MT-32 control + PCM ROM pair from a zip, 7z, folder or ROM file",
+                         [](const GameData&, const std::vector<std::string>& a) {
+                             if (a.size() != 2) return 2;
+                             const audio::Mt32ImportResult r = audio::importMt32Roms(a[0], a[1]);
+                             if (!r.ok) {
+                                 std::fprintf(stderr, "%s: %s\n", a[0].c_str(), r.error.c_str());
+                                 return 1;
+                             }
+                             std::printf("%s: %s -> %s\n", a[0].c_str(), r.roms->describe().c_str(), a[1].c_str());
+                             for (const auto* rom : {&r.roms->control, &r.roms->pcm})
+                                 for (const auto& f : rom->files) std::printf("  %s\n", f.filename().string().c_str());
+                             return 0;
+                         });
