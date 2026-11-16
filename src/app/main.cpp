@@ -87,12 +87,8 @@ void pushKey(ScriptKey sk) {
     e.key.keysym.mod = sk.mod;
     e.key.keysym.scancode = SDL_GetScancodeFromKey(sk.key);
     SDL_PushEvent(&e);
-    if (!sk.mod && sk.key >= 32 && sk.key < 127) {       // the text it would type
-        SDL_Event t{};
-        t.type = SDL_TEXTINPUT;
-        t.text.text[0] = static_cast<char>(sk.key);
-        SDL_PushEvent(&t);
-    }
+    // (No SDL_TEXTINPUT: pushing one crashes inside sdl2-compat. Scenes treat key
+    // presses without a window id, like these, as typed text.)
     e.type = SDL_KEYUP;
     SDL_PushEvent(&e);
 }
