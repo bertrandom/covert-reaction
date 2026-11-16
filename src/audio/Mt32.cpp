@@ -165,9 +165,14 @@ std::optional<Mt32Roms> findMt32Roms(const std::vector<fs::path>& dirs, std::vec
     for (const auto& dir : dirs) {
         std::error_code ec;
         if (!fs::is_directory(dir, ec)) continue;
-        const fs::path canon = fs::weakly_canonical(dir, ec);
-        if (std::find(seen.begin(), seen.end(), canon) != seen.end()) continue;
-        seen.push_back(canon);
+        // The same folder under another spelling (MT32 and mt32 on a file system
+        // that ignores case, a symlink, ..): fs::equivalent compares the files.
+        if (std::any_of(seen.begin(), seen.end(), [&](const fs::path& p) {
+                std::error_code e2;
+                return fs::equivalent(p, dir, e2);
+            }))
+            continue;
+        seen.push_back(dir);
         std::vector<fs::path> files;
         for (const auto& e : fs::directory_iterator(dir, ec))
             if (e.is_regular_file(ec) && romSize(e.file_size(ec))) files.push_back(e.path());
