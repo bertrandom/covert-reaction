@@ -1,0 +1,3 @@
+@ECHO OFF
+CL /AS /Gs /Oas BUGGEN.C > D:\CL.LOG
+BUGGEN > D:\OUT.TXT
