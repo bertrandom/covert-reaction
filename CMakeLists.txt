@@ -119,6 +119,11 @@ add_library(reaction_lzma STATIC ${REACTION_LZMA_FILES})
 target_include_directories(reaction_lzma SYSTEM PUBLIC ${lzma_sdk_SOURCE_DIR}/C)
 target_compile_definitions(reaction_lzma PRIVATE Z7_PPMD_SUPPORT Z7_EXTRACT_ONLY)
 
+# stb_truetype (Sean Barrett, public domain / MIT), in third_party/stb: the system
+# font for the setup screen's own UI (core/UiFont.h). Its own flags, no warnings.
+add_library(reaction_stb STATIC third_party/stb/stb_truetype.c)
+target_include_directories(reaction_stb SYSTEM PUBLIC third_party/stb)
+
 # The engine: file formats, the platform-independent core and the sound drivers.
 # No SDL here, so the command-line tools and tests can use it without a window.
 file(GLOB_RECURSE REACTION_CORE_SOURCES CONFIGURE_DEPENDS
@@ -126,7 +131,7 @@ file(GLOB_RECURSE REACTION_CORE_SOURCES CONFIGURE_DEPENDS
 add_library(reaction_core STATIC ${REACTION_CORE_SOURCES})
 target_include_directories(reaction_core PUBLIC src)
 target_compile_options(reaction_core PRIVATE ${REACTION_WARNINGS})
-target_link_libraries(reaction_core PUBLIC mt32emu nuked_opl3 PRIVATE reaction_miniz reaction_lzma)
+target_link_libraries(reaction_core PUBLIC mt32emu nuked_opl3 PRIVATE reaction_miniz reaction_lzma reaction_stb)
 if(NOT EMSCRIPTEN)   # (formats/GameImport.h's background job)
   find_package(Threads REQUIRED)
   target_link_libraries(reaction_core PUBLIC Threads::Threads)
