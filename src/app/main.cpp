@@ -62,7 +62,8 @@ std::vector<fs::path> bundleCandidates() {
         add(b / "resources" / "Covert");
         add(b / ".." / "Resources" / "Covert");             // inside a macOS .app
         add(b / ".." / ".." / ".." / "Covert");             // next to the .app
-        add(b / ".." / ".." / ".." / ".." / "resources" / "Covert");  // build/ tree
+        add(b / ".." / ".." / ".." / ".." / "resources" / "Covert");  // build/ tree (macOS .app)
+        add(b / ".." / "resources" / "Covert");             // build/ tree (a plain executable)
     }
     if (auto user = userDataDir(); !user.empty()) out.push_back(user / "Covert");
     return out;

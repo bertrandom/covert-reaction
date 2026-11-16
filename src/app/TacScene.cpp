@@ -127,7 +127,7 @@ public:
         const int code = tacKey(key, tac_.numLock());
         if (code < 0) return;
         tac_.pushKey(code);
-        held_ = key;
+        held_.emplace(key);   // (not `held_ = key`: GCC 13 misreads it as a dangling pointer)
         heldKey_ = e.key.keysym.sym;
         nextRepeat_ = static_cast<double>(tick_) + 17.5;   // typematic delay 250 ms
     }
