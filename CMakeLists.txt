@@ -40,13 +40,40 @@ else()
   set(REDUX_WARNINGS -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wno-sign-conversion)
 endif()
 
-# The engine: file formats and the platform-independent core. No SDL here, so
-# the command-line tools and tests can use it without a window.
+# Sound devices, emulated (third-party, fetched at configure time and pinned; built
+# as libraries of their own, with their own flags):
+#  - libmt32emu, Munt's MT-32 emulator (LGPL-2.1+). The player supplies the ROMs.
+#  - Nuked-OPL3, the AdLib's OPL2/OPL3 (LGPL-2.1+).
+# For an offline build, point FETCHCONTENT_SOURCE_DIR_MUNT / _NUKED_OPL3 at copies.
+include(FetchContent)
+FetchContent_Declare(munt
+  URL https://github.com/munt/munt/archive/refs/tags/munt_2_8_4.tar.gz
+  URL_HASH SHA256=75f29ed4b56c830e71005ce2d3ffc0b6b19a89ca8e3119054fa0d315b8bcc384
+  SOURCE_SUBDIR mt32emu
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+FetchContent_Declare(nuked_opl3
+  URL https://github.com/nukeykt/Nuked-OPL3/archive/765ec962e473aeb767e4cba74ffdc8f588ffbfe8.tar.gz
+  URL_HASH SHA256=2fad908c3904d3ef51b55e0d6a8980c7142942e2d0baa7e99bf038cf0a41199d
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+set(libmt32emu_SHARED OFF CACHE BOOL "" FORCE)
+set(libmt32emu_C_INTERFACE OFF CACHE BOOL "" FORCE)
+set(libmt32emu_REQUIRE_ANSI OFF CACHE BOOL "" FORCE)
+set(libmt32emu_BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(libmt32emu_INSTALL_DEFAULT_LOCALE OFF CACHE BOOL "" FORCE)
+set(libmt32emu_PKGCONFIG_INSTALL OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(munt nuked_opl3)
+enable_language(C)
+add_library(nuked_opl3 STATIC ${nuked_opl3_SOURCE_DIR}/opl3.c)
+target_include_directories(nuked_opl3 PUBLIC ${nuked_opl3_SOURCE_DIR})
+
+# The engine: file formats, the platform-independent core and the sound drivers.
+# No SDL here, so the command-line tools and tests can use it without a window.
 file(GLOB_RECURSE REDUX_CORE_SOURCES CONFIGURE_DEPENDS
-  src/core/*.cpp src/formats/*.cpp src/game/*.cpp)
+  src/core/*.cpp src/formats/*.cpp src/game/*.cpp src/audio/*.cpp)
 add_library(redux_core STATIC ${REDUX_CORE_SOURCES})
 target_include_directories(redux_core PUBLIC src)
 target_compile_options(redux_core PRIVATE ${REDUX_WARNINGS})
+target_link_libraries(redux_core PUBLIC mt32emu nuked_opl3)
 
 # The game application (SDL2 window, input, audio).
 file(GLOB_RECURSE REDUX_APP_SOURCES CONFIGURE_DEPENDS src/app/*.cpp)
