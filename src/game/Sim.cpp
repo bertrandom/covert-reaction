@@ -78,6 +78,7 @@ Plot& Sim::plot(int i) {
 // .receiver_city = plots[0].name[3].
 std::uint16_t Sim::msgFlags(int i) const {
     if (i >= 0 && i < 128) return w_.msgs[static_cast<std::size_t>(i)].flags;
+    if (neighbours_) return neighbours_->msgFlags(i);
     if (i == -1) return w_.cities[15].orgsVisited;
     if (i == 128) return w_.plots.empty() ? 0 : static_cast<std::uint16_t>(w_.plots[0].state);
     return 0;
@@ -85,6 +86,7 @@ std::uint16_t Sim::msgFlags(int i) const {
 
 void Sim::orMsgFlags(int i, unsigned v) {
     if (i >= 0 && i < 128) w_.msgs[static_cast<std::size_t>(i)].flags |= static_cast<std::uint16_t>(v);
+    else if (neighbours_) neighbours_->orMsgFlags(i, v);
     else if (i == -1) w_.cities[15].orgsVisited |= static_cast<std::uint16_t>(v);
     else if (i == 128 && !w_.plots.empty())
         w_.plots[0].state = static_cast<std::int16_t>(static_cast<std::uint16_t>(w_.plots[0].state) | v);
@@ -92,6 +94,7 @@ void Sim::orMsgFlags(int i, unsigned v) {
 
 std::int16_t Sim::msgTime(int i) const {
     if (i >= 0 && i < 128) return w_.msgs[static_cast<std::size_t>(i)].time;
+    if (neighbours_) return neighbours_->msgTime(i);
     if (i == -1) return w_.cities[15].size;
     if (i == 128) return static_cast<std::int16_t>(g_.popupFlag);
     return 0;
@@ -99,6 +102,7 @@ std::int16_t Sim::msgTime(int i) const {
 
 int Sim::msgReceiverCity(int i) const {
     if (i >= 0 && i < 128) return w_.msgs[static_cast<std::size_t>(i)].receiverCity;
+    if (neighbours_) return neighbours_->msgReceiverCity(i);
     if (i == -1) return static_cast<std::int8_t>(static_cast<std::uint16_t>(w_.hdr.numPersons) >> 8);
     if (i == 128 && !w_.plots.empty()) return static_cast<std::int8_t>(w_.plots[0].name.raw[3]);
     return 0;

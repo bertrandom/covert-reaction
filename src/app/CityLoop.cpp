@@ -14,6 +14,7 @@
 #include "app/Scenes.h"
 #include "game/CaseGen.h"
 #include "game/NewChar.h"
+#include "game/TacCase.h"
 #include "game/Wiretap.h"
 
 namespace redux {
@@ -89,75 +90,19 @@ std::unique_ptr<Scene> resumeGame(App& app, std::shared_ptr<CityEnv> env) {
 }
 
 std::unique_ptr<Scene> startTac(App& app, std::shared_ptr<CityEnv> env, int program) {
-    auto& w = app.game.world;
-    const auto& h = w.hdr;
-    TacSetup s;
-    s.env0 = program;
-    s.practice = false;
-    s.female = h.options & 2;
-    s.sound = h.options & 4;
-    s.difficulty = h.difficulty;
-    s.skillLevels = h.skillLevels;
-    s.alertLevel = h.var48;
-    s.org = h.hereOrg;
-    s.city = h.hereCity;
-    s.gameSeed = static_cast<std::uint16_t>(h.randSeed);
-    s.clockBase = static_cast<std::uint16_t>(h.clockBase);
-    s.raidedCities = static_cast<std::uint16_t>(h.doubleAgents);
-    s.knownPlans = static_cast<std::uint16_t>(h.seenOrgs);
-    s.nClues = h.numSuspects;
-    for (int i = 0; i < h.numPersons && i < 64; ++i) {
-        const Person& p = w.persons[static_cast<std::size_t>(i)];
-        TacSetup::Person tp;
-        tp.org = p.org;
-        tp.id = p.id;
-        tp.city = p.city;
-        tp.known = p.known;
-        tp.clues = p.flags;
-        tp.found = p.roles;
-        tp.points = p.points;
-        tp.status = p.fate;
-        s.persons.push_back(tp);
-    }
-    s.rescueTarget = static_cast<std::int8_t>((*env)[12]);
-    for (std::size_t i = 0; i < 4; ++i) {
-        s.agents[i].name = w.items[i].name.str();
-        s.agents[i].rank = w.items[i].icon;
-        s.agents[i].person = w.items[i].holder;
-    }
-    for (std::size_t i = 0; i < 16; ++i) {
-        s.cityNames[i] = w.cities[i].name.str();
-        s.orgNames[i] = w.orgs[i].name.str();
-    }
-    int site = -1;
-    for (int i = 0; i < h.numSites && i < 256; ++i)
-        if (w.sites[static_cast<std::size_t>(i)].org == h.hereOrg && w.sites[static_cast<std::size_t>(i)].city == h.hereCity)
-            site = i;
-    if (site >= 0) {
-        const Site& st = w.sites[static_cast<std::size_t>(site)];
-        s.roomsSeen = static_cast<std::uint16_t>(st.f8) | static_cast<std::uint32_t>(static_cast<std::uint16_t>(st.fa)) << 16;
-    }
-    return makeTacScene(app, std::move(s), nullptr, [env, site](App& a, const TacResult& r) {
-        auto& ww = a.game.world;
+    auto& g = app.game;
+    TacSetup s = TacCaseHooks::setupFrom(g.world, program, static_cast<std::int8_t>((*env)[12]), gameSeed());
+    // GAMELIB's routines inside the building work on the case's tables (game/TacCase.h)
+    auto hooks = std::make_shared<TacCaseHooks>(g.world, app.data, g.career);
+    return makeTacScene(app, std::move(s), hooks, [env, hooks](App& a, const TacResult& r) {
         (*env)[8] = static_cast<std::uint8_t>(r.score);
         (*env)[9] = static_cast<std::uint8_t>(r.violence);
         (*env)[10] = static_cast<std::uint8_t>(r.missionFlags);
         (*env)[11] = static_cast<std::uint8_t>(r.wounds);
         (*env)[13] = static_cast<std::uint8_t>(r.env13);
         (*env)[15] = static_cast<std::uint8_t>(r.minutes);
-        ww.hdr.skillLevels = static_cast<std::int16_t>((ww.hdr.skillLevels & ~0x300) | (r.gameSpeed & 3) << 8);
-        for (std::size_t i = 0; i < r.persons.size() && i < 64; ++i) {
-            Person& p = ww.persons[i];
-            p.known = static_cast<std::uint16_t>(r.persons[i].known);
-            p.roles = static_cast<std::uint16_t>(r.persons[i].found);
-            p.points = static_cast<std::int16_t>(r.persons[i].points);
-            p.fate = static_cast<std::int16_t>(r.persons[i].status);
-        }
-        if (site >= 0) {
-            Site& st = ww.sites[static_cast<std::size_t>(site)];
-            st.f8 = static_cast<std::int16_t>(r.roomsSeen & 0xFFFF);
-            st.fa = static_cast<std::int16_t>(r.roomsSeen >> 16);
-        }
+        TacCaseHooks::applyResult(a.game.world, r);
+        for (const auto& line : hooks->trace) std::fprintf(stderr, "tac lib: %s\n", line.c_str());
         return resumeGame(a, env);
     });
 }

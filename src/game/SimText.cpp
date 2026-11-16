@@ -93,7 +93,7 @@ void Sim::loadMessageText(int p) {
     g_.subst[3] = w_.cities[static_cast<std::size_t>(city)].name.str();
     makeMsgKey(w_.hdr.msgDay, p >= 0 ? plot(p).msg : p);
     lookupTextSimple("text.dta", g_.msgKey);
-    w_.orgs[static_cast<std::size_t>(org)].flags |= 1;
+    if (!tacLibrary_) w_.orgs[static_cast<std::size_t>(org)].flags |= 1;   // (#ifdef GAME_MSGTEXT)
 }
 
 void Sim::composeInterceptText(int n) {

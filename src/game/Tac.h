@@ -15,12 +15,17 @@
 // Setup: TacSetup holds what main() reads from the env block (see Tac.h fields)
 // with defaults for a practice break-in; the case-related library routines
 // (GAMELIB: dossiers, clue reveals, master plans, organization presence) go
-// through TacHooks, which by default do nothing (as in practice mode).
+// through TacHooks, which by default do nothing (as in practice mode); the case's
+// (game/TacCase.h) runs GAME's library port (game/Sim.h) on the case's tables.
+// What such a routine draws and waits for is recorded as LibSteps, which the
+// program replays (lib_play) right after the call, with its own text windows
+// and keys, before going on as the original does when the routine returns.
 #pragma once
 
 #include <array>
 #include <cstdint>
 #include <deque>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -30,6 +35,7 @@
 #include "core/Image.h"
 #include "formats/Font.h"
 #include "formats/McgaPalette.h"
+#include "game/Face.h"
 #include "game/Rng.h"
 #include "game/TacBuilding.h"
 #include "game/TacTask.h"
@@ -53,13 +59,15 @@ struct TacSetup {
     unsigned knownPlans = 0;    // env +4Ch: bit per organization whose plan is known
     int nClues = 0;             // env +3Eh
     std::uint32_t roomsSeen = 0;  // the site's rooms_seen (bit per room already explored)
+    int cityClueCount0 = 0;     // city_clue_count[0], which in TAC's DGROUP is guards_near
     // The plot's people (persons[], 64 slots; only what TAC reads).
     struct Person {
         int org = 0, id = 0, city = 0;
         unsigned known = 0;
         int clues = 0, found = 0, points = 0, status = 0;
     };
-    std::vector<Person> persons;    // n_persons
+    std::vector<Person> persons;    // persons[0..63] (fewer: practice)
+    int nPersons = -1;              // n_persons (-1: persons.size())
     int rescueTarget = -1;          // ENV[12] (rescue: the captured agent's person)
     std::array<TacAgent, 4> agents{};
     std::array<std::string, 16> cityNames{};   // for the terminal and the file search
@@ -81,24 +89,29 @@ struct TacResult {
     std::uint32_t roomsSeen = 0;
     int photos = 0, bugs = 0;
     std::vector<TacSetup::Person> persons;   // persons[] as TAC left them (known/found bits)
+    unsigned knownPlans = 0;    // known_plans (seen_orgs, env +4Ch)
+    int cityClueCount0 = 0;     // guards_near, saved as city_clue_count[0]
 };
 
 class Tac;
 
-// The case-related library routines (GAMELIB) TAC calls. The defaults do what a
-// practice break-in needs (nothing).
+// The case-related library routines (GAMELIB CLUE.C and PERSON.C) TAC calls, one
+// for each. The library's text_buf is TAC's msg_buf (Tac::msg_buf): they read
+// and append to it as the originals do. What they draw and wait for goes into
+// Tac::libSteps. The defaults do what a practice break-in needs (nothing).
 struct TacHooks {
     virtual ~TacHooks() = default;
-    virtual void suspectDossier(Tac&, int /*person*/) {}
-    virtual std::string personName(Tac&, int /*person*/) { return "the suspect"; }
-    virtual void describeNewInfo(Tac&, int /*org*/, int /*city*/, int /*amount*/, int /*worth*/) {}
-    virtual void showMasterPlan(Tac&, int /*org*/) {}
+    virtual void suspectDossier(Tac&, int /*who*/) {}
+    virtual void appendPersonName(Tac&, int /*p*/);      // "Agent X" without a case
+    virtual void personName(Tac&, int /*p*/) {}
+    virtual int describeNewInfo(Tac&, int /*org*/, int /*city*/, int /*amount*/, int /*popup*/) { return 0; }
+    virtual void showMasterPlan(Tac&, int /*org*/, int /*reveal*/) {}
     virtual int orgAlertLevel(Tac&, int /*city*/, int /*org*/) { return 0; }
-    virtual std::string buildingType(Tac&, int /*city*/, int /*org*/) { return " building"; }
+    virtual int appendBuildingType(Tac&, int /*city*/, int /*org*/) { return 0; }
     virtual int setLocationKnown(Tac&, int /*org*/, int /*city*/, int /*flags*/) { return -1; }
-    virtual int clueCount(Tac&) { return 0; }
-    virtual std::string clueText(Tac&, int /*clue*/) { return {}; }
-    virtual bool revealRandomClue(Tac&, int /*clue*/, int /*org*/, int /*city*/) { return false; }
+    virtual int loadClueText(Tac&, int /*suspect*/, int /*full*/) { return 0; }
+    virtual void appendNumber(Tac&, int /*num*/) {}
+    virtual int revealRandomClue(Tac&, int /*n*/, int /*org*/, int /*city*/) { return 0; }
 };
 
 // The pages and the graphics driver calls TAC makes (MPSLIB GFX.C, UI.C and the
@@ -169,7 +182,41 @@ public:
     std::string msg_buf;
     std::vector<TacSetup::Person> persons;
 
+    // What a library routine called through the hooks drew and waited for, in
+    // order; lib_play replays it on the screen (g_gfx's page) when the hook
+    // returns. Draw runs a drawing call, Key is wait_key_or_button, Menu
+    // show_menu(text, x, y) (TAC's, which the library's calls link to), Retrace
+    // wait_retrace(n), Popup TAC's draw_intercept_popup with text_buf = text and
+    // face_shown (popup_face) = n.
+    struct LibStep {
+        enum class Kind { Draw, Key, Menu, Retrace, Popup } kind = Kind::Draw;
+        std::function<void(Tac&)> draw;
+        std::string text;
+        int x = 0, y = 0, n = 0;
+    };
+    std::vector<LibStep> libSteps;
+    // the library's drawing surface: g_gfx's page, font 1, the face sprites
+    // (draw_face's icons, loaded by load_tac_sprites)
+    Image& gpage() { return gfx_.page[static_cast<std::size_t>(gfx_.gpage)]; }
+    const FaceSprites& faces() const { return faces_; }
+
+    // For a headless driver (redux-tool tac-case): puts Max on map cell (x, y)
+    // facing dir (1-8); the next frame enters that cell's room.
+    void debugPlaceMax(int x, int y, int dir) {
+        max_x = x * 16 + 8;
+        max_y = y * 16 + 8;
+        max_dir = want_dir = dir;
+    }
+    int curRoom() const { return cur_room; }
+    int maxX() const { return max_x; }
+    int maxY() const { return max_y; }
+    int targetPerson() const { return target_person; }
+    int missionFlags() const { return mission_flags; }
+    const std::string& currentPassword() const { return password; }
+
 private:
+    friend class TacCaseHooks;
+    Task<void> lib_play();
     // ---- waits ----
     struct RetraceAwait {
         Tac* t;
@@ -278,13 +325,13 @@ private:
     int room_map(int x, int y) { return map_.room(x, y); }
     const TacObjType& obj(int t) const { return map_.obj[static_cast<std::size_t>(t & 0x3F)]; }
     unsigned objFlags(int t) const { return obj(t).flags; }
-    std::string person_name(int p);
 
     const GameData& data_;
     const FontSet& fonts_;
     TacSetup setup_;
     std::shared_ptr<TacHooks> hooks_;
     TacGfx gfx_;
+    FaceSprites faces_;
     TacMap map_;
     Rng rng_;
     PaletteMap palette_{};

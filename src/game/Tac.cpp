@@ -229,7 +229,33 @@ std::int8_t& Tac::gpath(int g, int x, int y) {
     return guard_paths[static_cast<std::size_t>(i)];
 }
 
-std::string Tac::person_name(int p) { return hooks_->personName(*this, p); }
+void TacHooks::appendPersonName(Tac& t, int p) {
+    t.msg_buf += "Agent ";
+    t.msg_buf += static_cast<char>((p % 26 + 26) % 26 + 'A');
+}
+
+Task<void> Tac::lib_play() {
+    if (libSteps.empty()) co_return;
+    const std::vector<LibStep> steps = std::exchange(libSteps, {});
+    // (the hook left text_buf and face_shown as the routine did; the replay only draws)
+    const std::string keepText = msg_buf;
+    const int keepFace = popup_face;
+    for (const LibStep& s : steps) {
+        switch (s.kind) {
+        case LibStep::Kind::Draw: s.draw(*this); break;
+        case LibStep::Kind::Key: co_await wait_key_or_button(); break;
+        case LibStep::Kind::Menu: co_await show_menu(s.text, s.x, s.y); break;
+        case LibStep::Kind::Retrace: co_await wait_retrace(s.n); break;
+        case LibStep::Kind::Popup:
+            msg_buf = s.text;
+            popup_face = s.n;
+            draw_intercept_popup();
+            break;
+        }
+    }
+    msg_buf = keepText;
+    popup_face = keepFace;
+}
 
 // ---------------------------------------------------------------- TAC.C
 
@@ -256,7 +282,9 @@ Task<void> Tac::tac_main() {
     raided_cities = setup_.raidedCities;
     known_plans = setup_.knownPlans;
     n_clues = setup_.nClues;
-    const int n_persons = static_cast<int>(persons.size());
+    guards_near = setup_.cityClueCount0;
+    const int n_persons = setup_.nPersons >= 0 ? std::min(setup_.nPersons, static_cast<int>(persons.size()))
+                                               : static_cast<int>(persons.size());
 
     game_speed = (env_flags >> 8) & 3;
     orig_difficulty = difficulty;
@@ -348,6 +376,8 @@ Task<void> Tac::tac_main() {
     result_.photos = photos_taken;
     result_.bugs = bugs_planted;
     result_.persons = persons;
+    result_.knownPlans = known_plans;
+    result_.cityClueCount0 = guards_near;
     play_sound(0);
 }
 

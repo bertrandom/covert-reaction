@@ -160,8 +160,8 @@ void Tac::erase_actor_sprite(int n, int x, int y) {
 void Tac::load_tac_sprites() {
     int i, j;
 
-    // (draw_face grabs the portrait parts from faces.pic first; they are only
-    // used by the case screens, see TacHooks)
+    // draw_face: the portrait parts (draw_sprite_a's icons), for the case screens
+    if (real_mission) faces_ = FaceSprites::load(data_);
     {
         const Picture pic = decodePicture(data_.read((options & 2) ? "spritesf.pic" : "sprites.pic"));
         gfx_.page[2].blit(pic.image, 0, 0, pic.image.width(), pic.image.height(), 0, 0);
@@ -209,8 +209,11 @@ Task<void> Tac::examine_object() {
             if (target_person >= 0 && target_person < static_cast<int>(persons.size())) {
                 persons[static_cast<std::size_t>(target_person)].known |= 1;
                 hooks_->suspectDossier(*this, target_person);
+                co_await lib_play();
             }
-            msg_buf = "Do you want to\narrest " + person_name(target_person) + "?\n Yes\n No\n";
+            msg_buf = "Do you want to\narrest ";
+            hooks_->appendPersonName(*this, target_person);
+            msg_buf += "?\n Yes\n No\n";
             reply = co_await show_menu(msg_buf, 100, 140);
             numlock_ = true;
             save_to_back_buffer();
@@ -299,10 +302,11 @@ Task<void> Tac::take_photo() {
             saved = difficulty;
             difficulty = orig_difficulty;
             present_back_buffer();
-            if (worth != 4)
+            if (worth != 4) {
                 hooks_->describeNewInfo(*this, cur_org, cur_city,
                                         kTacRoomTypes[static_cast<std::size_t>(room(cur_room).type) % 10].value * worth, worth);
-            else
+                co_await lib_play();
+            } else
                 co_await search_files();
             save_to_back_buffer();
             gfx_.fillcolor = 1;
@@ -406,7 +410,8 @@ Task<void> Tac::search_files() {
             else
                 k = cur_org;
             if (!(known_plans & (1u << k))) {
-                hooks_->showMasterPlan(*this, k);
+                hooks_->showMasterPlan(*this, k, 1);
+                co_await lib_play();
                 tries = 999;
                 break;
             }
@@ -441,11 +446,16 @@ Task<void> Tac::search_files() {
             if (!(k & t.found)) {
                 t.found |= k;
                 hooks_->suspectDossier(*this, target_person);
-                msg_buf = person_name(target_person) + " has\nbeen identified as\na participant\nin the plot.\n";
+                co_await lib_play();
+                msg_buf.clear();
+                hooks_->appendPersonName(*this, target_person);
+                msg_buf += " has\nbeen identified as\na participant\nin the plot.\n";
             } else if (!(mission_flags & 4) && target_person != 0) {
                 hooks_->suspectDossier(*this, target_person);
-                msg_buf = "You find incriminating\nevidence which will\nturn " + person_name(target_person) +
-                          "\ninto a double agent!\n";
+                co_await lib_play();
+                msg_buf = "You find incriminating\nevidence which will\nturn ";
+                hooks_->appendPersonName(*this, target_person);
+                msg_buf += "\ninto a double agent!\n";
                 mission_flags |= 4;
             }
             if (!msg_buf.empty()) {
@@ -574,12 +584,14 @@ Task<void> Tac::terminal_search() {
         for (p = 0; p < static_cast<int>(persons.size()) && p < 64; p++) {
             TacSetup::Person& pe = persons[static_cast<std::size_t>(p)];
             if (!pe.id) continue;
-            msg_buf = person_name(p);
+            msg_buf.clear();
+            hooks_->personName(*this, p);
             if (!contains(msg_buf, word)) continue;
             if (pe.city != cur_city && pe.org != cur_org && orig_difficulty >= 2) continue;
             pe.known |= 0x1f;
             if (pe.city == cur_city && pe.org == cur_org) pe.found |= pe.clues & 0x7fff;
             hooks_->suspectDossier(*this, p);
+            co_await lib_play();
             co_await wait_key_or_button();
             co_return;
         }
@@ -588,7 +600,9 @@ Task<void> Tac::terminal_search() {
             if (!cityName(j).empty() && contains(cityName(j), word)) {
                 msg_buf = orgName(cur_org) + " has\n";
                 if (hooks_->orgAlertLevel(*this, j, cur_org)) {
-                    msg_buf += "a" + hooks_->buildingType(*this, j, cur_org);
+                    msg_buf += "a";
+                    hooks_->appendBuildingType(*this, j, cur_org);
+                    // (cities[j].orgs_known |= 1 << cur_org: set_location_known does it too)
                     hooks_->setLocationKnown(*this, cur_org, j, 12);
                     found = 1;
                 } else {
@@ -611,7 +625,7 @@ Task<void> Tac::terminal_search() {
             if (!orgName(j).empty() && contains(orgName(j), word)) {
                 msg_buf = orgName(j);
                 if (hooks_->orgAlertLevel(*this, cur_city, j)) {
-                    msg_buf += hooks_->buildingType(*this, cur_city, j);
+                    hooks_->appendBuildingType(*this, cur_city, j);
                     hooks_->setLocationKnown(*this, j, cur_city, 12);
                     found = 1;
                 } else {
@@ -633,8 +647,13 @@ Task<void> Tac::terminal_search() {
         }
         if (!show) {
             for (j = 0; j < n_clues; j++) {
-                msg_buf = hooks_->clueText(*this, j);
-                if (contains(msg_buf, word) && hooks_->revealRandomClue(*this, j, cur_org, cur_city)) co_return;
+                k = hooks_->loadClueText(*this, j, 0);
+                msg_buf.clear();
+                hooks_->appendNumber(*this, k);
+                if (contains(msg_buf, word) && hooks_->revealRandomClue(*this, j, cur_org, cur_city)) {
+                    co_await lib_play();
+                    co_return;
+                }
             }
             for (j = 0; j < 4 && !show; j++) {
                 const TacAgent& a = setup_.agents[static_cast<std::size_t>(j)];
@@ -742,6 +761,10 @@ void Tac::draw_intercept_popup() {
     const int x = clamp(31, popup_x - 146, popup_x);
     const int y = clamp(49, popup_y - 102, popup_y);
     gfx_.image(gfx_.gpage, x, y, &camera_img);
+    if (popup_face > -1) {
+        drawPortrait(gpage(), faces_, popup_face, x + 66, y + 24);
+        popup_face = -1;   // (draw_face_parts: face_shown, which is popup_face)
+    }
     if (popup_face == -2) gfx_.image(gfx_.gpage, x + 55, y + 7, &camera_img2);
     gfx_.fillcolor = 11;
     drawWrappedText(gfx_.page[static_cast<std::size_t>(gfx_.gpage)], *gfx_.font, msg_buf, 14, x + 20, y + 67, 3);

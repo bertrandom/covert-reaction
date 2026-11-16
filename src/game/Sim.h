@@ -130,6 +130,19 @@ struct SimGlobals {
     std::string msgKey = "*MSG0000";                    // msg_key
 };
 
+// What lies next to msgs[] in the running program's DGROUP, where
+// format_message_event reads and writes msgs[-1] and msgs[128] (i is -1 or 128).
+// Without one, GAME's neighbours (see Sim.cpp); TAC's copy of the library has its
+// own (game/TacCase.cpp).
+class SimNeighbours {
+public:
+    virtual ~SimNeighbours() = default;
+    virtual std::uint16_t msgFlags(int i) = 0;
+    virtual void orMsgFlags(int i, unsigned v) = 0;
+    virtual std::int16_t msgTime(int i) = 0;
+    virtual int msgReceiverCity(int i) = 0;
+};
+
 class Sim {
 public:
     Sim(World& world, Rng& rng, const GameData& data, Career& career);
@@ -139,6 +152,14 @@ public:
     // The screens drawing the simulation (nullptr: none, events are only listed).
     void setUi(SimUi* ui) { ui_ = ui; }
     SimUi* ui() const { return ui_; }
+    // The library as TAC.EXE links it: MSGTEXT.C without GAME_MSGTEXT
+    // (load_message_text leaves orgs[].flags alone), TAC's persons[-1] and its
+    // neighbours of msgs[] (nullptr: GAME's).
+    void setTacLibrary(const Person& personM1, SimNeighbours* neighbours) {
+        tacLibrary_ = true;
+        personM1_ = personM1;
+        neighbours_ = neighbours;
+    }
     SimGlobals& globals() { return g_; }
     const SimGlobals& globals() const { return g_; }
 
@@ -320,6 +341,8 @@ private:
     std::vector<SimEvent> events_;
     bool caseOver_ = false;
     Person personM1_;                               // persons[-1]
+    bool tacLibrary_ = false;                       // see setTacLibrary
+    SimNeighbours* neighbours_ = nullptr;
     Suspect suspectOut_;                            // suspects[] past the table
     Plot plotOut_;                                  // plots[] outside the table
     std::map<std::string, std::string> proseKeys_;  // show_prose's edited key literals

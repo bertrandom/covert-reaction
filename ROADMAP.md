@@ -48,9 +48,12 @@ scenes sharing one `World`.
    cards, dossiers, decoded messages, [x] interrogations, capture, prisoner
    exchange, jailbreaks (from the Sim's routines, untested in play),
    [x] the mini-games started with the case's data and their results taken back
-   (src/app/CityLoop.cpp), [ ] TAC's case hooks (TacHooks: dossiers, new
-   information, the master plan and clue searches inside a building do nothing
-   yet), [ ] sound effects, [ ] Alt-A/Alt-S/Alt-Q in GAME's text windows.
+   (src/app/CityLoop.cpp), [x] TAC's case hooks (src/game/TacCase.*: photos'
+   new information, file and safe searches, the master plan and personnel
+   files, dossiers, the arrest, the terminal's searches, run by GAME's library
+   port on the case's tables with TAC's random() and globals; `redux-tool
+   tac-case` scripts a break-in and prints what changed), [ ] BUG's intercepts
+   in a case, [ ] sound effects, [ ] Alt-A/Alt-S/Alt-Q in GAME's text windows.
 6. **End of case** (ENDCASE.C): [x] debriefing, timeline, efficiency report,
    MasterMind clue, vacation, Hall of Fame, career, promotion, retirement and the
    continue/save menu (src/game/EndCase.*, src/app/EndCaseScene.cpp), [x] the next
