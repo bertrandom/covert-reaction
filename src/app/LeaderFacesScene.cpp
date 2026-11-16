@@ -110,7 +110,7 @@ public:
     ResultScene(App& app, Frame back, std::string text) : app_(app), back_(std::move(back)) {
         TextWindowOptions opt;
         opt.showOk = true;
-        menu_.emplace(app.fonts.font(1), std::move(text), 96, 90, opt);
+        menu_.emplace(app.fonts.font(1), std::move(text), 96, 90, opt).setHotkeys(appHotkeys(app, *this));
     }
     void handle(const SDL_Event& e) override { menu_->handle(e, app_.mouse(e)); }
     void tick() override {

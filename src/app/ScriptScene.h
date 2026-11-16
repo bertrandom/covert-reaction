@@ -83,6 +83,7 @@ private:
     enum class Mode { Idle, Menu, Pages, Retrace, AnyKey, Vacation, Done };
     bool isKeyOrClick(const SDL_Event& e) const;
     void startPage();
+    void playAnimSounds();   // the animation's opcode-3 sounds since the last call
 
     App& app_;
     FaceSprites faces_;

@@ -55,7 +55,11 @@ public:
     }
 
     void tick() override {
-        if (anim_ && animating_) anim_->advance(kTick);
+        // (Alt-Q's window holds the animation: anim_active = 0.)
+        if (anim_ && animating_ && !(menu_ && menu_->confirmingQuit())) {
+            anim_->advance(kTick);
+            playAnimSounds();
+        }
         if (!menu_) return;
         menu_->tick();
         if (!menu_->result()) return;
@@ -104,8 +108,10 @@ private:
                 anim_ = std::make_unique<PanPlayer>(PanFile::parse(app_.data.read("briefing.pan")), PanOptions{},
                                                     &screen_);
                 anim_->setVar(0, 4);
-                anim_->step();
+                // text_window: "j = 0; do anim_step(); while (++j < 2);" before the window.
+                for (int j = 0; j < 2; ++j) anim_->step();
                 animating_ = true;
+                playAnimSounds();
             }
         } else {
             screen_ = Image(320, 200, 5);
@@ -113,9 +119,15 @@ private:
         nextPage();
     }
 
+    // anim_flush_sounds: the animation's opcode-3 sounds (play_sound, so options & 4).
+    void playAnimSounds() {
+        for (int n : anim_->takeSounds()) app_.sound(n);
+    }
+
     void nextPage() {
         if (page_ < static_cast<int>(pages_.size())) {
-            menu_.emplace(app_.fonts.font(1), pages_[static_cast<std::size_t>(page_)], 8, 149, fill5());
+            menu_.emplace(app_.fonts.font(1), pages_[static_cast<std::size_t>(page_)], 8, 149, fill5())
+                .setHotkeys(appHotkeys(app_, *this));
             return;
         }
         if (story_ == Story::Plot) app_.game.briefed = true;
@@ -180,7 +192,7 @@ public:
     NewCharacterScene(App& app, SceneThen then) : app_(app), then_(std::move(then)) {
         startNewCharacter(app_.game);
         screen_ = loadScreen(app_.data, "gender.pic");
-        menu_.emplace(app_.fonts.font(1), kGenderMenu, 96, 33, fill5());
+        menu_.emplace(app_.fonts.font(1), kGenderMenu, 96, 33, fill5()).setHotkeys(appHotkeys(app_, *this));
     }
 
     void handle(const SDL_Event& e) override {
@@ -283,7 +295,7 @@ private:
         if (field_.key(k)) {
             app_.game.career.codename.set(field_.result());
             phase_ = Phase::Difficulty;
-            menu_.emplace(app_.fonts.font(1), kDifficultyMenu, 96, 129, fill5());
+            menu_.emplace(app_.fonts.font(1), kDifficultyMenu, 96, 129, fill5()).setHotkeys(appHotkeys(app_, *this));
             return;
         }
         drawField();
@@ -301,7 +313,8 @@ private:
 
     void openTrainingMenu() {
         drawRatings(lvl_);
-        menu_.emplace(app_.fonts.font(1), trainingMenu(false), 92, 25, fill5(defaultSel_));
+        menu_.emplace(app_.fonts.font(1), trainingMenu(false), 92, 25, fill5(defaultSel_))
+            .setHotkeys(appHotkeys(app_, *this));
     }
 
     void trainingChoice(int choice) {

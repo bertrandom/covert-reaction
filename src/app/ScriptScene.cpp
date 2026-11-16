@@ -34,6 +34,10 @@ bool ScriptScene::isKeyOrClick(const SDL_Event& e) const {
     return (e.type == SDL_KEYDOWN && dosKey(e) >= 0) || e.type == SDL_MOUSEBUTTONDOWN;
 }
 
+void ScriptScene::playAnimSounds() {
+    for (int n : anim_->takeSounds()) app_.sound(n);   // anim_flush_sounds -> play_sound
+}
+
 void ScriptScene::insert(std::vector<Step> steps) {
     for (auto it = steps.rbegin(); it != steps.rend(); ++it) queue_.push_front(std::move(*it));
 }
@@ -44,7 +48,7 @@ ScriptScene::Step ScriptScene::menuStep(std::string text, int x, int y, std::fun
         TextWindowOptions o;
         o.fillColor = 5;
         o.selected = selected;
-        s.menu_.emplace(s.app_.fonts.font(1), text, x, y, o);
+        s.menu_.emplace(s.app_.fonts.font(1), text, x, y, o).setHotkeys(appHotkeys(s.app_, s));
         s.onMenu_ = done;
         s.clearAfter_ = clear;
         if (s.armed_ && (s.app_.game.world.hdr.options & 8)) {
@@ -52,8 +56,10 @@ ScriptScene::Step ScriptScene::menuStep(std::string text, int x, int y, std::fun
             s.anim_ = std::make_unique<PanPlayer>(PanFile::parse(s.app_.data.read("briefing.pan")), PanOptions{},
                                                   &s.screen_);
             s.anim_->setVar(0, s.armedVar_);
-            s.anim_->step();
+            // text_window: "j = 0; do anim_step(); while (++j < 2);" before the window.
+            for (int j = 0; j < 2; ++j) s.anim_->step();
             s.animating_ = true;
+            s.playAnimSounds();
         }
         s.armed_ = false;
         s.mode_ = Mode::Menu;
@@ -207,7 +213,11 @@ void ScriptScene::handle(const SDL_Event& e) {
 }
 
 void ScriptScene::tick() {
-    if (anim_ && animating_) anim_->advance(kTick);
+    // (Alt-Q's window holds the animation: anim_active = 0.)
+    if (anim_ && animating_ && !(menu_ && menu_->confirmingQuit())) {
+        anim_->advance(kTick);
+        playAnimSounds();
+    }
     switch (mode_) {
     case Mode::Menu: {
         menu_->tick();
