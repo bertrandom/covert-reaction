@@ -20,17 +20,21 @@ scenes sharing one `World`.
    - [x] keyed text files (`TEXT.DTA`, `CLUES.TXT`, `PLOT.TXT`, `PROSE.DTA`)
    - [x] world tables, `crimeN.dta`/`worldN.dta`, saved-game layout
    - [x] the original's random numbers (MSC `rand`, `random(n)`)
-   - [ ] pictures (`.PIC`, LZW) and palettes
-   - [ ] fonts (`FONTS.CV`) and text drawing; text windows and menus (TEXTWIN.C)
-   - [ ] animations (`.PAN` bytecode player)
-   - [ ] input: keyboard, mouse, the menu conventions
+   - [x] pictures (`.PIC`, LZW) and palettes
+   - [x] fonts (`FONTS.CV`) and text drawing; text windows and menus (TEXTWIN.C)
+   - [x] animations (`.PAN` bytecode player)
+   - [x] input: keyboard, mouse, the menu conventions
    - [ ] sound (the effects the sound drivers play; AdLib/MT-32 music later)
-2. **Title and front end** (FINAL.C): title animation, credits, main menu, new
-   character (NEWCHAR.C), load game.
-3. **Case generation** (CASE.C + GAMELIB CLUE.C): a new case from the crime/world
-   files, identical to the original's for the same seed; briefing.
-4. **Mini-games**, each self-contained: CODE (code breaking), BUG (wiretaps), CHASE
-   (car chase), TAC (break-ins).
+2. **Title and front end** (FINAL.C): [x] title animation, credits, main menu,
+   [x] new character (NEWCHAR.C), [x] plot briefing and leader line-up,
+   [x] Hall of Fame, [ ] load game, [ ] practice menu.
+3. **Case generation** (CASE.C + GAMELIB CLUE.C): [x] a new case from the
+   crime/world files, byte-identical to the original's C for the same seed
+   (`tests/msc`).
+4. **Mini-games**, each self-contained and playable in practice mode:
+   [x] CODE (code breaking), [x] BUG (wiretaps), [x] CHASE (car chase),
+   [x] TAC (break-ins). Their generators are byte-identical to the original's C
+   (`tests/msc-*`); hooking them to a real case comes with the city loop.
 5. **The city loop** (GAME): travel, CIA office, intelligence screens, messages and
    decoding, time and events, suspects and arrests.
 6. **End of case** (ENDCASE.C): debriefing, timeline, scoring, Hall of Fame, next
