@@ -466,7 +466,7 @@ void Sim::ciaContactScreen(int org, int city, bool fromStreet) {
     if (w_.hdr.hereOrg == 1) {
         if (ui_) {
             ui_->clearScreen();
-            ui_->sceneBackground("hq.pan", 0xA8, 0);
+            if (!ui_->sceneBackground("hq.pan", 0xA8, 0)) w_.hdr.options = static_cast<std::int16_t>(w_.hdr.options & ~8);
         }
         if (!difficulty()) {
             g_.textBuf = "You arrive at\nthe CIA building\nand check with\nyour contact.\n";
@@ -523,8 +523,16 @@ Sim::WatchResult Sim::watchBuilding(int org, int city) {
     } while (person(who).fate < 0 || who == 0);
     g_.faceShown = person(who).id;
     if (ui_) {
-        ui_->sceneBackground("binos3.pan", 150, 2);
-        ui_->sceneVar(0, (person(who).id & 1) ? -1 : 1);
+        if (ui_->sceneBackground("binos3.pan", 150, 2)) {
+            ui_->sceneVar(0, (person(who).id & 1) ? -1 : 1);
+        } else {
+            // the binoculars' view still: draw_face_parts resets face_shown, so
+            // the sprite is (-1 & 3) + 104
+            ui_->fillRect(168, 8, 144, 96, 1);
+            ui_->faceParts(g_.faceShown, 224, 32);
+            g_.faceShown = -1;
+            ui_->sprite((g_.faceShown & 3) + 104, 214, 57);
+        }
     }
     g_.textBuf = "You notice someone\nleaving the building.\nDo you ...\n Wait\n Follow car.\n Trace car.\n Check Data\n";
     // The menu: with a UI its answer, else the caller asks.

@@ -105,9 +105,11 @@ public:
     virtual void screenWidth(int /*w*/) {}                                 // screen_width = w
     virtual void portraitPos(int /*x*/, int /*y*/) {}                      // portrait_x, portrait_y
     // set_scene_var / set_scene_background(name, x, y): the animation the next
-    // text window plays.
+    // text window plays; false (the screen cleared, nothing to play) with
+    // animations off (options & 8).
     virtual void sceneVar(int /*i*/, int /*v*/) {}
-    virtual void sceneBackground(const std::string& /*name*/, int /*x*/, int /*y*/) {}
+    virtual bool sceneBackground(const std::string& /*name*/, int /*x*/, int /*y*/) { return true; }
+    virtual void faceParts(int /*face*/, int /*x*/, int /*y*/) {}         // draw_face_parts
 };
 
 // GAME's globals that are not in env.sve (TIME.C, CITY.C, the library's text

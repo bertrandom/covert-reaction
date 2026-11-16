@@ -139,6 +139,7 @@ int CityUi::textWindow(const std::string& text, int x, int y, unsigned flags) {
         TextWindowOptions o2 = opt;
         o2.selected = -1;
         drawTextWindow(screen, font(), text, x, y, o2);
+        keys_.clear();   // flush_input
         return -1;
     }
     menu_.emplace(font(), text, x, y, opt);
@@ -175,6 +176,22 @@ void CityUi::wait(int retraces) {
     Request r;
     r.kind = Request::Delay;
     r.ticks = retraces;
+    ask(r);
+}
+
+void CityUi::holdPaused(int retraces) {
+    if (retraces <= 0) return;
+    Request r;
+    r.kind = Request::Delay;
+    r.ticks = retraces;
+    r.keyEnds = true;
+    ask(r);
+}
+
+void CityUi::dissolveBackPage() {
+    dissolve_ = reaction::Dissolve(back);
+    Request r;
+    r.kind = Request::Dissolve;
     ask(r);
 }
 
@@ -233,17 +250,12 @@ void CityUi::handle(const SDL_Event& e) {
         return;
     }
     if (req_.kind == Request::Menu && menu_) {
-        if (e.type == SDL_KEYDOWN) keys_.push_back(e);     // (a key stops the animation: see tick)
         menu_->handle(e, app_.mouse(e));
         return;
     }
+    // (GAME takes no mouse input: MOUSE.C is linked but never called; only the
+    // Menu widget's own mouse support, the port's, works in the text windows.)
     if (e.type == SDL_KEYDOWN && dosKey(e) >= 0) keys_.push_back(e);
-    else if (e.type == SDL_MOUSEBUTTONDOWN) {
-        SDL_Event k{};
-        k.type = SDL_KEYDOWN;
-        k.key.keysym.sym = SDLK_RETURN;
-        keys_.push_back(k);
-    }
 }
 
 bool CityUi::tick() {
@@ -260,7 +272,16 @@ bool CityUi::tick() {
             req_.kind = Request::None;
             return true;
         }
+        if (req_.keyEnds && !keys_.empty()) {
+            keys_.clear();
+            req_.ticks = 0;
+        }
         if (--req_.ticks > 0) return false;
+        req_.kind = Request::None;
+        return true;
+    case Request::Dissolve:
+        dissolve_.tick(screen);
+        if (dissolve_.active()) return false;
         req_.kind = Request::None;
         return true;
     case Request::Key:
@@ -289,8 +310,10 @@ bool CityUi::tick() {
         return false;
     }
     case Request::Menu:
-        // A key stops the animation (anim_should_abort); it keeps its frame.
-        if (anim_ && !anim_->finished() && (keys_.empty() || anim_->framesShown() < 3)) anim_->advance(kTick);
+        // text_window steps the animation while no key is waiting, until it ends
+        // or the window closes (anim_should_abort never fires there: it is only
+        // reached with no key pending).
+        if (anim_ && !anim_->finished()) anim_->advance(kTick);
         menu_->tick();
         if (auto r = menu_->result()) {
             req_.result = *r;

@@ -53,6 +53,7 @@ int CityGame::run() {
         if (!cityExit_) travelScreen();
     } while (!cityExit_);
     ui_.showMenu("One moment please...\n", 100, 2, SimEvent::kNoWait);
+    ui_.holdPaused(kTicksPerSecond);   // (up while the next program loads)
     setExitState();
     if (env_[0] == 0xFF) {   // quit: the advertisement, then DOS
         ui_.loadPicture("ad.pic", 0);
@@ -317,7 +318,8 @@ void CityGame::buildingScreen() {
                 ui_.statusY = 4;
                 advanceTime(60);
                 cityExit_ = 1;
-                ui_.loadPicture("sneakin.pic", 0);   // (on the back page, then shown: drv_slot9)
+                ui_.loadPicture("sneakin.pic", 1);
+                ui_.dissolveBackPage();              // drv_slot9
                 ui_.wait(60);
             } else {
                 successBriefing(orgg, cityb);
@@ -334,6 +336,7 @@ void CityGame::buildingScreen() {
                 tb() += std::to_string(lvl);
                 tb() += " minutes.\n";
                 ui_.showMenu(tb(), 20, 20, SimEvent::kNoWait);
+                ui_.holdPaused();   // (up while BUG loads)
                 cityExit_ = 4;
             } else {
                 lastExit_ = 0;
@@ -381,6 +384,7 @@ void CityGame::watchBuilding(int org, int city) {
             sim_.describeAlertLevel(person(who).org, person(who).city);
             tb() += "\n.";
             ui_.showMenu(tb(), 20, 100, SimEvent::kNoWait);
+            ui_.holdPaused();   // (up while CHASE loads)
             env_[8] = static_cast<std::uint8_t>(who);
             env_[9] = static_cast<std::uint8_t>(h().hereOrg);
             env_[10] = static_cast<std::uint8_t>(person(who).id & 1);

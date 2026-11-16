@@ -23,6 +23,7 @@
 #include <string>
 
 #include "app/App.h"
+#include "app/Dissolve.h"
 #include "app/GameThread.h"
 #include "app/Menu.h"
 #include "app/Scene.h"
@@ -67,6 +68,12 @@ public:
     bool keyPending() const;     // !drv_kbhit()
     void flushInput();           // flush_input
     void wait(int retraces);     // wait_retrace(n)
+    // A paused window (dossier_state) left up while the next program loads: the
+    // original showed it for as long as the load took; this holds it `retraces`
+    // or until a key.
+    void holdPaused(int retraces = 2 * kTicksPerSecond);
+    // drv_dissolve_page: the back page dissolves onto the screen.
+    void dissolveBackPage();
     void incomingMessage(const std::string& title, const std::string& text);   // incoming_message
     // Runs another scene in the middle of the program (the save/load menus of the
     // hotel): `make(last, then)` builds it with the screen as it is; the scene
@@ -127,7 +134,8 @@ public:
     void screenWidth(int w) override { screenW = w; }
     void portraitPos(int x, int y) override { portraitX = x, portraitY = y; }
     void sceneVar(int i, int v) override { setSceneVar(i, v); }
-    void sceneBackground(const std::string& name, int x, int y) override { setSceneBackground(name, x, y); }
+    bool sceneBackground(const std::string& name, int x, int y) override { return setSceneBackground(name, x, y); }
+    void faceParts(int face, int x, int y) override { drawFace(face, x, y); }
 
     // ---- scene side ----
     void handle(const SDL_Event& e);
@@ -139,10 +147,11 @@ public:
 
 private:
     struct Request {
-        enum Kind { None, Delay, Key, Menu, Child } kind = None;
+        enum Kind { None, Delay, Key, Menu, Child, Dissolve } kind = None;
         int ticks = 0;
         int result = -1;
         bool flushAfter = false;       // wait_key_or_button flushes the rest
+        bool keyEnds = false;          // Delay: a key ends it (holdPaused)
     };
     struct SceneAnim {
         std::string name;
@@ -169,6 +178,7 @@ private:
     bool playing_ = false;                        // play_animation: the .PAN alone
 
     Request req_;
+    reaction::Dissolve dissolve_;                 // dissolveBackPage
     std::deque<SDL_Event> keys_;                  // typed ahead
     std::optional<reaction::Menu> menu_;
     std::string menuText_;
