@@ -5,12 +5,17 @@
 // the two runs at a time and a run is deterministic. GAME's city loop (and the
 // simulation's routines it calls, which wait for the player deep inside) is such
 // a program; this keeps it close to the C instead of turning it inside out.
+//
+// On the web (no threads without cross-origin isolation) the program runs on an
+// Emscripten fiber instead: the same hand-over, by switching stacks on the one
+// thread (needs -sASYNCIFY).
 #pragma once
 
 #include <condition_variable>
 #include <exception>
 #include <functional>
 #include <mutex>
+#include <memory>
 #include <thread>
 
 namespace redux {
@@ -21,8 +26,8 @@ public:
     // program is still waiting: it unwinds the program's stack.
     struct Abort {};
 
-    explicit GameThread(std::function<void()> body) : body_(std::move(body)) {}
-    ~GameThread();
+    explicit GameThread(std::function<void()> body);
+    ~GameThread();   // defined in GameThread.cpp (Fibers is incomplete here)
     GameThread(const GameThread&) = delete;
     GameThread& operator=(const GameThread&) = delete;
 
@@ -38,9 +43,14 @@ private:
     void run();
 
     std::function<void()> body_;
+#ifdef __EMSCRIPTEN__
+    struct Fibers;
+    std::unique_ptr<Fibers> fibers_;
+#else
     std::thread thread_;
     std::mutex m_;
     std::condition_variable cv_;
+#endif
     bool started_ = false;
     bool programTurn_ = false;
     bool done_ = false;

@@ -16,12 +16,14 @@ endif()
 
 if(EMSCRIPTEN)
   # Emscripten's own SDL2 port (downloaded on the first build). The engine uses
-  # exceptions: native WebAssembly exception handling, everywhere, compile and link.
+  # exceptions, everywhere, compile and link: Emscripten's JavaScript-based ones,
+  # since native WebAssembly exceptions don't work with ASYNCIFY (the city loop's
+  # fiber, see below).
   add_library(redux_sdl2 INTERFACE)
   target_compile_options(redux_sdl2 INTERFACE -sUSE_SDL=2)
   target_link_options(redux_sdl2 INTERFACE -sUSE_SDL=2)
-  add_compile_options(-fwasm-exceptions)
-  add_link_options(-fwasm-exceptions)
+  add_compile_options(-fexceptions)
+  add_link_options(-fexceptions)
   set(REDUX_SDL2 redux_sdl2)
   # FOR LOCAL TESTING ONLY: packs resources/Covert (your copy of the original game,
   # which is copyrighted) into the build. A build made with this ON must never be
@@ -90,6 +92,8 @@ elseif(EMSCRIPTEN)
     --shell-file ${REDUX_SHELL}
     -lidbfs.js
     -sFORCE_FILESYSTEM=1
+    # The city loop's GameThread runs GAME's code on a fiber (no threads on the web).
+    -sASYNCIFY=1
     -sALLOW_MEMORY_GROWTH=1
     -sINVOKE_RUN=0
     -sEXIT_RUNTIME=0
