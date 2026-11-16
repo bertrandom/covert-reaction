@@ -2,6 +2,7 @@
 
 #include <array>
 
+#include "app/FrontEnd.h"
 #include "app/Menu.h"
 
 namespace redux {
@@ -49,7 +50,9 @@ private:
 }  // namespace
 
 std::unique_ptr<Scene> makeScene(App& app, const std::string& name) {
-    if (name == "start" || name == "menu-demo") return std::make_unique<MenuDemoScene>(app);
+    if (name == "start" || name == "title") return makeTitleScene(app);
+    if (name == "main-menu") return makeMainMenuScene(app);
+    if (name == "menu-demo") return std::make_unique<MenuDemoScene>(app);
     return nullptr;
 }
 
