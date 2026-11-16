@@ -105,6 +105,7 @@ int CityUi::textWindow(const std::string& text, int x, int y, unsigned flags) {
         anim_ = std::make_unique<PanPlayer>(PanFile::parse(app_.data.read(pending_->name)), o, &screen);
         for (int i = 0; i < PanPlayer::kVars; ++i) anim_->setVar(i, vars_[static_cast<std::size_t>(i)]);
         cityPicShown_ = -1;
+        bldFlag_ = pending_->name.compare(0, 3, "bld") == 0;
         palette_ = mcgaPalette(palettes::kGame);
         const int portrait = sim_ ? sim_->globals().faceShown : -1;
         if (portrait != -1) {
@@ -186,6 +187,7 @@ void CityUi::playAnimation(const std::string& name, int x) {
     o.x = x;
     anim_ = std::make_unique<PanPlayer>(PanFile::parse(app_.data.read(name)), o, &screen);
     playing_ = true;
+    bldFlag_ = false;
     animSw_ = 0;
     Request r;
     r.kind = Request::Delay;
@@ -308,6 +310,7 @@ Image CityUi::composite() const {
     if (!anim_) return screen;
     Image img = anim_->frame();
     if (animSw_ > 0) img.blit(screen, 0, 0, animSw_, 200, 0, 0);
+    if (bldFlag_) img.blit(screen, 0, 0, 160, 30, 0, 0);   // restore_background's status bar
     return img;
 }
 

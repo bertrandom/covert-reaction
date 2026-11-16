@@ -162,6 +162,7 @@ private:
     std::array<int, PanPlayer::kVars> vars_{};    // set_scene_var
     std::unique_ptr<PanPlayer> anim_;             // playing behind a text window
     int animSw_ = 320;                            // screen_width while it plays
+    bool bldFlag_ = false;                        // bld_flag: a building's .PAN keeps the status bar
     bool playing_ = false;                        // play_animation: the .PAN alone
 
     Request req_;
