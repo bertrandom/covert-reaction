@@ -173,39 +173,66 @@ It looks for the game, in order, in:
 6. `Covert` in the per-user folder
 
 It doesn't search the disk. If none of these has the game (the first run, or
-the saved folder is gone), the window opens on a small **setup screen**:
+the saved folder is gone), the window opens on the **setup screen**, a small
+launcher of Covert Reaction's own: drawn at the window's full resolution
+(sharp on HiDPI / Retina displays, laid out again when the window is resized
+or goes full screen with Alt+Enter) in the system's own UI font, nothing of
+the game's. It has two cards:
 
-- **Game files:** where the game files come from (or "Not chosen");
-  **Choose game files...** asks for the game: an installer, an archive, a disk
-  image or a folder. What's chosen is imported into the data folder at once,
-  with its progress in the row, then "Covert Action's files: OK", or in red why
-  not. The data folder is replaced only once a new import is complete, so a
-  failed one leaves the old copy as it was.
-- **MT-32 ROMs (optional):** the ROM set found in the chosen folder (e.g. "MT-32
-  Control v1.07 + MT-32 PCM ROM"), a red note if that folder has no usable
-  control + PCM pair, or a set found anyway in the usual places (see
-  [Sound](#sound)); **Choose MT-32 ROMs...** asks for the folder with your ROM
-  files (they're used where they are). Without ROMs the music plays on the AdLib.
-- **START** (greyed until the game files are there) saves both folders
-  (`game_data`, `mt32_roms` in `settings.ini`) and starts the game; **Quit**
-  (Esc) leaves.
+- **Game files** (required): a status icon and line: "Not chosen", the import
+  under way (a progress bar with its stage), "Imported from GOG's Windows
+  installer · 98 files", or in red why not (the full message). **Choose…**
+  asks for the game: an installer, an archive, a disk image or a folder. What's
+  chosen is imported into the data folder at once. The data folder is replaced
+  only once a new import is complete, so a failed one leaves the old copy as
+  it was.
+- **MT-32 ROMs** (optional): the ROM set found in the chosen folder (e.g. "MT-32
+  Control v1.07 + MT-32 PCM ROM"), a warning if that folder has no usable
+  control + PCM pair, a set found anyway in the usual places (see
+  [Sound](#sound)), or "Not needed: the music plays on the AdLib". **Choose
+  folder…** asks for the folder with your ROM files (they're used where they
+  are); **Clear** goes back to looking in the usual places.
 
-Up/Down or Tab move between the buttons, Enter presses one; the mouse works too.
-"Choose..." opens the system's own panel on macOS (which needs none of macOS's
-folder permissions), and an in-game browser on Windows and Linux: folders that
-hold what's asked for are marked in green and the releases' files are listed
-after the folders; Enter opens a folder or takes a marked one or a file,
-Backspace goes up, U uses the folder, Esc goes back; the mouse wheel and clicks
-work too.
+**START** (greyed until the game files are there) saves both folders
+(`game_data`, `mt32_roms` in `settings.ini`) and starts the game; **Quit**
+leaves. Tab / Shift+Tab or the arrow keys move the focus, Enter or Space
+presses, Esc quits; the mouse works too.
 
-The same screen is in the main menu's Options (**Game files and ROMs...**), to
-change either later: new game files are used from the next start, a new ROM
-folder at once.
+"Choose…" opens the system's own file dialog:
 
-`--scene picker` or `COVERT_FORCE_PICKER=1` shows the setup screen anyway, with
-the in-game browser on macOS too, and `COVERT_PICKER_DIR` sets the folder the
-browser opens in (for testing; scripted `--shot` runs never open the system's
-panel). The web build has its own page for this (see [Web](#web)).
+| System | Dialog | Game files |
+|---|---|---|
+| macOS | the open panel (needs none of macOS's folder permissions) | one **Choose…**: a file or a folder |
+| Windows | the common file dialog | **Choose installer or archive…** (filtered to the releases' files) and **Choose folder…** |
+| Linux | `zenity`, else `kdialog` (`kdialog` first on KDE) | the same two buttons as on Windows |
+
+On Linux without `zenity` or `kdialog`, an in-game browser opens instead:
+folders that hold what's asked for are marked in green and the releases' files
+are listed after the folders; Enter opens a folder or takes a marked one or a
+file, Backspace goes up, U uses the folder, Esc goes back.
+
+The UI font is found at fixed places, no search: San Francisco on macOS
+(`/System/Library/Fonts/SFNS.ttf`, else Helvetica Neue, Helvetica or Arial),
+Segoe UI on Windows (else Arial), and on Linux fontconfig's `sans-serif`
+(`fc-match`), else DejaVu Sans, Noto Sans, Liberation Sans, Cantarell or Ubuntu
+in `/usr/share/fonts`. If none can be read it falls back to a built-in 8x8
+font. `COVERT_UI_FONT` (and `COVERT_UI_FONT_BOLD`) name a font file instead;
+`COVERT_UI_SCALE` makes the whole screen bigger or smaller.
+
+The same screen is in the main menu's Options (**Game files and ROMs...**),
+with **Done** and **Cancel**, to change either later: new game files are used
+from the next start, a new ROM folder at once.
+
+For testing: `--scene picker` or `COVERT_FORCE_PICKER=1` shows the setup screen
+anyway. Scripted `--shot` runs never open a dialog; there `COVERT_TEST_PICK=PATH`
+makes the next dialog "choose" PATH (`PATH1|PATH2`: one per dialog), the shot
+is the setup screen at `--ui-size WxH[@RATIO]` (default 1280x800; `@2` as a
+Retina display), a PNG if the file name ends in `.png`, and
+`COVERT_IMPORT_THREAD=1` with `COVERT_SCRIPT_TICK_MS=10` shows an import in
+progress. `COVERT_FILE_DIALOG=builtin` uses the in-game browser (whose first
+folder is `COVERT_PICKER_DIR`), `COVERT_FILE_DIALOG=split` shows the two game
+buttons as on Windows. The web build has its own page for this (see
+[Web](#web)).
 
 File names are matched case-insensitively.
 
@@ -265,7 +292,7 @@ downloads them. Put your own dumps in one of these places (the first found wins)
 1. `--mt32-roms <folder>` on the command line
 2. the `COVERT_MT32_ROMS` environment variable
 3. the folder saved as `mt32_roms` in `settings.ini`: the one chosen on the
-   setup screen (**Choose MT-32 ROMs...**, at the first start or from Options ›
+   setup screen (MT-32 ROMs › **Choose folder…**, at the first start or from Options ›
    Game files and ROMs...)
 4. the game folder, or an `MT32`, `MT32/roms`, `mt32-roms` or `roms` folder in it
    or next to it
@@ -312,14 +339,15 @@ Kept on purpose:
 
 | Folder | What it is |
 |---|---|
-| `src/core` | basics: finding and reading game files, images and palettes, settings, the built-in 8x8 font |
+| `src/core` | basics: finding and reading game files, images and palettes, settings, the built-in 8x8 font, a small true-colour canvas and the system UI font (for the setup screen) |
 | `src/formats` | the original file formats: pictures, fonts, text windows, animations, catalogs |
 | `src/game` | the game logic, ported from the original: case generation, the simulation, the mini-games, end of case, saved games |
 | `src/audio` | the sound drivers, ported, and the emulated MT-32, AdLib and PC speaker |
-| `src/app` | the SDL2 application: window, input, the scenes |
+| `src/app` | the SDL2 application: window, input, the scenes, the setup screen and its file dialogs |
 | `tools` | `reaction-tool`, a command-line tool for the game files and the game logic |
 | `tests` | harnesses that compare the port with the original's C and drivers (MSC 5.1, DOSBox-X); each has a README |
 | `web` | the web page around the WebAssembly build |
+| `third_party` | code by others kept in the source (see [Third-party code](#third-party-code)) |
 
 The engine (`src/core`, `src/formats`, `src/game`, `src/audio`) has no SDL
 dependency, so the tools and tests use it without a window. The screen is the
@@ -370,5 +398,6 @@ Included in the source:
 
 | Code | Version | License | Used for |
 |---|---|---|---|
-| [font8x8](https://github.com/dhepper/font8x8) (Daniel Hepper, after Marcel Sondaar and IBM's VGA fonts), `font8x8_basic.h`, in `src/core/BuiltinFont.cpp` | 8e279d2 (2019) | public domain | the 8x8 font of the screen that asks for the game files (the game's own fonts are game files) |
+| [font8x8](https://github.com/dhepper/font8x8) (Daniel Hepper, after Marcel Sondaar and IBM's VGA fonts), `font8x8_basic.h`, in `src/core/BuiltinFont.cpp` | 8e279d2 (2019) | public domain | the 8x8 font of the in-game folder browser, and the setup screen's last-resort font (the game's own fonts are game files) |
+| [stb_truetype](https://github.com/nothings/stb) (Sean Barrett), `third_party/stb/stb_truetype.h`, its notice at the end of the file | 1.28, 9f755b6 (2026) | public domain or MIT | reading and drawing the system's UI font on the setup screen |
 | [innoextract](https://constexpr.org/innoextract/) (Daniel Scharrer), adapted: the format knowledge behind `src/formats/InnoSetup.cpp`, with its CALL/JMP filter and GOG Galaxy part parsing ported from it | master (2025) | zlib | reading GOG's Windows installer |
