@@ -39,4 +39,13 @@ std::unique_ptr<Scene> makeLeaderFacesScene(App& app, LeaderLineup lineup,
 // practice mini-game, which ends in the main menu. The case is dropped.
 std::unique_ptr<Scene> makeLineupFailedScene(App& app, const Frame& last);
 
+// CASE.C case_briefing's screens, after generate_case made its draws (`res`): the
+// region and (difficulty < 2) the organization known to be involved, the mission
+// (and the double-agent caution), the leader line-up when it's asked for, then
+// "OK, you're cleared." (first case) "Here is some info we've picked up..." over
+// briefing.pan, and `startCase`. A wrong face goes to makeLineupFailedScene; a
+// right one (or any, with copy protection off) sets options 80h first.
+std::unique_ptr<Scene> makeCaseBriefingScene(App& app, const Frame& last, const CaseSetup& setup,
+                                             const CaseResult& res, SceneThen startCase);
+
 }  // namespace reaction

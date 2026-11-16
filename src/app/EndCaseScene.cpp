@@ -49,16 +49,12 @@ std::unique_ptr<Scene> startCityForNewCase(App& app, const Frame& last) { return
 // a practice mission instead.
 std::unique_ptr<Scene> generateCase(App& app, const Frame& last) {
     auto& g = app.game;
-    CaseResult res = CaseGenerator(g.world, g.rng, app.data, caseSetupFor(g)).generate();
+    const CaseSetup setup = caseSetupFor(g);
+    CaseResult res = CaseGenerator(g.world, g.rng, app.data, setup).generate();
     g.storeCareer();
-    if (!res.faceCheck) return startCityForNewCase(app, last);
-    return makeLeaderFacesScene(app, res.lineup, [&app](bool passed, const Frame& f) -> std::unique_ptr<Scene> {
-        if (passed) {
-            clearedForDuty(app.game.world);
-            app.game.storeCareer();
-            return startCityForNewCase(app, f);
-        }
-        return makeLineupFailedScene(app, f);
+    return makeCaseBriefingScene(app, last, setup, res, [&app](const Frame& f) -> std::unique_ptr<Scene> {
+        app.game.storeCareer();
+        return startCityForNewCase(app, f);
     });
 }
 

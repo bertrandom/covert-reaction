@@ -351,20 +351,12 @@ std::unique_ptr<Scene> caseNotPorted(App& app, const Frame& last);
 // when it asks for one), then GAME: the mission briefing and the city loop.
 std::unique_ptr<Scene> caseNotPorted(App& app, const Frame& last) {
     auto& g = app.game;
-    CaseResult res = CaseGenerator(g.world, g.rng, app.data, caseSetupFor(g)).generate();
+    const CaseSetup setup = caseSetupFor(g);
+    CaseResult res = CaseGenerator(g.world, g.rng, app.data, setup).generate();
     g.storeCareer();
-    auto startNotice = [&app](const Frame& f) -> std::unique_ptr<Scene> {
+    return makeCaseBriefingScene(app, last, setup, res, [&app](const Frame& f) -> std::unique_ptr<Scene> {
         app.game.storeCareer();
         return makeCityNewCaseScene(app, f);
-    };
-    if (!res.faceCheck) return startNotice(last);
-    return makeLeaderFacesScene(app, res.lineup, [&app, startNotice](bool passed, const Frame& f) -> std::unique_ptr<Scene> {
-        if (passed) {
-            clearedForDuty(app.game.world);
-            return startNotice(f);
-        }
-        // FINAL drops the case and sends a wrong answer to a practice mission.
-        return makeLineupFailedScene(app, f);
     });
 }
 

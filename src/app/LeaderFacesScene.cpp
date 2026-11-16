@@ -163,6 +163,55 @@ std::unique_ptr<Scene> makeLineupFailedScene(App& app, const Frame& last) {
     });
 }
 
+std::unique_ptr<Scene> makeCaseBriefingScene(App& app, const Frame& last, const CaseSetup& setup,
+                                             const CaseResult& res, SceneThen startCase) {
+    static const char* const kRegions[] = {"Europe.", "Africa/Middle East.", "Central America."};
+    std::string region = "We have indications that an operation is in preparation somewhere in ";
+    region += kRegions[setup.world >= 0 && setup.world < 3 ? setup.world : 0];
+    if (res.briefingOrg >= 0) {
+        region += " The ";
+        region += app.game.world.orgs[static_cast<std::size_t>(res.briefingOrg)].name.str();
+        region += " is known to be involved.";
+    }
+    wrapTextBuffer(region, 40);
+    std::string mission = "Your mission is to prevent this operation from succeeding "
+                          "and to capture as many of the participants as possible.";
+    if (setup.difficulty)
+        mission += " Caution, one or more Double Agents are believed to be active within the CIA.";
+    wrapTextBuffer(mission, 40);
+    std::string cleared = setup.curMonth == 0 ? "OK, you're cleared. " : "";
+    cleared += "Here is some info we've picked up over the last few days. "
+               "We think it's linked to this operation...\n";
+    wrapTextBuffer(cleared, 40);
+
+    // The chief's "cleared" window over briefing.pan (set_scene_var(0, 1)), then the case.
+    auto clearedScene = [&app, cleared, startCase](const Frame& f) -> std::unique_ptr<Scene> {
+        return std::make_unique<ScriptScene>(app, f, [cleared, startCase](ScriptScene& s) {
+            s.insert({ScriptScene::storyStep(1), ScriptScene::menuStep(cleared, 8, 149),
+                      ScriptScene::finishStep(startCase)});
+        });
+    };
+    const bool faceCheck = res.faceCheck;
+    const LeaderLineup lineup = res.lineup;
+    return std::make_unique<ScriptScene>(app, last, [&app, region, mission, faceCheck, lineup,
+                                                     clearedScene](ScriptScene& s) {
+        s.insert({
+            ScriptScene::menuStep(region, 8, 149, {}, true),   // then clear_text_area()
+            ScriptScene::menuStep(mission, 8, 149),
+            ScriptScene::finishStep([&app, faceCheck, lineup, clearedScene](const Frame& f) -> std::unique_ptr<Scene> {
+                if (!faceCheck) return clearedScene(f);
+                return makeLeaderFacesScene(app, lineup, [&app, clearedScene](bool passed, const Frame& f2)
+                                                             -> std::unique_ptr<Scene> {
+                    if (!passed) return makeLineupFailedScene(app, f2);
+                    clearedForDuty(app.game.world);   // options |= 80h
+                    app.game.storeCareer();
+                    return clearedScene(f2);
+                });
+            }),
+        });
+    });
+}
+
 REACTION_SCENE("leader-faces", [](App& app) {
     LeaderLineup lineup = drawLeaderLineup(app.game.rng);
     return makeLeaderFacesScene(app, lineup, [&app, lineup](bool passed, const Frame& last) {
