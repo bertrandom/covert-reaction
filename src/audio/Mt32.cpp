@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
 #include <array>
 #include <cstring>
 #include <map>
@@ -55,15 +57,36 @@ std::optional<Mt32Rom> assemble(const std::string& id, const std::vector<Found>&
 }
 
 // libmt32emu prints its debug messages and the LCD text on stdout by default.
-class QuietReports final : public MT32Emu::ReportHandler {
+// REACTION_MT32_DEBUG=1 in the environment prints, on stderr, what the emulated
+// MT-32 reports instead: notes it can't play for lack of partials, MIDI queue
+// overflows, program changes.
+class QuietReports final : public MT32Emu::ReportHandler3 {
 public:
+    QuietReports() : debug_(std::getenv("REACTION_MT32_DEBUG") != nullptr) {}
     void printDebug(const char*, va_list) override {}
     void showLCDMessage(const char*) override {}
+    bool onMIDIQueueOverflow() override {
+        if (debug_) std::fprintf(stderr, "mt32: MIDI queue overflow\n");
+        return false;
+    }
+    void onNoteOnIgnored(MT32Emu::Bit32u needed, MT32Emu::Bit32u free) override {
+        if (debug_) std::fprintf(stderr, "mt32: note on ignored (%u partials needed, %u free)\n", needed, free);
+    }
+    void onPlayingPolySilenced(MT32Emu::Bit32u needed, MT32Emu::Bit32u free) override {
+        if (debug_) std::fprintf(stderr, "mt32: playing note silenced (%u partials needed, %u free)\n", needed, free);
+    }
+    void onProgramChanged(MT32Emu::Bit8u part, const char* group, const char* patch) override {
+        if (debug_) std::fprintf(stderr, "mt32: part %u program %s %s\n", part + 1u, group, patch);
+    }
+
+private:
+    bool debug_;
 };
 
 class Mt32Synth final : public Synth {
 public:
-    Mt32Synth(const Mt32Roms& roms, int rate) : synth_(&reports_) {
+    Mt32Synth(const Mt32Roms& roms, int rate) {
+        synth_.setReportHandler3(&reports_);
         control_ = load(roms.control);
         pcm_ = load(roms.pcm);
         if (!control_ || !pcm_ || !control_->getROMInfo() || !pcm_->getROMInfo())
@@ -73,6 +96,15 @@ public:
         // An MPU-401 in UART mode and a MIDI cable: every message takes its
         // transmission time (31250 baud), as the driver's bytes did.
         synth_.setMIDIDelayMode(MT32Emu::MIDIDelayMode_DELAY_ALL);
+        // The LA32 adds the partials of the second half of each group of eight
+        // (4-7, 12-15, ...) in opposite phase, so a timbre whose two partials are
+        // nearly identical cancels out when it is given one of each, as the real
+        // MT-32 does (libmt32emu's "semi-confirmed" emulation; it depends on which
+        // partials happen to be free). Covert Action's gunshot is such a timbre: in
+        // a break-in, once the score has used partials, some shots are silent.
+        // REACTION_MT32_NICE_MIXING=1 mixes every partial in phase instead.
+        if (const char* e = std::getenv("REACTION_MT32_NICE_MIXING"); e && *e && *e != '0')
+            synth_.setNicePartialMixingEnabled(true);
         src_ = std::make_unique<MT32Emu::SampleRateConverter>(synth_, rate,
                                                               MT32Emu::SamplerateConversionQuality_GOOD);
         parser_ = std::make_unique<MT32Emu::DefaultMidiStreamParser>(synth_);
