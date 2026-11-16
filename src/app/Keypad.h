@@ -3,10 +3,10 @@
 // TAC and BUG move in eight directions, and the original's diagonals come from
 // keypad 7 9 1 3 (or Home PgUp End PgDn), which most laptops lack. Two ways in:
 //
-//   - Arrow chords: holding two perpendicular arrows gives the diagonal between
-//     them (Up+Right = keypad 9, Up+Left = 7, Down+Right = 3, Down+Left = 1).
-//     Releasing one goes back to the other arrow. Modifiers (Shift to dive in
-//     TAC) pass through.
+//   - Arrow chords: holding two perpendicular arrows gives the grey diagonal key
+//     between them (Up+Right = PgUp, Up+Left = Home, Down+Right = PgDn,
+//     Down+Left = End), so they act like the arrows themselves (in TAC the grey
+//     keys dive, as in the original). Releasing one goes back to the other arrow.
 //   - The number row as the keypad: 1-9 are the keypad digits (5 = keypad 5,
 //     sneak in TAC), via digitAsKeypad().
 //   - A keypad on the letters, as laptops with an embedded keypad have it:
@@ -65,7 +65,7 @@ inline SDL_Keycode letterKeypad(SDL_Keycode k) {
 class ArrowChords {
 public:
     // A key press: the key to act on. Arrows give the direction of all arrows now
-    // held (a keypad diagonal for two perpendicular ones, the arrow itself
+    // held (Home / PgUp / End / PgDn for two perpendicular ones, the arrow itself
     // otherwise); other keys come back unchanged.
     SDL_Keysym keyDown(SDL_Keysym k) {
         if (!isArrowKey(k.sym)) return k;
@@ -90,10 +90,10 @@ public:
     std::optional<SDL_Keycode> direction() const {
         const int v = (held_ & kUp ? -1 : 0) + (held_ & kDown ? 1 : 0);
         const int h = (held_ & kLeft ? -1 : 0) + (held_ & kRight ? 1 : 0);
-        if (v < 0 && h > 0) return SDLK_KP_9;
-        if (v < 0 && h < 0) return SDLK_KP_7;
-        if (v > 0 && h > 0) return SDLK_KP_3;
-        if (v > 0 && h < 0) return SDLK_KP_1;
+        if (v < 0 && h > 0) return SDLK_PAGEUP;
+        if (v < 0 && h < 0) return SDLK_HOME;
+        if (v > 0 && h > 0) return SDLK_PAGEDOWN;
+        if (v > 0 && h < 0) return SDLK_END;
         if (v < 0) return SDLK_UP;
         if (v > 0) return SDLK_DOWN;
         if (h < 0) return SDLK_LEFT;

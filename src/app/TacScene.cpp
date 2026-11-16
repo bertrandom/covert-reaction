@@ -4,10 +4,11 @@
 // for with the Menu widget.
 //
 // Keys (TAC forces NumLock on while Max moves):
-//   arrows / keypad 1-9 (and the digit keys)  walk; with Shift: dive
-//   Home End PgUp PgDn                         walk diagonally; with Shift: dive
-//   two arrows at once (Up+Right ...)          walk diagonally, for keyboards
-//                                              without a keypad (app/Keypad.h)
+//   keypad 1-9 (and the digit keys)            walk; with Shift: dive
+//   arrows, Home End PgUp PgDn                 dive (as in the original: the grey
+//                                              keys give no digit)
+//   two arrows at once (Up+Right ...)          dive diagonally, for keyboards
+//                                              without Home End PgUp PgDn (app/Keypad.h)
 //   keypad 5 or '5'                            sneak on / off
 //   7 8 9 / U I O / J K L                      the keypad on the letters, for
 //                                              keyboards without one: walk,
@@ -17,8 +18,6 @@
 //   F5 F6 F7 throw a grenade (short / medium / long fuse)
 //   F8 detonate remote-controlled traps       F9 set a trap   F10 next grenade kind
 //   s d f  slow / normal / fast   Alt-S sound   Alt-P pause   Alt-Q quit
-// (In the original the grey arrows give the Shift+keypad codes, so they dive;
-// here they walk like the keypad, which a keyboard without one needs.)
 //
 // Registered scene: "tac", a practice break-in. For testing, REDUX_TAC_CITY,
 // REDUX_TAC_ORG, REDUX_TAC_SEED (the game seed), REDUX_TAC_DIFFICULTY (0-3),
@@ -72,8 +71,10 @@ int tacKey(const SDL_Keysym& k, bool numlock) {
         {SDLK_PAGEDOWN, SDLK_KP_3, 0x51, '3'}, {SDLK_DOWN, SDLK_KP_2, 0x50, '2'}, {SDLK_END, SDLK_KP_1, 0x4F, '1'},
         {SDLK_LEFT, SDLK_KP_4, 0x4B, '4'}, {SDLK_HOME, SDLK_KP_7, 0x47, '7'},
     };
-    for (const Dir& d : dirs)
-        if (k.sym == d.a || k.sym == d.b) return numlock && !shift ? (d.scan << 8 | d.digit) : d.scan << 8;
+    for (const Dir& d : dirs) {
+        if (k.sym == d.a) return d.scan << 8;   // grey keys: no digit, so Max dives
+        if (k.sym == d.b) return numlock && !shift ? (d.scan << 8 | d.digit) : d.scan << 8;
+    }
     switch (k.sym) {
     case SDLK_KP_5: return numlock && !shift ? '5' : -1;
     case SDLK_RETURN: case SDLK_KP_ENTER: return 13;
@@ -105,7 +106,7 @@ public:
         if (e.type == SDL_KEYUP) {
             const SDL_Keycode up = e.key.keysym.sym;
             if (isArrowKey(up)) {
-                // Two arrows held = a diagonal: releasing one walks on the other way.
+                // Two arrows held = a diagonal: releasing one goes on the other way.
                 auto still = chords_.keyUp(up);
                 if (held_ && heldArrows_) {
                     if (still) held_->sym = *still;
