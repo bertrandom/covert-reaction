@@ -1,0 +1,3 @@
+@ECHO OFF
+CL /AS /Gs /Oas TACGEN.C > D:\CL.LOG
+TACGEN > D:\OUT.TXT
