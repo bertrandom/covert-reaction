@@ -49,11 +49,17 @@ private:
 
 }  // namespace
 
-std::unique_ptr<Scene> makeScene(App& app, const std::string& name) {
-    if (name == "start" || name == "title") return makeTitleScene(app);
-    if (name == "main-menu") return makeMainMenuScene(app);
-    if (name == "menu-demo") return std::make_unique<MenuDemoScene>(app);
-    return nullptr;
+std::map<std::string, SceneFactory>& sceneRegistry() {
+    static std::map<std::string, SceneFactory> r;
+    return r;
 }
+
+std::unique_ptr<Scene> makeScene(App& app, const std::string& name) {
+    auto& r = sceneRegistry();
+    auto it = r.find(name == "start" ? std::string("title") : name);
+    return it == r.end() ? nullptr : it->second(app);
+}
+
+REDUX_SCENE("menu-demo", [](App& app) { return std::make_unique<MenuDemoScene>(app); });
 
 }  // namespace redux

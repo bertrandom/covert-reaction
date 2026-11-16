@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "app/FrontEnd.h"
+#include "app/Scenes.h"
 #include "app/Menu.h"
 #include "formats/McgaPalette.h"
 #include "formats/Pan.h"
@@ -144,5 +145,8 @@ std::unique_ptr<Scene> makeMainMenuScene(App& app) {
     Image bg(320, 200, 0);
     return std::make_unique<MainMenuScene>(app, std::move(bg));
 }
+
+REDUX_SCENE("title", makeTitleScene);
+REDUX_SCENE("main-menu", makeMainMenuScene);
 
 }  // namespace redux
