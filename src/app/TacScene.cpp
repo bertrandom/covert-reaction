@@ -9,6 +9,9 @@
 //   two arrows at once (Up+Right ...)          walk diagonally, for keyboards
 //                                              without a keypad (app/Keypad.h)
 //   keypad 5 or '5'                            sneak on / off
+//   7 8 9 / U I O / J K L                      the keypad on the letters, for
+//                                              keyboards without one: walk,
+//                                              with Shift dive, I sneak
 //   Space fire          Enter or F1 examine (open / close, take)
 //   F2 photograph       F3 plant a bug        F4 use (computer terminal)
 //   F5 F6 F7 throw a grenade (short / medium / long fuse)
@@ -108,7 +111,7 @@ public:
                     if (still) held_->sym = *still;
                     else held_.reset();
                 }
-            } else if (held_ && up == held_->sym) {
+            } else if (held_ && up == heldKey_) {
                 held_.reset();
             }
             return;
@@ -119,11 +122,17 @@ public:
             return;
         }
         if (e.type != SDL_KEYDOWN || e.key.repeat || isModifier(e.key.keysym.sym)) return;
-        const SDL_Keysym key = chords_.keyDown(e.key.keysym);
+        SDL_Keysym key = chords_.keyDown(e.key.keysym);
+        // While Max moves (TAC's NumLock on), the number row and 7 8 9 / U I O /
+        // J K L are the keypad: walk, with Shift dive, I (5) sneak. Not while
+        // typing a message (NumLock off), nor with Ctrl / Alt / Cmd.
+        if (tac_.numLock() && !(key.mod & (KMOD_CTRL | KMOD_ALT | KMOD_GUI)))
+            key.sym = letterKeypad(digitAsKeypad(key.sym));
         const int code = tacKey(key, tac_.numLock());
         if (code < 0) return;
         tac_.pushKey(code);
         held_ = key;
+        heldKey_ = e.key.keysym.sym;
         heldArrows_ = isArrowKey(e.key.keysym.sym);
         nextRepeat_ = static_cast<double>(tick_) + 17.5;   // typematic delay 250 ms
     }
@@ -185,6 +194,7 @@ private:
     std::optional<Menu> menu_;
     std::optional<SDL_Keysym> held_;
     ArrowChords chords_;
+    SDL_Keycode heldKey_ = SDLK_UNKNOWN;   // the physical key behind held_
     bool heldArrows_ = false;   // held_ comes from the arrow keys (maybe a chord)
     double nextRepeat_ = 0;
     long tick_ = 0;

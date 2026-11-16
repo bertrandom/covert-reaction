@@ -30,8 +30,9 @@ namespace {
 using Ev = WiretapEvent::Kind;
 
 // SDL keys to the codes get_key() gives bug_frame. The keypad digits act as
-// the arrows they are with Num Lock off; so do the number row's digits and
-// arrow chords (Up+Right = PgUp ...), for keyboards without a keypad.
+// the arrows they are with Num Lock off; so do the number row's digits, the
+// keypad on the letters (7 8 9 / U I O / J K L) and arrow chords (Up+Right =
+// PgUp ...), for keyboards without a keypad.
 int dosKey(const SDL_Keysym& k) {
     using namespace bugkeys;
     if (k.mod & KMOD_ALT) {
@@ -42,7 +43,7 @@ int dosKey(const SDL_Keysym& k) {
         default: return kNone;
         }
     }
-    switch (digitAsKeypad(k.sym)) {
+    switch (k.mod & (KMOD_CTRL | KMOD_GUI) ? k.sym : letterKeypad(digitAsKeypad(k.sym))) {
     case SDLK_UP: case SDLK_KP_8: return kUp;
     case SDLK_PAGEUP: case SDLK_KP_9: return kPgUp;
     case SDLK_RIGHT: case SDLK_KP_6: return kRight;
