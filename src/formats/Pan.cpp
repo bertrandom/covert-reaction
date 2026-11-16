@@ -7,7 +7,7 @@
 
 #include "formats/Pic.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -515,4 +515,4 @@ const Image* PanPlayer::spriteImage(const Sprite& s) const {
     return img.empty() ? nullptr : &img;
 }
 
-}  // namespace redux
+}  // namespace reaction

@@ -41,7 +41,7 @@
 #include "game/Rng.h"
 #include "game/World.h"
 
-namespace redux {
+namespace reaction {
 
 class TextDb;
 class FontSet;
@@ -350,4 +350,4 @@ private:
     std::unique_ptr<FontSet> fonts_;
 };
 
-}  // namespace redux
+}  // namespace reaction

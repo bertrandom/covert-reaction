@@ -3,7 +3,7 @@
 #include "formats/Pic.h"
 #include "formats/TextWindow.h"
 
-namespace redux {
+namespace reaction {
 
 const std::array<std::array<int, 8>, 26> kFaceDefs = {{
     {0, 1, 2, 2, 2, 2, 3, 1}, {0, 0, 3, 3, 3, 3, 1, 2}, {0, 1, 5, 3, 4, 6, 0, 3},
@@ -104,4 +104,4 @@ void drawFaceFor(Image& dst, const FaceSprites& s, int p, int x, int y) {
     s.draw(dst, kFaceDefs[static_cast<std::size_t>(p)][7] + ((code & 1) ? 0x68 : 0x70), x + 3, y + 28);
 }
 
-}  // namespace redux
+}  // namespace reaction

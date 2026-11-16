@@ -13,7 +13,7 @@
 #include "game/Rng.h"
 #include "game/World.h"
 
-namespace redux {
+namespace reaction {
 
 // What the new-character and plot code (FINAL.C, NEWCHAR.C) has set up when
 // FINAL's main calls generate_case.
@@ -84,4 +84,4 @@ private:
     CaseResult r_;
 };
 
-}  // namespace redux
+}  // namespace reaction

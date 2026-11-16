@@ -8,7 +8,7 @@
 #include "game/Paper.h"
 #include "game/Sim.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -1153,4 +1153,4 @@ void makeDemoFinishedCase(GameState& g, const GameData& data, std::uint32_t seed
     g.storeCareer();
 }
 
-}  // namespace redux
+}  // namespace reaction

@@ -29,7 +29,7 @@
 #include "core/GameData.h"
 #include "game/Career.h"
 
-namespace redux {
+namespace reaction {
 
 class Sim;
 
@@ -199,4 +199,4 @@ private:
 void makeDemoFinishedCase(GameState& g, const GameData& data, std::uint32_t seed, int difficulty = 1,
                           int days = 12);
 
-}  // namespace redux
+}  // namespace reaction

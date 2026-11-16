@@ -1,4 +1,4 @@
-// redux-tool tac-case: a break-in during a case, headless, with GAMELIB's routines
+// reaction-tool tac-case: a break-in during a case, headless, with GAMELIB's routines
 // on the case's tables (game/TacCase.h). Generates the test scenes' case (the
 // "city-street" scene: COVERT_CITY_SEED, COVERT_CITY_LEVEL, COVERT_GAME_SEED),
 // puts the player at a suspect's building and runs TAC with a scripted visit:
@@ -23,8 +23,8 @@
 #include "game/Tac.h"
 #include "game/TacCase.h"
 
-using namespace redux;
-using namespace redux::tool;
+using namespace reaction;
+using namespace reaction::tool;
 
 namespace {
 
@@ -210,7 +210,7 @@ int run(const GameData& data, const std::vector<std::string>& args) {
 
 }  // namespace
 
-REDUX_COMMAND("tac-case",
+REACTION_COMMAND("tac-case",
               "tac-case [--suspect N] [--photos N] [--search WORD] [--no-arrest] [--shots DIR]: a scripted break-in "
               "into a suspect's building in the test case (COVERT_CITY_SEED, COVERT_CITY_LEVEL, COVERT_GAME_SEED, "
               "COVERT_TAC_RUNSEED, COVERT_SEED); prints the library's trace and the tables it changed",

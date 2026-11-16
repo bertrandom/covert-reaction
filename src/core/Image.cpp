@@ -4,7 +4,7 @@
 #include <fstream>
 #include <stdexcept>
 
-namespace redux {
+namespace reaction {
 
 void Image::blit(const Image& src, int sx, int sy, int w, int h, int dx, int dy, int transparent) {
     for (int y = 0; y < h; ++y) {
@@ -43,4 +43,4 @@ void writeBmp(const std::filesystem::path& path, const Image& img, const Palette
     f.write(reinterpret_cast<const char*>(out.data()), static_cast<std::streamsize>(out.size()));
 }
 
-}  // namespace redux
+}  // namespace reaction

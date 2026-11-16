@@ -16,7 +16,7 @@
 #include "app/App.h"
 #include "app/Scene.h"
 
-namespace redux {
+namespace reaction {
 
 // GAME at the start of a case (ENV[1] = 0): the mission briefing, then the city
 // loop. app.game holds the case generate_case made (and the career).
@@ -27,4 +27,4 @@ std::unique_ptr<Scene> makeCityNewCaseScene(App& app, const Frame& last);
 // here_city.
 std::unique_ptr<Scene> makeCityResumeScene(App& app, const Frame& last);
 
-}  // namespace redux
+}  // namespace reaction

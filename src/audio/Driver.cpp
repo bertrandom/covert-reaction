@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-namespace redux::audio {
+namespace reaction::audio {
 
 const char* deviceName(Device d) {
     switch (d) {
@@ -67,4 +67,4 @@ std::unique_ptr<SoundDriver> makeDriver(Device device, const DriverImage& image)
     return std::make_unique<Silent>();
 }
 
-}  // namespace redux::audio
+}  // namespace reaction::audio

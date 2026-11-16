@@ -1,6 +1,6 @@
 // The scene registry: makeScene(app, "start") gives the first scene; other names
 // open a scene directly (for development and the scripted tests). Each scene file
-// registers its scenes with REDUX_SCENE, so new screens add files, not edits.
+// registers its scenes with REACTION_SCENE, so new screens add files, not edits.
 #pragma once
 
 #include <functional>
@@ -11,7 +11,7 @@
 #include "app/App.h"
 #include "app/Scene.h"
 
-namespace redux {
+namespace reaction {
 
 using SceneFactory = std::function<std::unique_ptr<Scene>(App&)>;
 
@@ -22,10 +22,10 @@ struct SceneRegistrar {
     SceneRegistrar(const std::string& name, SceneFactory f) { sceneRegistry()[name] = std::move(f); }
 };
 
-}  // namespace redux
+}  // namespace reaction
 
-#define REDUX_SCENE_CONCAT2(a, b) a##b
-#define REDUX_SCENE_CONCAT(a, b) REDUX_SCENE_CONCAT2(a, b)
-// REDUX_SCENE("name", [](App& app) { return std::make_unique<MyScene>(app); })
-#define REDUX_SCENE(name, ...) \
-    static ::redux::SceneRegistrar REDUX_SCENE_CONCAT(scene_reg_, __LINE__)(name, __VA_ARGS__)
+#define REACTION_SCENE_CONCAT2(a, b) a##b
+#define REACTION_SCENE_CONCAT(a, b) REACTION_SCENE_CONCAT2(a, b)
+// REACTION_SCENE("name", [](App& app) { return std::make_unique<MyScene>(app); })
+#define REACTION_SCENE(name, ...) \
+    static ::reaction::SceneRegistrar REACTION_SCENE_CONCAT(scene_reg_, __LINE__)(name, __VA_ARGS__)

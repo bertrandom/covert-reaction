@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-namespace redux {
+namespace reaction {
 
 class Rng {
 public:
@@ -34,4 +34,4 @@ constexpr int clampTo(int v, int lo, int hi) {
     return v;
 }
 
-}  // namespace redux
+}  // namespace reaction

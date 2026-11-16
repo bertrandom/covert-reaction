@@ -1,6 +1,6 @@
 /* SNDDUMP: run one of Covert Action's sound drivers (the original .CA file)
  * and print what it sends to its device, tick by tick, in the format of
- * `redux-tool sound-events`.
+ * `reaction-tool sound-events`.
  *
  *   SNDDUMP R|A|I FILE.CA TICKS N[,A,B][@T] ...
  *

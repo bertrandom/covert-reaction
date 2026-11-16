@@ -4,7 +4,7 @@
 
 #include "formats/TextWindow.h"
 
-namespace redux {
+namespace reaction {
 
 void drawLine(Image& img, int x1, int y1, int x2, int y2, std::uint8_t c) {
     const int dx = std::abs(x2 - x1), dy = -std::abs(y2 - y1);
@@ -78,4 +78,4 @@ void wrapTextBuffer(std::string& t, int width) {
     if (pos > 0) t += '\n';
 }
 
-}  // namespace redux
+}  // namespace reaction

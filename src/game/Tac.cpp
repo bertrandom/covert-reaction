@@ -8,7 +8,7 @@
 
 #include "formats/Pic.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -1175,4 +1175,4 @@ void Tac::mark_guard_down(int g) {
     gu.stun = 9999;
 }
 
-}  // namespace redux
+}  // namespace reaction

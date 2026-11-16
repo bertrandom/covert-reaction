@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace redux {
+namespace reaction {
 
 class ByteReader {
 public:
@@ -58,4 +58,4 @@ private:
     std::vector<std::uint8_t> b_;
 };
 
-}  // namespace redux
+}  // namespace reaction

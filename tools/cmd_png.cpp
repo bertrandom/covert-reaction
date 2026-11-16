@@ -1,5 +1,5 @@
-// redux-tool bmp-png IN.bmp OUT.png [SCALE]: an 8-bit indexed BMP (the app's
-// --shot screenshots, redux-tool's dumps) as a PNG, for viewers that don't read
+// reaction-tool bmp-png IN.bmp OUT.png [SCALE]: an 8-bit indexed BMP (the app's
+// --shot screenshots, reaction-tool's dumps) as a PNG, for viewers that don't read
 // BMP. The PNG is RGB, stored without compression (deflate "stored" blocks).
 #include <cstdint>
 #include <cstdio>
@@ -34,8 +34,8 @@ void chunk(std::vector<std::uint8_t>& out, const char* type, const std::vector<s
 
 }  // namespace
 
-REDUX_COMMAND("bmp-png", "bmp-png IN.bmp OUT.png [SCALE]: convert an 8-bit indexed BMP to PNG",
-              [](const redux::GameData&, const std::vector<std::string>& args) {
+REACTION_COMMAND("bmp-png", "bmp-png IN.bmp OUT.png [SCALE]: convert an 8-bit indexed BMP to PNG",
+              [](const reaction::GameData&, const std::vector<std::string>& args) {
                   if (args.size() < 2) return 2;
                   const int scale = args.size() > 2 ? std::stoi(args[2]) : 1;
                   std::ifstream in(args[0], std::ios::binary);

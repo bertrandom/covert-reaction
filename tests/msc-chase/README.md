@@ -10,8 +10,8 @@ plays the chase with nobody steering for up to 3000 frames, dumping the three
 cars every 250 frames, and the end state with the next `rand()`. Odd
 difficulties play at night (limited view), the alert level is city * 7.
 
-`redux-tool chase-gen` prints the same dump from the C++ port (game/Chase).
+`reaction-tool chase-gen` prints the same dump from the C++ port (game/Chase).
 
 Run it like tests/msc: with covert-decomp's `toolchain/msc51` mounted as C: and
 this directory (CRLF line endings) as D:, `RUN.BAT` compiles with
-`CL /AS /Gs /Oas` and writes `OUT.TXT`; diff it with `redux-tool chase-gen`.
+`CL /AS /Gs /Oas` and writes `OUT.TXT`; diff it with `reaction-tool chase-gen`.

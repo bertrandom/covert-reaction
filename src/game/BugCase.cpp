@@ -5,7 +5,7 @@
 #include "formats/TextWindow.h"
 #include "game/Paper.h"
 
-namespace redux {
+namespace reaction {
 
 // msgs[-1] and msgs[128] in BUG's DGROUP (msgs at 6058h, cities at 5E32h):
 // msgs[-1] is the end of cities[15] (.time its orgs_known, .flags its map_x and
@@ -127,4 +127,4 @@ int BugCaseHooks::intercept(Wiretap& wt, int amount) {
     return static_cast<int>(scripts_.size()) - 1;
 }
 
-}  // namespace redux
+}  // namespace reaction

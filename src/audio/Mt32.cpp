@@ -14,7 +14,7 @@
 
 namespace fs = std::filesystem;
 
-namespace redux::audio {
+namespace reaction::audio {
 namespace {
 
 // Preferred control ROMs, best first: Covert Action (1990) was made for the
@@ -162,4 +162,4 @@ std::unique_ptr<Synth> makeMt32Synth(const Mt32Roms& roms, int sampleRate) {
     return std::make_unique<Mt32Synth>(roms, sampleRate);
 }
 
-}  // namespace redux::audio
+}  // namespace reaction::audio

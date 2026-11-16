@@ -1,4 +1,4 @@
-// redux-tool [--data DIR] COMMAND [ARGS...]
+// reaction-tool [--data DIR] COMMAND [ARGS...]
 #include <cstdio>
 #include <exception>
 #include <optional>
@@ -7,16 +7,16 @@
 
 #include "Tool.h"
 
-namespace redux::tool {
+namespace reaction::tool {
 std::map<std::string, Command>& registry() {
     static std::map<std::string, Command> r;
     return r;
 }
-}  // namespace redux::tool
+}  // namespace reaction::tool
 
-using namespace redux;
+using namespace reaction;
 
-REDUX_COMMAND("ls", "ls: list the game directory's files with their sizes",
+REACTION_COMMAND("ls", "ls: list the game directory's files with their sizes",
               [](const GameData& d, const std::vector<std::string>&) {
                   for (const auto& e : std::filesystem::directory_iterator(d.dir()))
                       if (e.is_regular_file())
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     }
     auto& reg = tool::registry();
     if (args.empty() || !reg.count(args[0])) {
-        std::fprintf(stderr, "usage: redux-tool [--data DIR] COMMAND [ARGS...]\n\ncommands:\n");
+        std::fprintf(stderr, "usage: reaction-tool [--data DIR] COMMAND [ARGS...]\n\ncommands:\n");
         for (const auto& [name, c] : reg) std::fprintf(stderr, "  %s\n", c.help.c_str());
         return 2;
     }

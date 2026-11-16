@@ -8,7 +8,7 @@
 #include "app/App.h"
 #include "app/Scene.h"
 
-namespace redux {
+namespace reaction {
 
 // The debriefing of the case in app.game, as GAME left it when the simulation
 // ended the case (Sim::caseOver): FINAL's start (reseed, options |= 8), the
@@ -22,4 +22,4 @@ std::unique_ptr<Scene> makeEndOfCaseScene(App& app);
 // Also where a game saved between cases goes once loaded. `last`: the screen.
 std::unique_ptr<Scene> makeNextCaseScene(App& app, const Frame& last);
 
-}  // namespace redux
+}  // namespace reaction

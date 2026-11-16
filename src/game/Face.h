@@ -24,7 +24,7 @@
 #include "core/GameData.h"
 #include "core/Image.h"
 
-namespace redux {
+namespace reaction {
 
 // face_defs: per leader code, sex (1 female), head variant, hair, eyes, nose,
 // mouth (1-based), skin tone, and the shoulders image.
@@ -59,4 +59,4 @@ void drawPortrait(Image& dst, const FaceSprites& s, int face, int x, int y);
 // career summary show it.
 void drawFaceFor(Image& dst, const FaceSprites& s, int leader, int x, int y);
 
-}  // namespace redux
+}  // namespace reaction

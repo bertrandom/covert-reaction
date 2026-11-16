@@ -8,7 +8,7 @@
 #include <string_view>
 #include <vector>
 
-namespace redux {
+namespace reaction {
 
 using Bytes = std::vector<std::uint8_t>;
 
@@ -39,4 +39,4 @@ private:
     std::filesystem::path dir_;
 };
 
-}  // namespace redux
+}  // namespace reaction

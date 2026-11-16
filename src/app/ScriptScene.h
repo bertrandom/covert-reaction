@@ -24,7 +24,7 @@
 #include "game/Face.h"
 #include "game/Fame.h"
 
-namespace redux {
+namespace reaction {
 
 class ScriptScene : public Scene {
 public:
@@ -113,4 +113,4 @@ private:
     std::unique_ptr<Scene> next_;
 };
 
-}  // namespace redux
+}  // namespace reaction

@@ -1,6 +1,6 @@
-// Covert Redux: entry point. Finds the game data, opens the window and runs scenes.
+// Covert Reaction: entry point. Finds the game data, opens the window and runs scenes.
 //
-//   covert-redux [--data DIR] [--scene NAME] [--shot FILE --ticks N] [--input "T:KEY ..."]
+//   covert-reaction [--data DIR] [--scene NAME] [--shot FILE --ticks N] [--input "T:KEY ..."]
 //                [--sound auto|mt32|adlib|speaker|none] [--mt32-roms DIR]
 //
 // --sound overrides the Options menu's sound device for this run; --mt32-roms
@@ -29,11 +29,11 @@
 #include <emscripten.h>
 
 // The page (web/shell.html) shows errors and the end of the run.
-EM_JS(void, redux_js_error, (const char* msg), {
-    if (Module.reduxError) Module.reduxError(UTF8ToString(msg));
+EM_JS(void, reaction_js_error, (const char* msg), {
+    if (Module.reactionError) Module.reactionError(UTF8ToString(msg));
 });
-EM_JS(void, redux_js_exit, (int status), {
-    if (Module.reduxExit) Module.reduxExit(status);
+EM_JS(void, reaction_js_exit, (int status), {
+    if (Module.reactionExit) Module.reactionExit(status);
 });
 #endif
 
@@ -45,7 +45,7 @@ EM_JS(void, redux_js_exit, (int status), {
 #include "core/GameData.h"
 
 namespace fs = std::filesystem;
-using namespace redux;
+using namespace reaction;
 
 namespace {
 
@@ -59,22 +59,19 @@ std::vector<fs::path> bundleCandidates() {
         out.push_back(b / ".." / "Resources" / "Covert");  // inside a macOS .app
         out.push_back(b / ".." / ".." / ".." / ".." / "resources" / "Covert");  // build/ tree
     }
-    if (char* pref = SDL_GetPrefPath("CovertRedux", "CovertRedux")) {
-        out.push_back(fs::path(pref) / "Covert");
-        SDL_free(pref);
-    }
+    if (auto user = userDataDir(); !user.empty()) out.push_back(user / "Covert");
     return out;
 }
 
 // Shows a fatal error: a message box on the desktop, the page in a browser (the
-// web shell defines Module.reduxError), and stderr everywhere.
+// web shell defines Module.reactionError), and stderr everywhere.
 void reportError(const char* msg, bool headless) {
     std::fprintf(stderr, "error: %s\n", msg);
 #ifdef __EMSCRIPTEN__
     (void)headless;
-    redux_js_error(msg);
+    reaction_js_error(msg);
 #else
-    if (!headless) SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Covert Redux", msg, nullptr);
+    if (!headless) SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Covert Reaction", msg, nullptr);
 #endif
 }
 
@@ -141,7 +138,7 @@ public:
         : data_(std::move(data)),
           script_(std::move(script)),
           scripted_(script_.shot.has_value()),
-          screen_("Covert Redux", 3, headless),
+          screen_("Covert Reaction", 3, headless),
           app_{data_, screen_, FontSet::load(data_)} {
         if (!headless) {   // scripted runs keep the defaults, so they stay reproducible
             app_.settingsFile = userFile("settings.ini");
@@ -241,12 +238,12 @@ private:
 std::unique_ptr<Runner> gRunner;
 bool gHeadless = false;
 
-// The page learns the run ended (quit, scripted shot, error) through Module.reduxExit.
+// The page learns the run ended (quit, scripted shot, error) through Module.reactionExit.
 void finish(int status) {
     emscripten_cancel_main_loop();
     gRunner.reset();
     SDL_Quit();
-    redux_js_exit(status);
+    reaction_js_exit(status);
 }
 
 void webFrame() {
@@ -292,7 +289,7 @@ int main(int argc, char** argv) {
     auto data = GameData::locate(dataDir, bundleCandidates());
     if (!data) {
         const char* msg =
-            "Covert Redux needs the files of the original Covert Action (1990).\n\n"
+            "Covert Reaction needs the files of the original Covert Action (1990).\n\n"
             "Run it with --data <directory>, set COVERT_DATA, or put the game's files in a "
             "folder named Covert next to the program.";
         reportError(msg, headless);

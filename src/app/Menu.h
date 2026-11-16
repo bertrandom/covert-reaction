@@ -13,7 +13,7 @@
 #include "formats/Font.h"
 #include "formats/TextWindow.h"
 
-namespace redux {
+namespace reaction {
 
 class Menu {
 public:
@@ -45,4 +45,4 @@ private:
     bool done_ = false;
 };
 
-}  // namespace redux
+}  // namespace reaction

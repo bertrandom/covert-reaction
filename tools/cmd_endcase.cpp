@@ -1,4 +1,4 @@
-// redux-tool endcase SEED [DIFFICULTY [DAYS]]: a case played by the simulation
+// reaction-tool endcase SEED [DIFFICULTY [DAYS]]: a case played by the simulation
 // (makeDemoFinishedCase), then FINAL's debriefing logic (src/game/EndCase.h),
 // printing the texts of its pages, the scores and the career afterwards; and a
 // save/load round trip of the result (src/game/SaveGame.h).
@@ -12,7 +12,7 @@
 #include "game/NewChar.h"
 #include "game/SaveGame.h"
 
-using namespace redux;
+using namespace reaction;
 
 namespace {
 
@@ -40,7 +40,7 @@ void printPages(const char* what, const std::vector<Page>& pages) {
 
 }  // namespace
 
-REDUX_COMMAND("endcase",
+REACTION_COMMAND("endcase",
               "endcase SEED [DIFFICULTY [DAYS]]: play a case with the simulation, then run the debriefing logic "
               "(timeline, efficiency report, MasterMind clue, career, promotion) and print it",
               [](const GameData& d, const std::vector<std::string>& args) {

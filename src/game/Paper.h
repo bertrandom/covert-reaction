@@ -12,7 +12,7 @@
 #include "formats/Font.h"
 #include "game/Face.h"
 
-namespace redux {
+namespace reaction {
 
 // gfx_line: a line, both end points included.
 void drawLine(Image& img, int x1, int y1, int x2, int y2, std::uint8_t c);
@@ -35,4 +35,4 @@ void drawCardPanel(Image& img, int x, int y);
 // turning spaces into '\n' ('^' forces a break), ending it with '\n'.
 void wrapTextBuffer(std::string& text, int width);
 
-}  // namespace redux
+}  // namespace reaction

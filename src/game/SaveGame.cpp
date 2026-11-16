@@ -8,7 +8,7 @@
 
 #include "game/NewChar.h"
 
-namespace redux::savegame {
+namespace reaction::savegame {
 
 namespace fs = std::filesystem;
 
@@ -142,4 +142,4 @@ int writeSlot(const fs::path& userDir, int slot, std::span<const std::uint8_t> b
     return 0;
 }
 
-}  // namespace redux::savegame
+}  // namespace reaction::savegame

@@ -24,7 +24,7 @@
 
 #include "game/Rng.h"
 
-namespace redux {
+namespace reaction {
 
 // What CHASE reads from the env block (CHASE.C main, read_env_params). The
 // defaults are a practice chase as FINAL's start_practice(1) sets it up.
@@ -237,4 +237,4 @@ private:
     std::vector<Turn> turns_;
 };
 
-}  // namespace redux
+}  // namespace reaction

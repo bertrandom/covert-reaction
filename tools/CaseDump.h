@@ -14,7 +14,7 @@
 #include "game/NewChar.h"
 #include "game/Sim.h"
 
-namespace redux::tool {
+namespace reaction::tool {
 
 inline int envInt(const char* n, int d) {
     const char* v = std::getenv(n);
@@ -127,4 +127,4 @@ inline void printChanges(const std::vector<std::string>& before, const std::vect
         if (!b.count(l)) std::printf("+ %s\n", l.c_str());
 }
 
-}  // namespace redux::tool
+}  // namespace reaction::tool

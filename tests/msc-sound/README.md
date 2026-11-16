@@ -6,7 +6,7 @@ routines into software interrupts that it logs (the MT-32 driver's MPU-401 data
 writes, the AdLib driver's OPL register writes, the speaker driver's PIT
 channel 2 and port 61h writes), masks the hardware timer and runs the driver's
 own timer interrupt handler once per tick. It prints, tick by tick, what the
-driver sent, in the format of `redux-tool sound-events`; `cases.js` lists the
+driver sent, in the format of `reaction-tool sound-events`; `cases.js` lists the
 cases (every effect and tune, pause/resume, the car engines, the generated
 break-in score with its parameters, effects interrupting music) and compares the
 two outputs, including which timer handler (60 or 300 Hz) is installed.

@@ -7,7 +7,7 @@
 
 #include "core/Image.h"
 
-namespace redux {
+namespace reaction {
 
 class Screen {
 public:
@@ -34,4 +34,4 @@ private:
     bool headless_ = false;
 };
 
-}  // namespace redux
+}  // namespace reaction

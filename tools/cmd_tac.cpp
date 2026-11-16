@@ -7,7 +7,7 @@
 #include "Tool.h"
 #include "game/TacBuilding.h"
 
-using namespace redux;
+using namespace reaction;
 
 namespace {
 
@@ -57,7 +57,7 @@ void run(int mode, int city, int org, unsigned seed, int diff, int target, int t
 
 }  // namespace
 
-REDUX_COMMAND("tac-gen", "tac-gen: TAC building generation for every city x organization (2 seeds) plus "
+REACTION_COMMAND("tac-gen", "tac-gen: TAC building generation for every city x organization (2 seeds) plus "
                          "kidnap/rescue/bomb/suspect variants (compare with tests/msc-tac)",
               [](const GameData&, const std::vector<std::string>&) {
                   for (int city = 0; city < 16; city++)

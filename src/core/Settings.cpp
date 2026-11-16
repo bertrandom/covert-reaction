@@ -3,7 +3,7 @@
 #include <fstream>
 #include <system_error>
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -48,7 +48,7 @@ bool Settings::save(const std::filesystem::path& file) const {
     std::error_code ec;
     std::filesystem::create_directories(file.parent_path(), ec);
     std::ofstream out(file, std::ios::trunc);
-    out << "# Covert Redux settings (the main menu's Options)\n"
+    out << "# Covert Reaction settings (the main menu's Options)\n"
         << "keypad_keys = " << onOff(keypadKeys) << "\n"
         << "copy_protection = " << onOff(copyProtection) << "\n"
         << "sound = " << sound << "\n"
@@ -56,4 +56,4 @@ bool Settings::save(const std::filesystem::path& file) const {
     return static_cast<bool>(out);
 }
 
-}  // namespace redux
+}  // namespace reaction

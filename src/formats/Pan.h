@@ -53,7 +53,7 @@
 #include "core/Image.h"
 #include "formats/McgaPalette.h"
 
-namespace redux {
+namespace reaction {
 
 struct PanFile {
     enum class Background : std::uint8_t { None, Picture, Fill };
@@ -184,4 +184,4 @@ private:
     double clock_ = 0;
 };
 
-}  // namespace redux
+}  // namespace reaction

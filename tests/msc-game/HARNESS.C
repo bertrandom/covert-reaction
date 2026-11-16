@@ -1,4 +1,4 @@
-/* HARNESS.C - differential test of covert-redux's src/game/Sim against GAME.EXE's
+/* HARNESS.C - differential test of covert-reaction's src/game/Sim against GAME.EXE's
  * world simulation: covert-decomp's own TIME.C, CHRONO.C, CLUE.C, MSGTXTG.C,
  * PERSON.C and TRAVEL.C, compiled unchanged with MSC 5.1, linked with this file
  * (the program around them: loading the starting world, the new-game sequence
@@ -7,10 +7,10 @@
  *
  *   HARNESS IN.SVE SEED DAYS SCAN
  *
- * IN.SVE: the world as `redux-tool sim ... --save-init` writes it (a saved game:
+ * IN.SVE: the world as `reaction-tool sim ... --save-init` writes it (a saved game:
  * the env block, the player block and the tables). SEED: GAME's randomize().
  * SCAN: 0 none, 1 local scan, 2 international scan, 3 both, after each day.
- * Prints what redux-tool sim ... --raw prints. Run from the game directory
+ * Prints what reaction-tool sim ... --raw prints. Run from the game directory
  * (text.dta, clues.txt, fonts.cv). */
 #include <stdio.h>
 #include "game.h"

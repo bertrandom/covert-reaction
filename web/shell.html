@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Covert Redux</title>
+<title>Covert Reaction</title>
 <!--
-  The web page of Covert Redux (Emscripten --shell-file; CMake configures it into
+  The web page of Covert Reaction (Emscripten --shell-file; CMake configures it into
   the build directory). The original game's files are copyrighted and never part
   of the build: the player picks their own copy, which is copied into the
   Emscripten file system at /Covert and kept in this browser (IndexedDB), so it is
@@ -100,11 +100,11 @@
 
 <div id="landing">
   <div class="card">
-    <h1>Covert Redux</h1>
+    <h1>Covert Reaction</h1>
     <p class="sub">Sid Meier's Covert Action (1990), reimplemented.</p>
 
     <div id="need-files">
-      <p>Covert Redux plays with the files of your own copy of the original game
+      <p>Covert Reaction plays with the files of your own copy of the original game
          (GOG or the floppies): the folder with <code>TEXT.DTA</code>,
          <code>TITLE2.PAN</code>, <code>FACES.PIC</code> and the rest.</p>
       <div id="drop">
@@ -150,9 +150,9 @@
 <script>
 (function () {
   'use strict';
-  // True in a build made with REDUX_WEB_PRELOAD_DATA=ON (local testing only): the
+  // True in a build made with REACTION_WEB_PRELOAD_DATA=ON (local testing only): the
   // game files are already in /Covert and are not stored or asked for.
-  const PRELOADED = @REDUX_WEB_PRELOADED@;
+  const PRELOADED = @REACTION_WEB_PRELOADED@;
   const DATA_DIR = '/Covert';
   const USER_DIR = '/libsdl';          // SDL_GetPrefPath() lives under it
   const MARKERS = ['TEXT.DTA', 'TITLE2.PAN', 'FACES.PIC'];
@@ -185,7 +185,7 @@
     syncing = true;
     FS.syncfs(false, (err) => {
       syncing = false;
-      if (err) console.warn('Covert Redux: saving to IndexedDB failed', err);
+      if (err) console.warn('Covert Reaction: saving to IndexedDB failed', err);
       if (syncAgain) { syncAgain = false; persist(); }
       if (done) done(err);
     });
@@ -349,7 +349,7 @@
   function fatal(err) {
     running = false;
     const text = (err && (err.message || err.toString())) || String(err);
-    showOverlay('Something went wrong', 'Covert Redux stopped with this error:', text);
+    showOverlay('Something went wrong', 'Covert Reaction stopped with this error:', text);
   }
 
   function ready() {
@@ -374,22 +374,22 @@
       if (!PRELOADED) mountIdb(DATA_DIR);
       Module.addRunDependency('idbfs');
       FS.syncfs(true, (err) => {
-        if (err) console.warn('Covert Redux: reading IndexedDB failed', err);
+        if (err) console.warn('Covert Reaction: reading IndexedDB failed', err);
         Module.removeRunDependency('idbfs');
       });
     }],
     onAbort: (what) => fatal(what),
     // Called from C++ (main.cpp, Screen.cpp).
-    reduxError: (msg) => {
+    reactionError: (msg) => {
       running = false;
-      showOverlay('Something went wrong', 'Covert Redux stopped with this error:', msg);
+      showOverlay('Something went wrong', 'Covert Reaction stopped with this error:', msg);
     },
-    reduxExit: (status) => {
+    reactionExit: (status) => {
       persist();
       running = false;
-      if (status === 0) showOverlay('Game over', 'Thanks for playing Covert Redux.', '');
+      if (status === 0) showOverlay('Game over', 'Thanks for playing Covert Reaction.', '');
     },
-    reduxToggleFullscreen: toggleFullscreen,
+    reactionToggleFullscreen: toggleFullscreen,
   };
   window.addEventListener('error', (e) => { if (e.error !== 'unwind') console.error(e.error || e.message); });
   setStatus('Loading…');

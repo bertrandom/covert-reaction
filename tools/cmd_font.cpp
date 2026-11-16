@@ -1,4 +1,4 @@
-// redux-tool font-sheet OUT.bmp [SCALE]
+// reaction-tool font-sheet OUT.bmp [SCALE]
 //            font-text FONT "string" OUT.bmp [SCALE] [--transparent]
 //            font-window "line\n item\n ..." OUT.bmp [SCALE] [--sel N] [--odd]
 // ("text" is taken by the keyed-text lookup in cmd_text.cpp.)
@@ -9,7 +9,7 @@
 #include "formats/Font.h"
 #include "formats/TextWindow.h"
 
-using namespace redux;
+using namespace reaction;
 
 namespace {
 
@@ -67,7 +67,7 @@ std::string unescape(const std::string& s) {
 
 }  // namespace
 
-REDUX_COMMAND("font-sheet", "font-sheet OUT.bmp [SCALE]: every glyph of every font in FONTS.CV",
+REACTION_COMMAND("font-sheet", "font-sheet OUT.bmp [SCALE]: every glyph of every font in FONTS.CV",
               [](const GameData& d, const std::vector<std::string>& a) {
                   if (a.empty()) return 2;
                   const FontSet fonts = FontSet::load(d);
@@ -107,7 +107,7 @@ REDUX_COMMAND("font-sheet", "font-sheet OUT.bmp [SCALE]: every glyph of every fo
                   return 0;
               });
 
-REDUX_COMMAND("font-text",
+REACTION_COMMAND("font-text",
               "font-text FONT STRING OUT.bmp [SCALE] [--transparent]: draw a string (\\n, \\xHH escapes)",
               [](const GameData& d, const std::vector<std::string>& a) {
                   if (a.size() < 3) return 2;
@@ -138,7 +138,7 @@ REDUX_COMMAND("font-text",
                   return 0;
               });
 
-REDUX_COMMAND("font-window",
+REACTION_COMMAND("font-window",
               "font-window TEXT OUT.bmp [SCALE] [--sel N] [--odd] [--ok]: a text window/menu as text_window draws it",
               [](const GameData& d, const std::vector<std::string>& a) {
                   if (a.size() < 2) return 2;

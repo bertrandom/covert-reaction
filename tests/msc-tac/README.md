@@ -9,7 +9,7 @@ captured agent), bomb and suspect-inside variants (576 buildings), it seeds
 generates, and dumps the rooms, the doors, hashes of the object/room/wall grids,
 the captured-agent and suspect tiles and the next `rand()`.
 
-`redux-tool tac-gen` prints the same dump from the C++ port (game/TacBuilding);
+`reaction-tool tac-gen` prints the same dump from the C++ port (game/TacBuilding);
 the two were byte-identical for all 576 buildings when the port was written.
 
 `wall_map` is placed in a struct between `guards_left` and `cur_org` because
@@ -19,4 +19,4 @@ reads turn out never to decide anything; see game/TacBuilding.h).
 Run it like tests/msc-bug: with covert-decomp's `toolchain/msc51` mounted as C:
 and a copy of this directory (CRLF line endings) as D:, `RUN.BAT` compiles with
 `CL /AS /Gs /Oas` and writes `OUT.TXT`; diff it (CRs stripped) with
-`redux-tool tac-gen`.
+`reaction-tool tac-gen`.

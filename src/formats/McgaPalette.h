@@ -21,7 +21,7 @@
 
 #include "core/Image.h"
 
-namespace redux {
+namespace reaction {
 
 // A set_palette argument: 16 colour numbers (indices into default_dac) + border.
 using PaletteMap = std::array<std::uint8_t, 17>;
@@ -52,4 +52,4 @@ Palette mcgaPalette(const PaletteMap& map = palettes::kGame);
 // The border register set_palette selects (-1: pal[16] isn't among pal[0..15]).
 int mcgaBorderColor(const PaletteMap& map);
 
-}  // namespace redux
+}  // namespace reaction

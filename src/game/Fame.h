@@ -7,7 +7,7 @@
 //   +00 score (-1 = empty)  +02 code name[32]  +22 difficulty (bit 7: Maxine)
 //   +24 plot  +26 episode  +28 efficiency points  +2A cur_month
 // The original reads and writes it in the game directory, and only saves when
-// the file exists and is writable. The redux saves to a per-user file instead
+// the file exists and is writable. Covert Reaction saves to a per-user file instead
 // and reads the game directory's copy only when it has none yet; the paths are
 // the caller's (src/app knows where they are).
 #pragma once
@@ -23,7 +23,7 @@
 #include "core/Image.h"
 #include "game/World.h"
 
-namespace redux {
+namespace reaction {
 
 struct FameEntry {
     std::int16_t score = -1;
@@ -88,4 +88,4 @@ struct VacationPictures {
 // random(3), the caller draws it in the original's order.
 VacationPictures loadVacation(const GameData& data, const Vacation& v, bool maxine, bool drawExtra);
 
-}  // namespace redux
+}  // namespace reaction

@@ -13,7 +13,7 @@
 #include "core/Image.h"
 #include "game/CaseGen.h"
 
-namespace redux {
+namespace reaction {
 
 // What comes after a scene: given the last screen and palette, the next scene.
 using SceneThen = std::function<std::unique_ptr<Scene>(const Frame& last)>;
@@ -39,4 +39,4 @@ std::unique_ptr<Scene> makeLeaderFacesScene(App& app, LeaderLineup lineup,
 // practice mini-game, which ends in the main menu. The case is dropped.
 std::unique_ptr<Scene> makeLineupFailedScene(App& app, const Frame& last);
 
-}  // namespace redux
+}  // namespace reaction

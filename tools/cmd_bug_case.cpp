@@ -1,4 +1,4 @@
-// redux-tool bug-case: a wiretap during a case, headless, with show_intercepted_info's
+// reaction-tool bug-case: a wiretap during a case, headless, with show_intercepted_info's
 // describe_new_info on the case's tables (game/BugCase.h). Generates the test
 // scenes' case, puts the player at a suspect's building and plays BUG with a
 // greedy player (each move: the swap that taps the most phones without an alarm,
@@ -17,8 +17,8 @@
 #include "game/BugCase.h"
 #include "game/Wiretap.h"
 
-using namespace redux;
-using namespace redux::tool;
+using namespace reaction;
+using namespace reaction::tool;
 
 namespace {
 
@@ -116,7 +116,7 @@ int run(const GameData& data, const std::vector<std::string>& args) {
 
 }  // namespace
 
-REDUX_COMMAND("bug-case",
+REACTION_COMMAND("bug-case",
               "bug-case [--suspect N] [--shots DIR]: a wiretap on a suspect's building in the test case "
               "(COVERT_CITY_SEED, COVERT_CITY_LEVEL, COVERT_GAME_SEED, COVERT_SEED, COVERT_BUG_SEED), played by a "
               "greedy player; prints the intercepts' library trace and the tables they changed",

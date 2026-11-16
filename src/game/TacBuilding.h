@@ -24,7 +24,7 @@
 
 #include "game/Rng.h"
 
-namespace redux {
+namespace reaction {
 
 // Kinds of room (TAC.C room_types).
 struct TacRoomType {
@@ -136,4 +136,4 @@ inline std::uint32_t tacBuildingSeed(int city, int org, unsigned gameSeed) {
                                       (gameSeed & 0x3FFF));
 }
 
-}  // namespace redux
+}  // namespace reaction

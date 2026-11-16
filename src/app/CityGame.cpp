@@ -5,7 +5,7 @@
 
 #include <cstdlib>
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -533,4 +533,4 @@ void CityGame::flyToCity(int from, int to) {
     } while ((dx || dy) && ++guard < 100000);
 }
 
-}  // namespace redux
+}  // namespace reaction

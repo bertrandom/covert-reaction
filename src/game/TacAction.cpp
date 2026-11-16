@@ -10,7 +10,7 @@
 #include "formats/TextWindow.h"
 #include "game/Tac.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -791,4 +791,4 @@ std::string Tac::format_clock_hms(int frames) const {
     return out;
 }
 
-}  // namespace redux
+}  // namespace reaction

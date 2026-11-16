@@ -7,7 +7,7 @@
 #include "formats/Pic.h"
 #include "game/NewChar.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -162,4 +162,4 @@ VacationPictures loadVacation(const GameData& data, const Vacation& v, bool maxi
     return p;
 }
 
-}  // namespace redux
+}  // namespace reaction

@@ -1,13 +1,13 @@
 // The differential test's cases, shared by run.sh (RUN.BAT for DOSBox-X) and
-// the comparison with `redux-tool sound-events`.
+// the comparison with `reaction-tool sound-events`.
 //   node cases.js bat DIR      writes DIR/RUN.BAT
-//   node cases.js compare DIR REDUX_TOOL DATA_DIR   compares DIR/*.TXT with the port
+//   node cases.js compare DIR REACTION_TOOL DATA_DIR   compares DIR/*.TXT with the port
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 
 const drivers = { R: ["RSOUND.CA", "mt32", 54], A: ["ASOUND.CA", "adlib", 46], I: ["ISOUND.CA", "speaker", 46] };
-// The ISR each driver installs -> the timer divisor redux-tool prints.
+// The ISR each driver installs -> the timer divisor reaction-tool prints.
 const isrs = { R: { "029D": "4C90" }, A: { "1036": "4C90", "0F80": "0F88" }, I: { "05FC": "4C90", "05C2": "0F88" } };
 
 function cases() {

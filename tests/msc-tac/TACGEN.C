@@ -1,7 +1,7 @@
 /* Harness: covert-decomp's TAC generate_building and its helpers (ROOM.C),
  * copied verbatim between the markers below (randomize() is a no-op here, so
  * the next rand() can be dumped), compiled with MSC 5.1 to compare the building
- * generation against covert-redux's port (redux-tool tac-gen).
+ * generation against covert-reaction's port (reaction-tool tac-gen).
  * wall_map sits in a struct between guards_left and cur_org, as in TAC's DGROUP,
  * because split_rooms reads a few bytes on either side of it. */
 #include <stdio.h>

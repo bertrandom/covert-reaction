@@ -6,7 +6,7 @@
 #include <vector>
 #endif
 
-namespace redux {
+namespace reaction {
 
 #ifdef __EMSCRIPTEN__
 
@@ -124,4 +124,4 @@ void GameThread::yield() {
 
 GameThread::GameThread(std::function<void()> body) : body_(std::move(body)) {}
 
-}  // namespace redux
+}  // namespace reaction

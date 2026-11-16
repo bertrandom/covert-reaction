@@ -37,7 +37,7 @@
 #include "formats/TextWindow.h"
 #include "game/CodeBreak.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -443,6 +443,6 @@ std::unique_ptr<Scene> makeCodeScene(App& app, const CodeSetup& setup, CodeDone 
     return std::make_unique<CodeScene>(app, setup, std::move(onDone));
 }
 
-REDUX_SCENE("code", makePracticeCodeScene);
+REACTION_SCENE("code", makePracticeCodeScene);
 
-}  // namespace redux
+}  // namespace reaction

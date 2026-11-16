@@ -10,7 +10,7 @@
 #include "formats/TextWindow.h"
 #include "game/Paper.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -110,7 +110,7 @@ int CityUi::textWindow(const std::string& text, int x, int y, unsigned flags) {
         const int portrait = sim_ ? sim_->globals().faceShown : -1;
         if (portrait != -1) {
             if (((portrait >> 2) & 3) == 3) palette_ = mcgaPalette(kPalette2);
-            redux::drawFaceParts(anim_->backPage(), faces_, portrait, portraitX, portraitY);
+            reaction::drawFaceParts(anim_->backPage(), faces_, portrait, portraitX, portraitY);
         }
         anim_->step();
         anim_->step();
@@ -339,7 +339,7 @@ int CityUi::event(const SimEvent& e) {
 // ---------------------------------------------------------------- drawing
 
 void CityUi::fill(int x, int y, int w, int h, int color) {
-    redux::fillRect(screen, x, y, w, h, static_cast<std::uint8_t>(color));
+    reaction::fillRect(screen, x, y, w, h, static_cast<std::uint8_t>(color));
 }
 
 void CityUi::recolor(int x, int y, int w, int h, int from, int to) {
@@ -383,7 +383,7 @@ void CityUi::drawTextT(const std::string& s, int x, int y, int color) {
 }
 
 void CityUi::drawTextCentered(const std::string& s, int x, int y, int color) {
-    redux::drawTextCentered(screen, font(), s, x, y, static_cast<std::uint8_t>(color));
+    reaction::drawTextCentered(screen, font(), s, x, y, static_cast<std::uint8_t>(color));
 }
 
 int CityUi::drawWrapped(const std::string& s, int width, int x, int y, int color) {
@@ -391,12 +391,12 @@ int CityUi::drawWrapped(const std::string& s, int width, int x, int y, int color
 }
 
 void CityUi::drawPortrait(int face, int x, int y) {
-    redux::drawPortrait(screen, faces_, face, x, y);
+    reaction::drawPortrait(screen, faces_, face, x, y);
     if (sim_) sim_->globals().faceShown = -1;
 }
 
 void CityUi::drawFace(int face, int x, int y) {
-    redux::drawFaceParts(screen, faces_, face, x, y);
+    reaction::drawFaceParts(screen, faces_, face, x, y);
     if (sim_) sim_->globals().faceShown = -1;
 }
 
@@ -406,7 +406,7 @@ void CityUi::cardPanel(int x, int y) { drawCardPanel(screen, x, y); }
 
 void CityUi::drawPageFrame(const std::string& title, int color) {
     screenW = 320;
-    redux::drawPageFrame(screen, font(), faces_, title, static_cast<std::uint8_t>(color));
+    reaction::drawPageFrame(screen, font(), faces_, title, static_cast<std::uint8_t>(color));
     fillColor = 15;
 }
 
@@ -481,7 +481,7 @@ void CityUi::loadCityPicture(int c, int x, int y) {
         std::string name = stripSpaces(city.name.str());
         if (name.size() > 8) name.resize(8);
         name += ".pic";
-        redux::fillRect(back, 0, 0, 320, 200, 0);
+        reaction::fillRect(back, 0, 0, 320, 200, 0);
         cityPicW_ = cityPicH_ = 0;
         if (app_.data.exists("cities.cat")) {
             const auto cat = app_.data.read("cities.cat");
@@ -517,7 +517,7 @@ void CityUi::incomingMessage(const std::string& title, const std::string& text) 
     drawLineC(0x31, 0x96, 0x31, 0xA2, 8);
     drawLineC(0x10E, 0x96, 0x10E, 0xA2, 8);
     work.blit(screen, 0, 100, 320, 100, 0, 100);
-    redux::fillRect(work, 0x32, 0x44, 0xDC, 0x5F, 15);
+    reaction::fillRect(work, 0x32, 0x44, 0xDC, 0x5F, 15);
     const int y = drawWrappedText(work, font(), text, 0x19, 0x3A, 0x4C, 5);
     flushInput();
     auto scroll = [&](int n) {
@@ -555,4 +555,4 @@ void CityUi::incomingMessage(const std::string& title, const std::string& text) 
     screen = back;
 }
 
-}  // namespace redux
+}  // namespace reaction

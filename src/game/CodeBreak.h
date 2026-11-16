@@ -17,7 +17,7 @@
 #include "core/GameData.h"
 #include "game/Rng.h"
 
-namespace redux {
+namespace reaction {
 
 // What CODE.EXE's main() reads from the env block.
 struct CodeSetup {
@@ -143,4 +143,4 @@ private:
     std::string title_;
 };
 
-}  // namespace redux
+}  // namespace reaction

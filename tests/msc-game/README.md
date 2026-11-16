@@ -20,7 +20,7 @@ This test runs covert-decomp's **own sources, unchanged** — `TIME.C`, `CHRONO.
   the same neighbours as in GAME's DGROUP (`persons[-1]`, `msgs[-1]`, `msgs[128]`;
   check `HARNESS.MAP`).
 
-`redux-tool sim CRIME WORLD DIFFICULTY SEED DAYS --scan S --raw` prints the same
+`reaction-tool sim CRIME WORLD DIFFICULTY SEED DAYS --scan S --raw` prints the same
 lines from the port; `--save-init FILE` writes the world it starts from (a case
 from the ported `CaseGenerator`, as a saved game), which is the harness's input.
 The two outputs must be byte-identical.
@@ -28,7 +28,7 @@ The two outputs must be byte-identical.
 ## Running
 
 ```bash
-cmake -S . -B build-sim && cmake --build build-sim -j8 --target redux-tool
+cmake -S . -B build-sim && cmake --build build-sim -j8 --target reaction-tool
 tests/msc-game/run.sh                 # tests/msc-game/cases.txt
 tests/msc-game/run.sh my-cases.txt    # lines: CRIME WORLD DIFFICULTY SEED DAYS SCAN
 ```

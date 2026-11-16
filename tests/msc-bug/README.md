@@ -8,9 +8,9 @@ chip, the number of swaps, the output signals, a hash of the trace bits and the
 next `rand()`. The trace bits read from board.pic take no random numbers, so
 both sides start from a blank picture.
 
-`redux-tool bug-gen` prints the same dump from the C++ port (game/Wiretap); the
+`reaction-tool bug-gen` prints the same dump from the C++ port (game/Wiretap); the
 two were byte-identical for all 1000 boards when the port was written.
 
 Run it like tests/msc: with covert-decomp's `toolchain/msc51` mounted as C: and
 this directory (CRLF line endings) as D:, `RUN.BAT` compiles with
-`CL /AS /Gs /Oas` and writes `OUT.TXT`; diff it with `redux-tool bug-gen`.
+`CL /AS /Gs /Oas` and writes `OUT.TXT`; diff it with `reaction-tool bug-gen`.

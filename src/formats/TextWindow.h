@@ -16,7 +16,7 @@
 #include "core/Image.h"
 #include "formats/Font.h"
 
-namespace redux {
+namespace reaction {
 
 struct TextWindowLayout {
     std::vector<int> lineStart;   // offset of each line in the text (line_start)
@@ -75,4 +75,4 @@ void recolorRect(Image& img, int x, int y, int w, int h, std::uint8_t from, std:
 int drawWrappedText(Image& img, const Font& font, std::string_view text, int widthChars, int x, int y,
                     std::uint8_t color);
 
-}  // namespace redux
+}  // namespace reaction

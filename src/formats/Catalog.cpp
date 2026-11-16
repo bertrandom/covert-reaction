@@ -2,7 +2,7 @@
 
 #include <cctype>
 
-namespace redux {
+namespace reaction {
 
 std::optional<std::size_t> catalogFind(std::span<const std::uint8_t> cat, std::string_view name) {
     if (cat.size() < 2) return std::nullopt;
@@ -25,4 +25,4 @@ std::optional<std::size_t> catalogFind(std::span<const std::uint8_t> cat, std::s
     return std::nullopt;
 }
 
-}  // namespace redux
+}  // namespace reaction

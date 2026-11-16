@@ -11,7 +11,7 @@
 #include <optional>
 #include <utility>
 
-namespace redux {
+namespace reaction {
 
 namespace detail {
 
@@ -114,4 +114,4 @@ private:
     std::coroutine_handle<promise_type> h_;
 };
 
-}  // namespace redux
+}  // namespace reaction

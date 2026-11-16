@@ -9,7 +9,7 @@
 #include "game/BugCase.h"
 #include "game/Wiretap.h"
 
-namespace redux {
+namespace reaction {
 
 // Called when the puzzle ends (not after Alt-Q / Yes, which quits the game):
 // gives the scene to switch to.
@@ -20,4 +20,4 @@ using BugDone = std::function<std::unique_ptr<Scene>(App&, const WiretapResult&)
 std::unique_ptr<Scene> makeBugScene(App& app, const WiretapSetup& setup, BugDone onDone,
                                     std::shared_ptr<BugCaseHooks> hooks = nullptr);
 
-}  // namespace redux
+}  // namespace reaction

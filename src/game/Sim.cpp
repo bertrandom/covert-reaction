@@ -6,7 +6,7 @@
 #include "formats/Font.h"
 #include "formats/TextDb.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -551,4 +551,4 @@ void Sim::addChronologyEntry(int kind, int msg) {
     }
 }
 
-}  // namespace redux
+}  // namespace reaction

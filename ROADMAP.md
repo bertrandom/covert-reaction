@@ -1,6 +1,6 @@
 # Roadmap
 
-How Covert Redux gets from an engine skeleton to the whole game. The reference for
+How Covert Reaction gets from an engine skeleton to the whole game. The reference for
 every step is the reconstructed original in `../covert-decomp` (byte-exact C and
 assembly), so the port follows the original's rules rather than guessing them.
 
@@ -10,13 +10,13 @@ COVERT.EXE is a launcher that runs one program after another, passing the game
 state in memory (`env.sve`): FINAL (title, main menu, new case, debriefing), GAME
 (the city/office loop: travel, intelligence, messages, time), TAC (break-ins),
 CHASE (car chases), BUG (wiretaps) and CODE (code breaking), with INTRO (hardware
-menu, not needed here). Covert Redux is one program: each of those becomes a set of
+menu, not needed here). Covert Reaction is one program: each of those becomes a set of
 scenes sharing one `World`.
 
 ## Phases
 
 1. **Engine and formats** (in progress)
-   - [x] skeleton: CMake/SDL2, indexed 320x200 frame, game-data lookup, `redux-tool`
+   - [x] skeleton: CMake/SDL2, indexed 320x200 frame, game-data lookup, `reaction-tool`
    - [x] keyed text files (`TEXT.DTA`, `CLUES.TXT`, `PLOT.TXT`, `PROSE.DTA`)
    - [x] world tables, `crimeN.dta`/`worldN.dta`, saved-game layout
    - [x] the original's random numbers (MSC `rand`, `random(n)`)
@@ -54,9 +54,9 @@ scenes sharing one `World`.
    (src/app/CityLoop.cpp), [x] TAC's case hooks (src/game/TacCase.*: photos'
    new information, file and safe searches, the master plan and personnel
    files, dossiers, the arrest, the terminal's searches, run by GAME's library
-   port on the case's tables with TAC's random() and globals; `redux-tool
+   port on the case's tables with TAC's random() and globals; `reaction-tool
    tac-case` scripts a break-in and prints what changed), [x] BUG's intercepts
-   in a case (src/game/BugCase.*, the same way; `redux-tool bug-case`), [x] sound effects, [ ] Alt-A/Alt-S/Alt-Q in GAME's text windows.
+   in a case (src/game/BugCase.*, the same way; `reaction-tool bug-case`), [x] sound effects, [ ] Alt-A/Alt-S/Alt-Q in GAME's text windows.
 6. **End of case** (ENDCASE.C): [x] debriefing, timeline, efficiency report,
    MasterMind clue, vacation, Hall of Fame, career, promotion, retirement and the
    continue/save menu (src/game/EndCase.*, src/app/EndCaseScene.cpp), [x] the next
@@ -69,6 +69,6 @@ scenes sharing one `World`.
 ## Verification
 
 - Formats: decode every file of the original and look at the result
-  (`redux-tool`), against the original routines' behaviour.
+  (`reaction-tool`), against the original routines' behaviour.
 - Logic: the same inputs and random seed must give the original's results; where
   practical, compare against the original programs run in DOSBox-X.

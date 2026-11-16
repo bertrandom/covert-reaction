@@ -10,7 +10,7 @@
 #include "game/Rng.h"
 #include "game/World.h"
 
-namespace redux {
+namespace reaction {
 
 // The MasterMind's defaults for person slot 0 (FINAL's mm_known, mm_org, mm_city,
 // mm_id; words 4-0Ah of env.sve's player block). NEWCHAR.C plot_briefing picks them.
@@ -54,4 +54,4 @@ private:
     Mastermind mm_;
 };
 
-}  // namespace redux
+}  // namespace reaction

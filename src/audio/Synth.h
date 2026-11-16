@@ -13,7 +13,7 @@
 
 #include "audio/Driver.h"
 
-namespace redux::audio {
+namespace reaction::audio {
 
 class Synth : public DeviceSink {
 public:
@@ -50,4 +50,4 @@ std::optional<Mt32Roms> findMt32Roms(const std::vector<std::filesystem::path>& d
 // MT-32: libmt32emu (Munt). Throws std::runtime_error if the ROMs won't load.
 std::unique_ptr<Synth> makeMt32Synth(const Mt32Roms& roms, int sampleRate);
 
-}  // namespace redux::audio
+}  // namespace reaction::audio

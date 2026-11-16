@@ -31,7 +31,7 @@
 #include "game/Face.h"
 #include "game/Sim.h"
 
-namespace redux {
+namespace reaction {
 
 // process_events ended the case: GAME exits (to FINAL's debriefing) from
 // wherever it was. Thrown through the program's stack by the UI.
@@ -167,7 +167,7 @@ private:
 
     Request req_;
     std::deque<SDL_Event> keys_;                  // typed ahead
-    std::optional<redux::Menu> menu_;
+    std::optional<reaction::Menu> menu_;
     std::string menuText_;
     std::unique_ptr<Scene> child_;                // runScene
     Frame childLast_;
@@ -176,4 +176,4 @@ private:
     int cityPicW_ = 0, cityPicH_ = 0;
 };
 
-}  // namespace redux
+}  // namespace reaction

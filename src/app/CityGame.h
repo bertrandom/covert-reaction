@@ -16,7 +16,7 @@
 #include "app/CityUi.h"
 #include "game/Sim.h"
 
-namespace redux {
+namespace reaction {
 
 // What survives between two runs of GAME: the bytes of the env block the
 // programs pass each other (ENV[0..15]; the tables and the header are in
@@ -101,4 +101,4 @@ private:
     int saveSlot_ = 0;         // OFFICE.C save_slot
 };
 
-}  // namespace redux
+}  // namespace reaction

@@ -1,6 +1,6 @@
 #include "formats/McgaPalette.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -72,4 +72,4 @@ int mcgaBorderColor(const PaletteMap& map) {
     return -1;
 }
 
-}  // namespace redux
+}  // namespace reaction

@@ -20,7 +20,7 @@
 #include "game/NewChar.h"
 #include "game/Paper.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -374,14 +374,14 @@ std::unique_ptr<Scene> makeNewCharacterScene(App& app, SceneThen then) {
     return std::make_unique<NewCharacterScene>(app, std::move(then));
 }
 
-REDUX_SCENE("new-character", [](App& app) {
+REACTION_SCENE("new-character", [](App& app) {
     return makeNewCharacterScene(app, [&app](const Frame& last) { return caseNotPorted(app, last); });
 });
 
 // The plot briefing on its own (difficulty and career as they are: a first case
 // on Local Disturbance gets "Welcome Max").
-REDUX_SCENE("plot-briefing", [](App& app) -> std::unique_ptr<Scene> {
+REACTION_SCENE("plot-briefing", [](App& app) -> std::unique_ptr<Scene> {
     return std::make_unique<BriefingScene>(app, [&app](const Frame& last) { return caseNotPorted(app, last); });
 });
 
-}  // namespace redux
+}  // namespace reaction

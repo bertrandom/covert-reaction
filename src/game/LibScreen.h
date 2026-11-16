@@ -22,7 +22,7 @@
 #include "game/Face.h"
 #include "game/Sim.h"
 
-namespace redux {
+namespace reaction {
 
 // The program's screen port: g_gfx's page, font 1, draw_sprite_a's icons and
 // g_gfx->fillcolor (which the drawing changes as the original's does).
@@ -75,4 +75,4 @@ public:
 // show_master_plan(org, reveal) (GAMELIB PERSON.C), drawn through the recorder.
 void libShowMasterPlan(Sim& sim, LibRecorder& ui, int org, int reveal);
 
-}  // namespace redux
+}  // namespace reaction

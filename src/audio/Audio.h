@@ -1,7 +1,7 @@
 // The sound engine: one of the original's drivers (Driver.h) and the device it
 // drives (Synth.h), run sample-accurately: render() interleaves the driver's
 // timer interrupts (60.88 Hz, or 300 Hz for the noise effects) with the synth's
-// samples. No SDL here: the app's audio callback calls render(), redux-tool
+// samples. No SDL here: the app's audio callback calls render(), reaction-tool
 // calls it to write WAV files.
 //
 // Threads: play() and select() may be called from any thread (the game's,
@@ -21,7 +21,7 @@
 #include "audio/Synth.h"
 #include "core/GameData.h"
 
-namespace redux::audio {
+namespace reaction::audio {
 
 // Where to look for MT-32 ROMs: `explicitDir` (--mt32-roms), COVERT_MT32_ROMS,
 // the game directory and its MT32 / ROMs subfolders, a sibling MT32 (/roms)
@@ -85,4 +85,4 @@ private:
     double untilTick_ = 0;             // PIT clocks to the next timer interrupt
 };
 
-}  // namespace redux::audio
+}  // namespace reaction::audio

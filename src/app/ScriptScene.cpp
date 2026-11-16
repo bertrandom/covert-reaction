@@ -5,7 +5,7 @@
 #include "formats/Pic.h"
 #include "game/Paper.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -276,4 +276,4 @@ void ScriptScene::draw(Frame& f) {
     if (menu_) menu_->draw(f.image);
 }
 
-}  // namespace redux
+}  // namespace reaction

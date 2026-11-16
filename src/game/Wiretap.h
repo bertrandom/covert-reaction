@@ -30,7 +30,7 @@
 #include "game/Rng.h"
 #include "game/World.h"
 
-namespace redux {
+namespace reaction {
 
 // What BUG.EXE reads from the env block in main().
 struct WiretapSetup {
@@ -183,4 +183,4 @@ private:
     std::vector<WiretapEvent> events_;
 };
 
-}  // namespace redux
+}  // namespace reaction

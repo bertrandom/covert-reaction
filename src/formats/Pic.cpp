@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -154,4 +154,4 @@ Picture decodePicture(std::span<const std::uint8_t> data, std::size_t pos, std::
     return pic;
 }
 
-}  // namespace redux
+}  // namespace reaction

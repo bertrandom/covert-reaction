@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <vector>
 
-namespace redux {
+namespace reaction {
 
 struct Rgb {
     std::uint8_t r = 0, g = 0, b = 0;
@@ -55,4 +55,4 @@ private:
 // Writes an 8-bit indexed BMP (for the dump tool and debugging).
 void writeBmp(const std::filesystem::path& path, const Image& img, const Palette& pal);
 
-}  // namespace redux
+}  // namespace reaction

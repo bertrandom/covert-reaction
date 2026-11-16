@@ -4,7 +4,7 @@
 
 #include <cstdlib>
 
-namespace redux {
+namespace reaction {
 
 const std::array<TacRoomType, 10> kTacRoomTypes = {{
     {"Office", 4, 2, 7},
@@ -455,4 +455,4 @@ void generateBuilding(TacMap& m, Rng& rng, const TacBuildingParams& p) {
     g.run();
 }
 
-}  // namespace redux
+}  // namespace reaction

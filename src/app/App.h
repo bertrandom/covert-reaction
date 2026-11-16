@@ -10,7 +10,7 @@
 #include "formats/Font.h"
 #include "game/Career.h"
 
-namespace redux {
+namespace reaction {
 
 struct App {
     const GameData& data;
@@ -21,7 +21,7 @@ struct App {
     // The difficulty picked in FINAL's practice menu (0-3), -1 if none: the
     // practice mini-games use it instead of their defaults.
     int practiceLevel = -1;
-    // The redux's own options (the main menu's Options) and where they're kept
+    // Covert Reaction's own options (the main menu's Options) and where they're kept
     // (empty in scripted test runs: defaults, never saved).
     Settings settings{};
     std::filesystem::path settingsFile{};
@@ -51,4 +51,4 @@ struct App {
     }
 };
 
-}  // namespace redux
+}  // namespace reaction

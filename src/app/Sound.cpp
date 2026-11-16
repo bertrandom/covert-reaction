@@ -2,7 +2,7 @@
 
 #include <cstdio>
 
-namespace redux {
+namespace reaction {
 
 SoundOut::SoundOut(const GameData& data, std::vector<std::filesystem::path> romDirs, const std::string& setting)
     : engine_(std::make_unique<audio::AudioEngine>(data, std::move(romDirs), 48000)) {
@@ -39,4 +39,4 @@ void SoundOut::callback(void* self, Uint8* stream, int len) {
     static_cast<SoundOut*>(self)->engine_->render(reinterpret_cast<std::int16_t*>(stream), len / 4);
 }
 
-}  // namespace redux
+}  // namespace reaction

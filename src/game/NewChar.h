@@ -20,7 +20,7 @@
 #include "game/CaseGen.h"
 #include "game/Career.h"
 
-namespace redux {
+namespace reaction {
 
 // plot_defs: plot.txt's plots (*PLnn).
 struct PlotDef {
@@ -103,4 +103,4 @@ void startCaseClock(GameState& g);
 // difficulty, the MasterMind, cur_month.
 CaseSetup caseSetupFor(const GameState& g);
 
-}  // namespace redux
+}  // namespace reaction

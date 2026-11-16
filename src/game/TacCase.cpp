@@ -4,7 +4,7 @@
 #include <utility>
 
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -262,4 +262,4 @@ void TacCaseHooks::applyResult(World& w, const TacResult& r) {
     }
 }
 
-}  // namespace redux
+}  // namespace reaction

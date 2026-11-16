@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -554,4 +554,4 @@ ChaseResult Chase::result(bool quit) const {
     return r;
 }
 
-}  // namespace redux
+}  // namespace reaction

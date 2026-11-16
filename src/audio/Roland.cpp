@@ -19,7 +19,7 @@
 
 #include "audio/Driver.h"
 
-namespace redux::audio {
+namespace reaction::audio {
 namespace {
 
 // DATA offsets.
@@ -613,4 +613,4 @@ std::unique_ptr<SoundDriver> makeRoland(const DriverImage& image) {
     return std::make_unique<Roland>(image);
 }
 
-}  // namespace redux::audio
+}  // namespace reaction::audio

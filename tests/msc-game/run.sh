@@ -7,13 +7,13 @@
 # CASES: a file with one case per line, "CRIME WORLD DIFFICULTY SEED DAYS SCAN"
 # (SCAN: none, local, intl or both); default: tests/msc-game/cases.txt.
 # Environment: DECOMP (covert-decomp), COVERT_DATA (the game directory), TOOL
-# (redux-tool), WORK (scratch directory), DOSBOX (dosbox-x).
+# (reaction-tool), WORK (scratch directory), DOSBOX (dosbox-x).
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 DECOMP="${DECOMP:-$ROOT/../covert-decomp}"
 DATA="${COVERT_DATA:-$ROOT/resources/Covert}"
-TOOL="${TOOL:-$ROOT/build-sim/redux-tool}"
+TOOL="${TOOL:-$ROOT/build-sim/reaction-tool}"
 WORK="${WORK:-$ROOT/build-sim/msc-game}"
 CASES="${1:-$HERE/cases.txt}"
 MAC_DOSBOX=/Applications/dosbox-x.app/Contents/MacOS/dosbox-x

@@ -1,7 +1,7 @@
 /* Harness: covert-decomp's CHASE generate_city_map (CITY.C), the car offers of
  * car_select_screen, init_cars, chase_loop, car_in_view and road_open (DRIVE.C),
  * copied with the drawing, sound and keyboard removed, compiled with MSC 5.1 to
- * compare against covert-redux's port (redux-tool chase-gen).
+ * compare against covert-reaction's port (reaction-tool chase-gen).
  * For every city x difficulty x mode (0 follow, 2 chased) it dumps the map, the
  * buildings, the cars every 250 frames of a chase nobody steers, the end and
  * the next rand(). */

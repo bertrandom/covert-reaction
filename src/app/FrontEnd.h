@@ -6,11 +6,11 @@
 #include "app/App.h"
 #include "app/Scene.h"
 
-namespace redux {
+namespace reaction {
 
 std::unique_ptr<Scene> makeTitleScene(App& app);
 std::unique_ptr<Scene> makeMainMenuScene(App& app);
 // The main menu drawn over `background` (what the screen showed before).
 std::unique_ptr<Scene> makeMainMenuSceneOver(App& app, Image background);
 
-}  // namespace redux
+}  // namespace reaction

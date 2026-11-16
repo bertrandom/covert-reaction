@@ -1,12 +1,12 @@
-// redux-tool text FILE KEY [$NAME=value ...]   and   text-keys FILE
+// reaction-tool text FILE KEY [$NAME=value ...]   and   text-keys FILE
 #include <cstdio>
 
 #include "Tool.h"
 #include "formats/TextDb.h"
 
-using namespace redux;
+using namespace reaction;
 
-REDUX_COMMAND("text", "text FILE KEY [$NAME=value ...]: look up a keyed text entry (TEXT.DTA, CLUES.TXT, ...)",
+REACTION_COMMAND("text", "text FILE KEY [$NAME=value ...]: look up a keyed text entry (TEXT.DTA, CLUES.TXT, ...)",
               [](const GameData& d, const std::vector<std::string>& a) {
                   if (a.size() < 2) return 2;
                   std::vector<Substitution> subst;
@@ -19,7 +19,7 @@ REDUX_COMMAND("text", "text FILE KEY [$NAME=value ...]: look up a keyed text ent
                   return t ? 0 : 1;
               });
 
-REDUX_COMMAND("text-keys", "text-keys FILE: list the keys of a keyed text file",
+REACTION_COMMAND("text-keys", "text-keys FILE: list the keys of a keyed text file",
               [](const GameData& d, const std::vector<std::string>& a) {
                   if (a.empty()) return 2;
                   for (const auto& k : TextDb::load(d, a[0]).keys()) std::printf("%s\n", k.c_str());

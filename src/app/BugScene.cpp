@@ -5,8 +5,8 @@
 //
 // Registered scenes (practice setup, a new board each time):
 //   bug       phone taps          bug-car   car tracer
-// For testing, REDUX_BUG_SEED fixes the srand() seed (default: the time, as
-// randomize()), and REDUX_BUG_DIFFICULTY the board difficulty (0-3, default 1).
+// For testing, REACTION_BUG_SEED fixes the srand() seed (default: the time, as
+// randomize()), and REACTION_BUG_DIFFICULTY the board difficulty (0-3, default 1).
 #include "app/BugScene.h"
 
 #include <cstdio>
@@ -23,7 +23,7 @@
 #include "formats/Pic.h"
 #include "formats/TextWindow.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -363,8 +363,8 @@ WiretapSetup practiceSetup(bool car) {
     WiretapSetup s;
     s.carTracer = car;
     s.practice = true;
-    if (const char* d = std::getenv("REDUX_BUG_DIFFICULTY")) s.difficulty = std::atoi(d);
-    if (const char* seed = std::getenv("REDUX_BUG_SEED"))
+    if (const char* d = std::getenv("REACTION_BUG_DIFFICULTY")) s.difficulty = std::atoi(d);
+    if (const char* seed = std::getenv("REACTION_BUG_SEED"))
         s.seed = static_cast<std::uint32_t>(std::strtoul(seed, nullptr, 10));
     else
         s.seed = static_cast<std::uint32_t>(std::time(nullptr)) & 0x7FFF;
@@ -380,11 +380,11 @@ std::unique_ptr<Scene> makeBugScene(App& app, const WiretapSetup& setup, BugDone
     return std::make_unique<BugScene>(app, setup, std::move(onDone), std::move(hooks));
 }
 
-REDUX_SCENE("bug", [](App& app) {
+REACTION_SCENE("bug", [](App& app) {
     WiretapSetup s = practiceSetup(false);
     if (app.practiceLevel >= 0) s.difficulty = app.practiceLevel;
     return makeBugScene(app, s, backToMenu);
 });
-REDUX_SCENE("bug-car", [](App& app) { return makeBugScene(app, practiceSetup(true), backToMenu); });
+REACTION_SCENE("bug-car", [](App& app) { return makeBugScene(app, practiceSetup(true), backToMenu); });
 
-}  // namespace redux
+}  // namespace reaction

@@ -1,4 +1,4 @@
-# Covert Redux
+# Covert Reaction
 
 A modern, portable reimplementation of Sid Meier's Covert Action (MicroProse, 1990)
 on SDL2, written in C++20. It plays with the files of the original game: pictures,
@@ -23,7 +23,7 @@ brew install cmake sdl2
 cmake -S . -B build && cmake --build build -j
 ```
 
-The app is `build/Covert Redux.app`.
+The app is `build/Covert Reaction.app`.
 
 Linux (Debian/Ubuntu):
 
@@ -70,13 +70,13 @@ copied into the browser's storage (IndexedDB) and never uploaded, so they are
 asked for only once; "Forget the game files" removes them. Saved games and the
 Hall of Fame are kept in IndexedDB too.
 
-For local testing only, `-DREDUX_WEB_PRELOAD_DATA=ON` packs `resources/Covert`
+For local testing only, `-DREACTION_WEB_PRELOAD_DATA=ON` packs `resources/Covert`
 into the build (`index.data`) and starts straight away. That build contains the
 original, copyrighted game files: never publish or share it.
 
 ## Options
 
-The main menu has an **Options** item (not in the original) for the redux's own
+The main menu has an **Options** item (not in the original) for Covert Reaction's own
 settings, saved in `settings.ini` in the per-user folder:
 
 | Option | What it does | Default |
@@ -92,7 +92,7 @@ Scripted test runs (`--shot`) ignore the saved settings and use the defaults.
 
 The original has one sound driver per device (`RSOUND.CA` for the Roland MT-32,
 `ASOUND.CA` for the AdLib, `ISOUND.CA` for the PC speaker, `NSOUND.CA` for none),
-and the music and effects are inside them. Covert Redux runs ports of those
+and the music and effects are inside them. Covert Reaction runs ports of those
 drivers (`src/audio`) on the data of your own copy's `.CA` files, at the
 drivers' own timer rate (60.88 Hz, 300 Hz for the speaker's and AdLib's noise
 effects), and emulates the device they drive:
@@ -111,7 +111,7 @@ in the mini-games, as in the original. Scripted test runs (`--shot`) have no sou
 In a browser the sound starts with the first click or key.
 
 **MT-32 ROMs.** The ROMs are Roland's and copyrighted: they are never part of
-Covert Redux and it never downloads them. Put your own dumps in one of these
+Covert Reaction and it never downloads them. Put your own dumps in one of these
 places (first found wins):
 
 1. `--mt32-roms <directory>` on the command line
@@ -125,17 +125,17 @@ list of known dumps), so Munt/DOSBox names (`MT32_CONTROL.ROM`, `MT32_PCM.ROM`,
 `CM32L_CONTROL.ROM`, `CM32L_PCM.ROM`), MAME names (`mt32_ctrl_1_07.rom`,
 `mt32_pcm.rom`, `cm32l_ctrl_1_02.rom`, ...) and split halves (`_a`/`_b`, `_l`/`_h`)
 all do. With several sets, the original MT-32 is preferred (control ROM 1.07, then
-1.06, 1.05, 1.04, BlueRidge, 2.0x), then the CM-32L. `redux-tool sound-roms` lists
+1.06, 1.05, 1.04, BlueRidge, 2.0x), then the CM-32L. `reaction-tool sound-roms` lists
 what it finds; the game prints the device it uses on stderr.
 
-`redux-tool sound-events DEVICE N` prints what a driver sends to its device for
+`reaction-tool sound-events DEVICE N` prints what a driver sends to its device for
 `play_sound(N)` (MIDI bytes, OPL register writes, speaker divisors), and
-`redux-tool sound-wav DEVICE OUT.wav N` renders it. `tests/msc-sound` checks the
+`reaction-tool sound-wav DEVICE OUT.wav N` renders it. `tests/msc-sound` checks the
 ports against the original drivers run in DOSBox-X.
 
 ## The game files
 
-Covert Redux needs an installed copy of the original game (the directory with
+Covert Reaction needs an installed copy of the original game (the directory with
 `TEXT.DTA`, `TITLE2.PAN`, `FACES.PIC`, ...; GOG and the original floppies both
 work). It looks for it, in order:
 
@@ -143,7 +143,7 @@ work). It looks for it, in order:
 2. the `COVERT_DATA` environment variable
 3. a folder named `Covert` next to the program (or in `Contents/Resources` of the
    macOS app), or `resources/Covert`
-4. `Covert` in the per-user data folder (`~/Library/Application Support/CovertRedux`
+4. `Covert` in the per-user data folder (`~/Library/Application Support/Covert Reaction`
    on macOS)
 
 File names are matched case-insensitively, so a copy from DOS, Windows or a
@@ -158,7 +158,7 @@ case-sensitive Linux file system all work.
 | `src/game` | game logic, ported from the reconstructed original |
 | `src/audio` | the sound drivers, ported, and the emulated MT-32, AdLib and PC speaker |
 | `src/app` | the SDL2 application: window, input, the scene loop |
-| `tools` | `redux-tool`, a command-line inspector for the game files (`redux-tool` lists its commands) |
+| `tools` | `reaction-tool`, a command-line inspector for the game files (`reaction-tool` lists its commands) |
 
 The engine (`src/core`, `src/formats`, `src/game`, `src/audio`) has no SDL dependency, so tools
 and tests can use it without a window. The screen is the original 320x200 256-colour
@@ -166,7 +166,7 @@ frame, shown at 4:3 with nearest-neighbour scaling; Alt+Enter toggles full scree
 
 ## License
 
-Covert Redux is free software under the GNU General Public License, version 3 or
+Covert Reaction is free software under the GNU General Public License, version 3 or
 (at your option) any later version; see [LICENSE](LICENSE). Third-party libraries
 keep their own licenses.
 

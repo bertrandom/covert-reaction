@@ -6,7 +6,7 @@
 #include "formats/TextDb.h"
 #include "game/Sim.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -280,4 +280,4 @@ int Sim::drawWrappedText(int width, int y) const {
 
 int Sim::textWidth(const std::string& s) const { return fonts_->font(1).textWidth(s); }
 
-}  // namespace redux
+}  // namespace reaction

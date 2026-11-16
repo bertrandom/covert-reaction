@@ -18,7 +18,7 @@
 #include <memory>
 #include <thread>
 
-namespace redux {
+namespace reaction {
 
 class GameThread {
 public:
@@ -58,4 +58,4 @@ private:
     std::exception_ptr error_;
 };
 
-}  // namespace redux
+}  // namespace reaction

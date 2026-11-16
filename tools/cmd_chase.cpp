@@ -6,7 +6,7 @@
 #include "Tool.h"
 #include "game/Chase.h"
 
-using namespace redux;
+using namespace reaction;
 
 namespace {
 
@@ -21,7 +21,7 @@ void dumpCars(const Chase& g) {
 
 }  // namespace
 
-REDUX_COMMAND("chase-gen", "chase-gen: CHASE city maps and unsteered chases for every city, difficulty and "
+REACTION_COMMAND("chase-gen", "chase-gen: CHASE city maps and unsteered chases for every city, difficulty and "
                            "mode 0/2 (compare with tests/msc-chase)",
               [](const GameData&, const std::vector<std::string>&) {
                   for (int city = 0; city < 16; ++city)

@@ -7,7 +7,7 @@
 
 #include <SDL.h>
 
-namespace redux {
+namespace reaction {
 
 // The code of a key press, -1 if the event isn't one (or is a modifier alone).
 // Character keys give their unshifted/shifted ASCII from the key symbol, for
@@ -55,4 +55,4 @@ inline int textChar(const SDL_Event& e) {
     return c >= 32 && c < 127 && e.text.text[1] == 0 ? c : -1;
 }
 
-}  // namespace redux
+}  // namespace reaction

@@ -1,11 +1,11 @@
-// redux-tool case-gen CRIME WORLD DIFFICULTY SEED [MM_ORG [MM_CITY [CUR_MONTH]]] [--raw]
+// reaction-tool case-gen CRIME WORLD DIFFICULTY SEED [MM_ORG [MM_CITY [CUR_MONTH]]] [--raw]
 #include <cstdio>
 #include <string>
 
 #include "Tool.h"
 #include "game/CaseGen.h"
 
-using namespace redux;
+using namespace reaction;
 
 namespace {
 
@@ -97,7 +97,7 @@ void dumpReadable(const World& w, const CaseSetup& cs, const CaseResult& r) {
 
 }  // namespace
 
-REDUX_COMMAND(
+REACTION_COMMAND(
     "case-gen",
     "case-gen CRIME WORLD DIFFICULTY SEED [MM_ORG [MM_CITY [CUR_MONTH]]] [--raw] (\"-\" for a default): generate a case (CASE.C "
     "generate_case) with the Rng seeded to SEED on entry; MasterMind defaults: org 4 + SEED % 12 (the next one "

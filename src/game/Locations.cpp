@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 
-namespace redux {
+namespace reaction {
 
 namespace {
 // 1 << n as a 16-bit int (MSC small model): 0 once n reaches 16.
@@ -130,4 +130,4 @@ void Locations::freeLocationIfUnused(int i) {
     p.known = 0;
 }
 
-}  // namespace redux
+}  // namespace reaction

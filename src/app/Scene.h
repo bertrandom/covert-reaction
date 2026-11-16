@@ -8,7 +8,7 @@
 #include "core/GameData.h"
 #include "core/Image.h"
 
-namespace redux {
+namespace reaction {
 
 struct Frame {
     Image image{320, 200};
@@ -30,4 +30,4 @@ public:
 // The original game is paced by the VGA retrace (70 Hz in mode 13h).
 constexpr int kTicksPerSecond = 70;
 
-}  // namespace redux
+}  // namespace reaction

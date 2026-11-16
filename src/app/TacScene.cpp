@@ -17,11 +17,11 @@
 //   F8 detonate remote-controlled traps       F9 set a trap   F10 next grenade kind
 //   s d f  slow / normal / fast   Alt-S sound   Alt-P pause   Alt-Q quit
 //
-// Registered scene: "tac", a practice break-in. For testing, REDUX_TAC_CITY,
-// REDUX_TAC_ORG, REDUX_TAC_SEED (the game seed), REDUX_TAC_DIFFICULTY (0-3),
-// REDUX_TAC_RUNSEED (the srand seed after the building, default the time),
-// REDUX_TAC_MODE (ENV[0]: 7 kidnap, 8 rescue, 10 bomb; not practice then),
-// REDUX_TAC_FEMALE=1 and REDUX_TAC_HOUR set the setup.
+// Registered scene: "tac", a practice break-in. For testing, REACTION_TAC_CITY,
+// REACTION_TAC_ORG, REACTION_TAC_SEED (the game seed), REACTION_TAC_DIFFICULTY (0-3),
+// REACTION_TAC_RUNSEED (the srand seed after the building, default the time),
+// REACTION_TAC_MODE (ENV[0]: 7 kidnap, 8 rescue, 10 bomb; not practice then),
+// REACTION_TAC_FEMALE=1 and REACTION_TAC_HOUR set the setup.
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
@@ -34,7 +34,7 @@
 #include "app/Scenes.h"
 #include "game/Tac.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -196,14 +196,14 @@ TacSetup practiceSetup() {
     TacSetup s;
     // FINAL's start_practice: a random organization (4-15) and city
     Rng r(static_cast<std::uint32_t>(std::time(nullptr)) & 0x7FFF);
-    s.org = envInt("REDUX_TAC_ORG", r.below(12) + 4);
-    s.city = envInt("REDUX_TAC_CITY", r.below(16));
-    s.gameSeed = static_cast<unsigned>(envInt("REDUX_TAC_SEED", r.next()));
-    s.difficulty = envInt("REDUX_TAC_DIFFICULTY", 1);
-    s.clockBase = static_cast<unsigned>(envInt("REDUX_TAC_HOUR", 12) * 60);
-    s.female = envInt("REDUX_TAC_FEMALE", 0) != 0;
-    if (const char* rs = std::getenv("REDUX_TAC_RUNSEED")) s.runSeed = static_cast<std::uint32_t>(std::strtoul(rs, nullptr, 10));
-    if (const char* m = std::getenv("REDUX_TAC_MODE")) {
+    s.org = envInt("REACTION_TAC_ORG", r.below(12) + 4);
+    s.city = envInt("REACTION_TAC_CITY", r.below(16));
+    s.gameSeed = static_cast<unsigned>(envInt("REACTION_TAC_SEED", r.next()));
+    s.difficulty = envInt("REACTION_TAC_DIFFICULTY", 1);
+    s.clockBase = static_cast<unsigned>(envInt("REACTION_TAC_HOUR", 12) * 60);
+    s.female = envInt("REACTION_TAC_FEMALE", 0) != 0;
+    if (const char* rs = std::getenv("REACTION_TAC_RUNSEED")) s.runSeed = static_cast<std::uint32_t>(std::strtoul(rs, nullptr, 10));
+    if (const char* m = std::getenv("REACTION_TAC_MODE")) {
         s.env0 = std::atoi(m);
         s.practice = false;
     }
@@ -216,10 +216,10 @@ std::unique_ptr<Scene> makeTacScene(App& app, TacSetup setup, std::shared_ptr<Ta
     return std::make_unique<TacScene>(app, std::move(setup), std::move(hooks), std::move(onDone));
 }
 
-REDUX_SCENE("tac", [](App& app) {
+REACTION_SCENE("tac", [](App& app) {
     TacSetup s = practiceSetup();
     if (app.practiceLevel >= 0) s.difficulty = app.practiceLevel;
     return std::make_unique<TacScene>(app, s);
 });
 
-}  // namespace redux
+}  // namespace reaction

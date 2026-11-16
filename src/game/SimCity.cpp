@@ -11,7 +11,7 @@
 #include "formats/TextDb.h"
 #include "game/Sim.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -807,4 +807,4 @@ bool Sim::prisonerExchange(bool agree) {
     return true;
 }
 
-}  // namespace redux
+}  // namespace reaction

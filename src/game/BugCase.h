@@ -29,7 +29,7 @@
 #include "game/Wiretap.h"
 #include "game/World.h"
 
-namespace redux {
+namespace reaction {
 
 class BugCaseHooks {
 public:
@@ -59,4 +59,4 @@ private:
     Wiretap* wt_ = nullptr;
 };
 
-}  // namespace redux
+}  // namespace reaction

@@ -1,5 +1,5 @@
-// redux-tool: developer commands for inspecting game resources. Each tools/cmd_*.cpp
-// registers its commands with REDUX_COMMAND, so new formats add files, not edits.
+// reaction-tool: developer commands for inspecting game resources. Each tools/cmd_*.cpp
+// registers its commands with REACTION_COMMAND, so new formats add files, not edits.
 #pragma once
 
 #include <functional>
@@ -9,7 +9,7 @@
 
 #include "core/GameData.h"
 
-namespace redux::tool {
+namespace reaction::tool {
 
 struct Command {
     std::string help;
@@ -23,11 +23,11 @@ struct Registrar {
     Registrar(const std::string& name, Command c) { registry()[name] = std::move(c); }
 };
 
-}  // namespace redux::tool
+}  // namespace reaction::tool
 
-#define REDUX_CONCAT2(a, b) a##b
-#define REDUX_CONCAT(a, b) REDUX_CONCAT2(a, b)
-// REDUX_COMMAND("name", "usage and help", [](const GameData& d, const auto& args) {...})
+#define REACTION_CONCAT2(a, b) a##b
+#define REACTION_CONCAT(a, b) REACTION_CONCAT2(a, b)
+// REACTION_COMMAND("name", "usage and help", [](const GameData& d, const auto& args) {...})
 // (variadic, so lambdas with commas in their capture lists work)
-#define REDUX_COMMAND(name, help, ...) \
-    static ::redux::tool::Registrar REDUX_CONCAT(reg_, __LINE__)(name, ::redux::tool::Command{help, __VA_ARGS__})
+#define REACTION_COMMAND(name, help, ...) \
+    static ::reaction::tool::Registrar REACTION_CONCAT(reg_, __LINE__)(name, ::reaction::tool::Command{help, __VA_ARGS__})

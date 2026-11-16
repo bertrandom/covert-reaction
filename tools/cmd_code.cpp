@@ -1,4 +1,4 @@
-// redux-tool code [SEED [LEVEL [DIFFICULTY]]]: the code-breaking puzzle a practice
+// reaction-tool code [SEED [LEVEL [DIFFICULTY]]]: the code-breaking puzzle a practice
 // run generates (game/CodeBreak), with its answer.
 #include <cstdio>
 #include <cstdlib>
@@ -7,9 +7,9 @@
 #include "Tool.h"
 #include "game/CodeBreak.h"
 
-using namespace redux;
+using namespace reaction;
 
-REDUX_COMMAND("code", "code [SEED [LEVEL [DIFFICULTY]]]: a practice crypto puzzle and its answer",
+REACTION_COMMAND("code", "code [SEED [LEVEL [DIFFICULTY]]]: a practice crypto puzzle and its answer",
               [](const GameData& d, const std::vector<std::string>& a) {
                   CodeSetup setup;
                   setup.seed = a.size() > 0 ? static_cast<std::uint32_t>(std::stoul(a[0])) : 1u;

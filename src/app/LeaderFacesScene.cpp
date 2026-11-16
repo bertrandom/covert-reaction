@@ -4,7 +4,7 @@
 //
 // This is the game's copy protection (the leaders' faces are in the manual).
 // The 1990 floppy release rejects a wrong face; the GOG and eXoDOS releases have
-// the comparison patched out, so any face passes. The redux follows GOG unless
+// the comparison patched out, so any face passes. Covert Reaction follows GOG unless
 // app.game.copyProtection is set (COVERT_COPY_PROTECTION=1).
 #include <functional>
 #include <memory>
@@ -22,7 +22,7 @@
 #include "game/Face.h"
 #include "game/NewChar.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -163,7 +163,7 @@ std::unique_ptr<Scene> makeLineupFailedScene(App& app, const Frame& last) {
     });
 }
 
-REDUX_SCENE("leader-faces", [](App& app) {
+REACTION_SCENE("leader-faces", [](App& app) {
     LeaderLineup lineup = drawLeaderLineup(app.game.rng);
     return makeLeaderFacesScene(app, lineup, [&app, lineup](bool passed, const Frame& last) {
         std::string text = passed ? "Cleared for duty.\n" : "Wrong face.\n";
@@ -172,4 +172,4 @@ REDUX_SCENE("leader-faces", [](App& app) {
     });
 });
 
-}  // namespace redux
+}  // namespace reaction

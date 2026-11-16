@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace redux {
+namespace reaction {
 
 // BUG.C: the chip truth tables, [chip][right * 2 + left][0 left out, 1 right out].
 const int Wiretap::kLogic[12][4][2] = {
@@ -404,4 +404,4 @@ void Wiretap::frame(int key) {
     }
 }
 
-}  // namespace redux
+}  // namespace reaction

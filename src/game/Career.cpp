@@ -4,7 +4,7 @@
 #include <cstring>
 #include <ctime>
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -89,4 +89,4 @@ GameState::GameState() {
     if (const char* s = std::getenv("COVERT_COPY_PROTECTION")) copyProtection = std::atoi(s) != 0;
 }
 
-}  // namespace redux
+}  // namespace reaction

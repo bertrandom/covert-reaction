@@ -6,7 +6,7 @@
 #include "game/Paper.h"
 #include "game/SaveGame.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -663,4 +663,4 @@ void CityGame::showMasterPlan(int org, bool reveal) {
     ui_.waitKey();
 }
 
-}  // namespace redux
+}  // namespace reaction

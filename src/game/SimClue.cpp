@@ -5,7 +5,7 @@
 #include "formats/TextDb.h"
 #include "game/Sim.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -847,4 +847,4 @@ void Sim::formatMessageEvent(int e) {
     tb += ".";
 }
 
-}  // namespace redux
+}  // namespace reaction

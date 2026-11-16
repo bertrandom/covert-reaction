@@ -1,6 +1,6 @@
 /* Harness: covert-decomp's generate_case and helpers (CASE.C, CLUE.C, PERSON.C,
  * NEWCHAR.C, GFX.C), copied with the drawing removed, compiled with MSC 5.1 to
- * compare against covert-redux's port. */
+ * compare against covert-reaction's port. */
 #include <stdio.h>
 
 extern char *strcpy();

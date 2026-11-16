@@ -7,12 +7,12 @@
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 
-EM_JS(void, redux_js_toggle_fullscreen, (), {
-    if (Module.reduxToggleFullscreen) Module.reduxToggleFullscreen();
+EM_JS(void, reaction_js_toggle_fullscreen, (), {
+    if (Module.reactionToggleFullscreen) Module.reactionToggleFullscreen();
 });
 #endif
 
-namespace redux {
+namespace reaction {
 
 namespace {
 #ifdef __EMSCRIPTEN__
@@ -85,8 +85,8 @@ void Screen::toggleFullscreen() {
     if (headless_) return;
 #ifdef __EMSCRIPTEN__
     // The page puts its game container (not the bare canvas) in full screen, so its
-    // CSS keeps the 4:3 letterbox (Module.reduxToggleFullscreen, web/shell.html).
-    redux_js_toggle_fullscreen();
+    // CSS keeps the 4:3 letterbox (Module.reactionToggleFullscreen, web/shell.html).
+    reaction_js_toggle_fullscreen();
     (void)fullscreen_;
 #else
     fullscreen_ = !fullscreen_;
@@ -101,4 +101,4 @@ SDL_Point Screen::toFrame(int wx, int wy) const {
     return {static_cast<int>(lx * kWidth / kLogicalW), static_cast<int>(ly * kHeight / kLogicalH)};
 }
 
-}  // namespace redux
+}  // namespace reaction

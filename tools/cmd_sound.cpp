@@ -11,8 +11,8 @@
 #include "Tool.h"
 #include "audio/Audio.h"
 
-using namespace redux;
-using namespace redux::audio;
+using namespace reaction;
+using namespace reaction::audio;
 
 namespace {
 
@@ -101,7 +101,7 @@ void writeWav(const std::string& path, const std::vector<std::int16_t>& s, int r
 
 }  // namespace
 
-REDUX_COMMAND("sound-events",
+REACTION_COMMAND("sound-events",
               "sound-events DEVICE N[,A,B] [MORE...] [--ticks T] [--init]: run a driver (mt32, adlib, "
               "speaker), play_sound(N, A, B), and print what it sends to the device on each timer tick "
               "(MIDI bytes, |status; OPL reg=value; speaker divisor/gate). N,A,B@T plays at tick T",
@@ -136,7 +136,7 @@ REDUX_COMMAND("sound-events",
                   return 0;
               });
 
-REDUX_COMMAND("sound-wav",
+REACTION_COMMAND("sound-wav",
               "sound-wav DEVICE OUT.wav N[,A,B][@SECONDS] [MORE...] [--seconds S] [--rate HZ] "
               "[--mt32-roms DIR] [--keep-init]: render play_sound calls on a device (auto, mt32, adlib, "
               "speaker) to a WAV file, and print its levels",
@@ -202,7 +202,7 @@ REDUX_COMMAND("sound-wav",
                   return 0;
               });
 
-REDUX_COMMAND("sound-roms",
+REACTION_COMMAND("sound-roms",
               "sound-roms [DIR]: list the MT-32 / CM-32L ROMs found (DIR, COVERT_MT32_ROMS, next to the "
               "game data) and the set that would be used",
               [](const GameData& d, const std::vector<std::string>& args) {

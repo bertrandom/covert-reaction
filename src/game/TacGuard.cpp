@@ -6,7 +6,7 @@
 #include "formats/Pic.h"
 #include "game/Tac.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -788,4 +788,4 @@ void Tac::draw_equipment_panel() {
         }
 }
 
-}  // namespace redux
+}  // namespace reaction

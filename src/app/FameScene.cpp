@@ -16,7 +16,7 @@
 #include "game/NewChar.h"
 #include "game/Paper.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -205,20 +205,20 @@ std::unique_ptr<Scene> makeHallOfFameScene(App& app, std::optional<int> insertPo
     return std::make_unique<FameScene>(app, insertPoints, std::move(then));
 }
 
-REDUX_SCENE("hall-of-fame", [](App& app) {
+REACTION_SCENE("hall-of-fame", [](App& app) {
     return makeHallOfFameScene(app, std::nullopt, [&app](const Frame& last) { return backToMenu(app, last); });
 });
 
-REDUX_SCENE("fame-demo", [](App& app) -> std::unique_ptr<Scene> {
+REACTION_SCENE("fame-demo", [](App& app) -> std::unique_ptr<Scene> {
     auto s = std::make_unique<FameScene>(app, std::nullopt, [&app](const Frame& last) { return backToMenu(app, last); });
     s->demo(-1);
     return s;
 });
 
-REDUX_SCENE("fame-demo-insert", [](App& app) -> std::unique_ptr<Scene> {
+REACTION_SCENE("fame-demo-insert", [](App& app) -> std::unique_ptr<Scene> {
     auto s = std::make_unique<FameScene>(app, std::nullopt, [&app](const Frame& last) { return backToMenu(app, last); });
     s->demo(2);
     return s;
 });
 
-}  // namespace redux
+}  // namespace reaction

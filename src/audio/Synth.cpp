@@ -7,7 +7,7 @@ extern "C" {
 #include "opl3.h"
 }
 
-namespace redux::audio {
+namespace reaction::audio {
 namespace {
 
 std::int16_t clamp16(double v) {
@@ -93,4 +93,4 @@ std::unique_ptr<Synth> makeOplSynth(int sampleRate) { return std::make_unique<Op
 std::unique_ptr<Synth> makeSpeakerSynth(int sampleRate) { return std::make_unique<SpeakerSynth>(sampleRate); }
 std::unique_ptr<Synth> makeSilentSynth() { return std::make_unique<SilentSynth>(); }
 
-}  // namespace redux::audio
+}  // namespace reaction::audio

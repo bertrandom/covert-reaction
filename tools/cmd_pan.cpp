@@ -7,7 +7,7 @@
 #include "core/Image.h"
 #include "formats/Pan.h"
 
-using namespace redux;
+using namespace reaction;
 
 namespace {
 
@@ -33,7 +33,7 @@ std::string frameName(int i) {
 
 }  // namespace
 
-REDUX_COMMAND("pan", "pan NAME OUTDIR [frames]: play a .PAN, writing each frame to OUTDIR (default 300 frames)",
+REACTION_COMMAND("pan", "pan NAME OUTDIR [frames]: play a .PAN, writing each frame to OUTDIR (default 300 frames)",
               [](const GameData& d, const std::vector<std::string>& args) {
                   if (args.size() < 2) throw std::runtime_error("usage: pan NAME OUTDIR [frames]");
                   const int maxFrames = args.size() > 2 ? std::stoi(args[2]) : 300;
@@ -54,7 +54,7 @@ REDUX_COMMAND("pan", "pan NAME OUTDIR [frames]: play a .PAN, writing each frame 
                   return 0;
               });
 
-REDUX_COMMAND("pan-info", "pan-info NAME [OUTDIR]: describe a .PAN (and dump its background and images)",
+REACTION_COMMAND("pan-info", "pan-info NAME [OUTDIR]: describe a .PAN (and dump its background and images)",
               [](const GameData& d, const std::vector<std::string>& args) {
                   if (args.empty()) throw std::runtime_error("usage: pan-info NAME [OUTDIR]");
                   const Bytes bytes = d.read(args[0]);

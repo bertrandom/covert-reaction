@@ -12,7 +12,7 @@
 
 #include "core/GameData.h"
 
-namespace redux {
+namespace reaction {
 
 class ByteReader;
 class ByteWriter;
@@ -161,4 +161,4 @@ struct World {
     std::array<std::uint8_t, 0x3F0> env{};
 };
 
-}  // namespace redux
+}  // namespace reaction

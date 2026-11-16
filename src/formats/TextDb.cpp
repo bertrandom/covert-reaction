@@ -1,6 +1,6 @@
 #include "formats/TextDb.h"
 
-namespace redux {
+namespace reaction {
 
 TextDb TextDb::parse(std::span<const std::uint8_t> bytes) {
     TextDb db;
@@ -50,4 +50,4 @@ std::vector<std::string> TextDb::keys() const {
     return out;
 }
 
-}  // namespace redux
+}  // namespace reaction

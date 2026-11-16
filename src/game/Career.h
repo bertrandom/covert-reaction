@@ -1,6 +1,6 @@
 // FINAL's career data: the player block that env.sve and the saved games carry
 // (ENV.C save_env writes 0x28E bytes from plot_num; World::playerBlock holds them
-// raw), and the session state the redux scenes share.
+// raw), and the session state Covert Reaction scenes share.
 //
 // Player block layout (FINAL.EXE DGROUP 7DF2h-8080h, words little-endian):
 //   +000 plot_num        +002 plot_episodes   +004 mm_known     +006 mm_org
@@ -20,7 +20,7 @@
 #include "game/Rng.h"
 #include "game/World.h"
 
-namespace redux {
+namespace reaction {
 
 struct Career {
     static constexpr std::size_t kBlockSize = 0x28E;
@@ -49,7 +49,7 @@ struct Career {
     void pack(std::array<std::uint8_t, kBlockSize>& block) const;
 };
 
-// What the redux keeps for a run of the game: the original's tables (env.sve),
+// What Covert Reaction keeps for a run of the game: the original's tables (env.sve),
 // the career, the random numbers, and FINAL's globals that aren't saved.
 struct GameState {
     GameState();
@@ -73,4 +73,4 @@ struct GameState {
     void loadCareer() { career = Career::unpack(world.playerBlock); }
 };
 
-}  // namespace redux
+}  // namespace reaction

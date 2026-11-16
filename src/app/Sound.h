@@ -13,7 +13,7 @@
 #include "audio/Audio.h"
 #include "core/GameData.h"
 
-namespace redux {
+namespace reaction {
 
 class SoundOut {
 public:
@@ -36,4 +36,4 @@ private:
     bool tried_ = false;
 };
 
-}  // namespace redux
+}  // namespace reaction

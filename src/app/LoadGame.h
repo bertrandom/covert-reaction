@@ -2,7 +2,7 @@
 // load_game_menu, save_game_menu): four slots, cv0.sve .. cv3.sve, kept in the
 // per-user folder (UserFiles; an original save in the game directory loads too).
 // The logic and the file format are src/game/SaveGame.*. The original first asks
-// for the drive with the save disk (select_drive); the redux has no drives to
+// for the drive with the save disk (select_drive); Covert Reaction has no drives to
 // ask about and goes straight to the slots.
 #pragma once
 
@@ -12,7 +12,7 @@
 #include "app/App.h"
 #include "app/Scene.h"
 
-namespace redux {
+namespace reaction {
 
 // load_game_menu: the slots, then load_env of the chosen one into app.game
 // (options &= ~80h). `then(loaded, last)`; loaded is false on Esc, an empty slot
@@ -34,4 +34,4 @@ std::unique_ptr<Scene> makeSaveGameScene(App& app, int defaultSlot, const Frame&
 // briefing (makeNextCaseScene), any other back into the city loop.
 std::unique_ptr<Scene> makeFinalLoadGameScene(App& app, const Frame& last);
 
-}  // namespace redux
+}  // namespace reaction

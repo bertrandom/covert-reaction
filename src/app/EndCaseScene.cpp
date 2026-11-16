@@ -18,7 +18,7 @@
 #include "game/NewChar.h"
 #include "game/Paper.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -105,7 +105,7 @@ Step caseIntroStep(std::shared_ptr<TextDb> plot) {
 void continueMenu(ScriptScene& s, const EcPtr& ec);
 
 std::unique_ptr<Scene> endGame(App& app, const Frame& last) {
-    // set_exit_state(); ENV[0] = 0xFF; exit(): COVERT.EXE ends. The redux goes
+    // set_exit_state(); ENV[0] = 0xFF; exit(): COVERT.EXE ends. Covert Reaction goes
     // back to the main menu.
     app.game.storeCareer();
     return mainMenu(app, last);
@@ -265,7 +265,7 @@ std::unique_ptr<Scene> makeNextCaseScene(App& app, const Frame& last) {
 
 // The debriefing on its own: a case played by the simulation from a fixed seed
 // (COVERT_SEED, else 1990), then end_of_case.
-REDUX_SCENE("endcase", [](App& app) -> std::unique_ptr<Scene> {
+REACTION_SCENE("endcase", [](App& app) -> std::unique_ptr<Scene> {
     std::uint32_t seed = 1990;
     if (const char* s = std::getenv("COVERT_SEED")) seed = static_cast<std::uint32_t>(std::strtoul(s, nullptr, 0));
     makeDemoFinishedCase(app.game, app.data, seed);
@@ -274,7 +274,7 @@ REDUX_SCENE("endcase", [](App& app) -> std::unique_ptr<Scene> {
 
 // The same at the end of a ten-year career, with five MasterMinds arrested
 // before: the career's faces, the retirement and the rogues' gallery.
-REDUX_SCENE("endcase-retire", [](App& app) -> std::unique_ptr<Scene> {
+REACTION_SCENE("endcase-retire", [](App& app) -> std::unique_ptr<Scene> {
     makeDemoFinishedCase(app.game, app.data, 1990);
     app.game.career.curMonth = 119;
     app.game.career.mastermindsArrested = 0x0210A5;
@@ -283,11 +283,11 @@ REDUX_SCENE("endcase-retire", [](App& app) -> std::unique_ptr<Scene> {
 });
 
 // The next case's briefing on its own (as after "Continue Game").
-REDUX_SCENE("next-case", [](App& app) -> std::unique_ptr<Scene> {
+REACTION_SCENE("next-case", [](App& app) -> std::unique_ptr<Scene> {
     makeDemoFinishedCase(app.game, app.data, 1990);
     Frame f;
     f.image = Image(320, 200, 5);
     return makeNextCaseScene(app, f);
 });
 
-}  // namespace redux
+}  // namespace reaction

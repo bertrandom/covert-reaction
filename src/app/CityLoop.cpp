@@ -17,7 +17,7 @@
 #include "game/TacCase.h"
 #include "game/Wiretap.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -229,12 +229,12 @@ std::unique_ptr<Scene> makeCityResumeScene(App& app, const Frame&) {
     return std::make_unique<CityLoopScene>(app, env, gameSeed());
 }
 
-REDUX_SCENE("city", [](App& app) -> std::unique_ptr<Scene> {
+REACTION_SCENE("city", [](App& app) -> std::unique_ptr<Scene> {
     generateTestCase(app);
     return std::make_unique<CityLoopScene>(app, std::make_shared<CityEnv>(), testSeed());
 });
 
-REDUX_SCENE("city-street", [](App& app) -> std::unique_ptr<Scene> {
+REACTION_SCENE("city-street", [](App& app) -> std::unique_ptr<Scene> {
     generateTestCase(app);
     {
         // The new game's start (mission briefing) without a screen.
@@ -249,4 +249,4 @@ REDUX_SCENE("city-street", [](App& app) -> std::unique_ptr<Scene> {
     return std::make_unique<CityLoopScene>(app, env, testSeed());
 });
 
-}  // namespace redux
+}  // namespace reaction

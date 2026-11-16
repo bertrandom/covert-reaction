@@ -28,7 +28,7 @@
 
 #include "core/Image.h"
 
-namespace redux {
+namespace reaction {
 
 // The LZW + run-length decoder state (lzw_start .. lzw_decode). It reads its
 // input as words, like the original, so position() is where a following item of
@@ -86,4 +86,4 @@ struct Picture {
 Picture decodePicture(std::span<const std::uint8_t> data, std::size_t pos = 0,
                       std::size_t* end = nullptr);
 
-}  // namespace redux
+}  // namespace reaction

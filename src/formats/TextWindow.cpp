@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -160,4 +160,4 @@ int drawWrappedText(Image& img, const Font& font, std::string_view text, int wid
     return y;
 }
 
-}  // namespace redux
+}  // namespace reaction

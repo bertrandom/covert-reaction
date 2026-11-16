@@ -1,6 +1,6 @@
 #include "app/Menu.h"
 
-namespace redux {
+namespace reaction {
 
 Menu::Menu(const Font& font, std::string text, int x, int y, TextWindowOptions opt)
     : font_(&font), text_(std::move(text)), x_(x), y_(y), opt_(opt),
@@ -71,4 +71,4 @@ void Menu::draw(Image& frame) const {
     }
 }
 
-}  // namespace redux
+}  // namespace reaction

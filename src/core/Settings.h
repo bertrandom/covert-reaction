@@ -1,4 +1,4 @@
-// The redux's own options (not the original's): chosen in the main menu's Options
+// Covert Reaction's own options (not the original's): chosen in the main menu's Options
 // window and kept in settings.ini in the per-user folder, one "key = value" per
 // line. Missing files, keys or bad values give the defaults.
 #pragma once
@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <string>
 
-namespace redux {
+namespace reaction {
 
 struct Settings {
     // 7 8 9 / U I O / J K L act as the keypad in TAC and BUG, and BUG also takes
@@ -25,4 +25,4 @@ struct Settings {
     bool save(const std::filesystem::path& file) const;   // false if it can't be written
 };
 
-}  // namespace redux
+}  // namespace reaction

@@ -11,7 +11,7 @@
 #include "formats/Pan.h"
 #include "formats/Pic.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -100,7 +100,7 @@ private:
                       80, 80);
     }
 
-    // The redux's own options (core/Settings.h), not in the original's menu.
+    // Covert Reaction's own options (core/Settings.h), not in the original's menu.
     // Choosing one changes it and saves; "Done" or Esc goes back.
     static constexpr const char* kSounds[] = {"auto", "mt32", "adlib", "speaker", "none"};
     static constexpr const char* kSoundNames[] = {"Automatic", "Roland MT-32", "AdLib", "PC speaker", "Off"};
@@ -243,7 +243,7 @@ std::unique_ptr<Scene> makeMainMenuSceneOver(App& app, Image background) {
     return std::make_unique<MainMenuScene>(app, std::move(background));
 }
 
-REDUX_SCENE("title", makeTitleScene);
-REDUX_SCENE("main-menu", makeMainMenuScene);
+REACTION_SCENE("title", makeTitleScene);
+REACTION_SCENE("main-menu", makeMainMenuScene);
 
-}  // namespace redux
+}  // namespace reaction

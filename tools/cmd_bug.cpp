@@ -7,9 +7,9 @@
 #include "core/Image.h"
 #include "game/Wiretap.h"
 
-using namespace redux;
+using namespace reaction;
 
-REDUX_COMMAND("bug-gen", "bug-gen [SEEDS]: BUG board generation for difficulties 0-3, seeds 0..SEEDS-1 "
+REACTION_COMMAND("bug-gen", "bug-gen [SEEDS]: BUG board generation for difficulties 0-3, seeds 0..SEEDS-1 "
                          "(default 250), blank board picture (compare with tests/msc-bug)",
               [](const GameData&, const std::vector<std::string>& args) {
                   const int seeds = args.empty() ? 250 : std::stoi(args[0]);

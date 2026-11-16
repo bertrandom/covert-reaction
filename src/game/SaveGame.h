@@ -1,7 +1,7 @@
 // Saved games (covert-decomp FINAL/LOADGAME.C and GAME/OFFICE.C load_game_menu,
 // list_save_files, save_game_menu, write_save_file; MPSLIB/ENV.C save_env and
 // load_env with a file name): four slots, CV0.SVE .. CV3.SVE, in the original's
-// format, so the original's saves load and the redux's load in the original.
+// format, so the original's saves load and Covert Reaction's load in the original.
 //
 // A save file is the env block from ENV+10h (3F0h bytes: the header words at
 // ENV+20h..53h, see WorldHeader), then the player block (0x28E bytes, Career),
@@ -11,7 +11,7 @@
 // cur_person_name to the current city's name (the listing's "where").
 //
 // The original asks for a drive (select_drive) and keeps the files on a floppy;
-// the redux keeps them in the per-user folder (the caller's directory) and, when
+// Covert Reaction keeps them in the per-user folder (the caller's directory) and, when
 // a slot has no file there, reads the game directory's copy (an original save).
 #pragma once
 
@@ -25,7 +25,7 @@
 
 #include "game/Career.h"
 
-namespace redux::savegame {
+namespace reaction::savegame {
 
 inline constexpr int kSlots = 4;
 
@@ -68,4 +68,4 @@ std::array<std::optional<std::vector<std::uint8_t>>, kSlots> readSlots(const std
 // the original reports (13: write access denied, 28: disk full; others as 5).
 int writeSlot(const std::filesystem::path& userDir, int slot, std::span<const std::uint8_t> bytes);
 
-}  // namespace redux::savegame
+}  // namespace reaction::savegame

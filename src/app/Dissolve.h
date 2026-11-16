@@ -8,7 +8,7 @@
 
 #include "core/Image.h"
 
-namespace redux {
+namespace reaction {
 
 class Dissolve {
 public:
@@ -34,4 +34,4 @@ private:
     int left_ = 0;
 };
 
-}  // namespace redux
+}  // namespace reaction

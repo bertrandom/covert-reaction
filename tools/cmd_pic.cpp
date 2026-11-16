@@ -9,7 +9,7 @@
 #include "formats/McgaPalette.h"
 #include "formats/Pic.h"
 
-using namespace redux;
+using namespace reaction;
 
 namespace {
 
@@ -31,7 +31,7 @@ Picture decodeAndDescribe(const std::string& name, const Bytes& bytes) {
 
 }  // namespace
 
-REDUX_COMMAND("pic", "pic NAME OUT.bmp [ega|game|face|chase]: decode a .PIC (default palette: game)",
+REACTION_COMMAND("pic", "pic NAME OUT.bmp [ega|game|face|chase]: decode a .PIC (default palette: game)",
               [](const GameData& d, const std::vector<std::string>& args) {
                   if (args.size() < 2) throw std::runtime_error("usage: pic NAME OUT.bmp [palette]");
                   const Picture pic = decodeAndDescribe(args[0], d.read(args[0]));
@@ -39,7 +39,7 @@ REDUX_COMMAND("pic", "pic NAME OUT.bmp [ega|game|face|chase]: decode a .PIC (def
                   return 0;
               });
 
-REDUX_COMMAND("pic-all", "pic-all OUTDIR [palette]: decode every .PIC to OUTDIR/NAME.bmp",
+REACTION_COMMAND("pic-all", "pic-all OUTDIR [palette]: decode every .PIC to OUTDIR/NAME.bmp",
               [](const GameData& d, const std::vector<std::string>& args) {
                   if (args.empty()) throw std::runtime_error("usage: pic-all OUTDIR [palette]");
                   const std::filesystem::path out = args[0];

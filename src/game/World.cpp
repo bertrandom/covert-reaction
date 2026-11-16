@@ -2,7 +2,7 @@
 
 #include "core/Bytes.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -34,28 +34,28 @@ struct Out {
     template <std::size_t N> void operator()(const FixedString<N>& s) { wr(w, s); }
 };
 
-#define REDUX_FIELDS(T, ...)                                   \
+#define REACTION_FIELDS(T, ...)                                   \
     template <class IO, class X>                               \
         requires std::is_same_v<std::remove_const_t<X>, T>     \
     void table(IO& io, X& p) { __VA_ARGS__; }
 
-REDUX_FIELDS(Person, io(p.org); io(p.id); io(p.city); io(p.known); io(p.flags); io(p.roles); io(p.points); io(p.fate))
-REDUX_FIELDS(Site, io(p.org); io(p.city); io(p.flags); io(p.strength); io(p.f8); io(p.fa))
-REDUX_FIELDS(Clue, io(p.org); io(p.city); io(p.suspect); io(p.kind); io(p.text); io(p.pad0); io(p.pad1))
-REDUX_FIELDS(City, io(p.name); io(p.country); io(p.code); io(p.size); io(p.orgsKnown); io(p.orgsVisited); io(p.mapX); io(p.mapY))
-REDUX_FIELDS(Msg, io(p.type); io(p.time); io(p.msg); io(p.flags); io(p.level); io(p.sender); io(p.senderCity); io(p.receiver); io(p.receiverCity))
-REDUX_FIELDS(Plot, io(p.suspect); io(p.f1); io(p.state); io(p.msg); io(p.name); io(p.flags); io(p.items); io(p.severity))
-REDUX_FIELDS(Suspect, io(p.person); io(p.importance); io(p.name); io(p.info); io(p.f25); io(p.flags); io(p.found); io(p.type); io(p.rank); io(p.f2e))
-REDUX_FIELDS(SuspectState, io(p.time); io(p.progress); io(p.f4))
-REDUX_FIELDS(Org, io(p.abbrev); io(p.name); io(p.home); io(p.strength); io(p.range); io(p.flags); io(p.nationality); io(p.f23))
-REDUX_FIELDS(Item, io(p.name); io(p.icon); io(p.holder))
-REDUX_FIELDS(WorldHeader,
+REACTION_FIELDS(Person, io(p.org); io(p.id); io(p.city); io(p.known); io(p.flags); io(p.roles); io(p.points); io(p.fate))
+REACTION_FIELDS(Site, io(p.org); io(p.city); io(p.flags); io(p.strength); io(p.f8); io(p.fa))
+REACTION_FIELDS(Clue, io(p.org); io(p.city); io(p.suspect); io(p.kind); io(p.text); io(p.pad0); io(p.pad1))
+REACTION_FIELDS(City, io(p.name); io(p.country); io(p.code); io(p.size); io(p.orgsKnown); io(p.orgsVisited); io(p.mapX); io(p.mapY))
+REACTION_FIELDS(Msg, io(p.type); io(p.time); io(p.msg); io(p.flags); io(p.level); io(p.sender); io(p.senderCity); io(p.receiver); io(p.receiverCity))
+REACTION_FIELDS(Plot, io(p.suspect); io(p.f1); io(p.state); io(p.msg); io(p.name); io(p.flags); io(p.items); io(p.severity))
+REACTION_FIELDS(Suspect, io(p.person); io(p.importance); io(p.name); io(p.info); io(p.f25); io(p.flags); io(p.found); io(p.type); io(p.rank); io(p.f2e))
+REACTION_FIELDS(SuspectState, io(p.time); io(p.progress); io(p.f4))
+REACTION_FIELDS(Org, io(p.abbrev); io(p.name); io(p.home); io(p.strength); io(p.range); io(p.flags); io(p.nationality); io(p.f23))
+REACTION_FIELDS(Item, io(p.name); io(p.icon); io(p.holder))
+REACTION_FIELDS(WorldHeader,
     io(p.hereCity); io(p.hereOrg); io(p.options); io(p.msgDay); io(p.org2); io(p.org3); io(p.city1);
     io(p.city2); io(p.clockBase); io(p.numPersons); io(p.numSites); io(p.gameTime); io(p.var38);
     io(p.difficulty); io(p.randSeed); io(p.numSuspects); io(p.numPlots); io(p.jailbreakPerson);
     io(p.videoMode); io(p.numMsgs); io(p.var48); io(p.doubleAgents); io(p.seenOrgs);
     io(p.skillLevels); io(p.var50); io(p.var52))
-#undef REDUX_FIELDS
+#undef REACTION_FIELDS
 
 template <class T> void readAll(ByteReader& r, T& range) { In in{r}; for (auto& x : range) table(in, x); }
 template <class T> void writeAll(ByteWriter& w, const T& range) { Out out{w}; for (const auto& x : range) table(out, x); }
@@ -138,4 +138,4 @@ void World::loadWorld(const GameData& data, int n) {
     for (int i = 0; i < norgs && i < 16; ++i) { In in{r}; table(in, orgs[static_cast<std::size_t>(i)]); }
 }
 
-}  // namespace redux
+}  // namespace reaction

@@ -31,7 +31,7 @@
 #include <string>
 #include <vector>
 
-namespace redux::audio {
+namespace reaction::audio {
 
 // The PIT's input clock (Hz): timer divisors are in these units.
 constexpr double kPitHz = 1193182.0;
@@ -105,4 +105,4 @@ std::unique_ptr<SoundDriver> makeSpeaker(const DriverImage& image);   // ISOUND
 inline std::uint16_t ror3(std::uint16_t v) { return static_cast<std::uint16_t>(v >> 3 | v << 13); }
 inline std::int16_t sx(std::uint8_t v) { return static_cast<std::int8_t>(v); }   // cbw
 
-}  // namespace redux::audio
+}  // namespace reaction::audio

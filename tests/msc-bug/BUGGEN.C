@@ -1,6 +1,6 @@
 /* Harness: covert-decomp's BUG build_board (BOARD.C) and board_status's signal
  * propagation, copied with the drawing removed, compiled with MSC 5.1 to compare
- * the board generation against covert-redux's port (redux-tool bug-gen).
+ * the board generation against covert-reaction's port (reaction-tool bug-gen).
  * The trace bits read from board.pic start at 0 here (they take no random
  * numbers); everything build_board writes and the next rand() are dumped. */
 #include <stdio.h>

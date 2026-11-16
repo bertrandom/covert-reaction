@@ -5,7 +5,7 @@
 #include "formats/TextDb.h"
 #include "game/World.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -232,4 +232,4 @@ char CodeBreak::answer(int n) const {
     return ' ';
 }
 
-}  // namespace redux
+}  // namespace reaction

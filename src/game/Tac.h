@@ -41,7 +41,7 @@
 #include "game/TacBuilding.h"
 #include "game/TacTask.h"
 
-namespace redux {
+namespace reaction {
 
 // What TAC's main() takes from the env block (load_env, ENV[]); defaults: a
 // practice break-in.
@@ -194,7 +194,7 @@ public:
     Image& gpage() { return gfx_.page[static_cast<std::size_t>(gfx_.gpage)]; }
     const FaceSprites& faces() const { return faces_; }
 
-    // For a headless driver (redux-tool tac-case): puts Max on map cell (x, y)
+    // For a headless driver (reaction-tool tac-case): puts Max on map cell (x, y)
     // facing dir (1-8); the next frame enters that cell's room.
     void debugPlaceMax(int x, int y, int dir) {
         max_x = x * 16 + 8;
@@ -398,4 +398,4 @@ private:
                                      {266, 0}, {172, 3}, {172, 17}, {172, 31}, {172, 71}, {172, 80}}};
 };
 
-}  // namespace redux
+}  // namespace reaction

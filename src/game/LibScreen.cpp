@@ -6,7 +6,7 @@
 #include "formats/TextWindow.h"
 #include "game/Paper.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -101,7 +101,7 @@ void LibRecorder::bevelBox(int x, int y, int w, int h, int col) {
 }
 
 void LibRecorder::fillRect(int x, int y, int w, int h, int col) {
-    draw([=](LibCanvas& c) { redux::fillRect(c.img, x, y, w, h, u8(col)); });
+    draw([=](LibCanvas& c) { reaction::fillRect(c.img, x, y, w, h, u8(col)); });
 }
 
 void LibRecorder::step(LibStep::Kind k, std::string t, int x, int y, int n) {
@@ -179,4 +179,4 @@ void libShowMasterPlan(Sim& sim, LibRecorder& ui, int org, int reveal) {
     ui.step(LibStep::Kind::Key);
 }
 
-}  // namespace redux
+}  // namespace reaction

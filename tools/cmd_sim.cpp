@@ -1,4 +1,4 @@
-// redux-tool sim CRIME WORLD DIFFICULTY SEED DAYS [options]: generate a case and
+// reaction-tool sim CRIME WORLD DIFFICULTY SEED DAYS [options]: generate a case and
 // run GAME's world simulation day by day (src/game/Sim.h).
 #include <cstdio>
 #include <fstream>
@@ -10,7 +10,7 @@
 #include "game/NewChar.h"
 #include "game/Sim.h"
 
-using namespace redux;
+using namespace reaction;
 
 namespace {
 
@@ -189,7 +189,7 @@ void cityDay(Sim& sim, World& w, int d) {
 
 }  // namespace
 
-REDUX_COMMAND(
+REACTION_COMMAND(
     "sim",
     "sim CRIME WORLD DIFFICULTY SEED DAYS [--raw] [--scan none|local|intl|both] [--game-seed N] [--save-init FILE]: "
     "generate a case (as case-gen, MasterMind defaults from SEED), then run GAME: the mission briefing and DAYS x "

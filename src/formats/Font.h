@@ -39,7 +39,7 @@
 #include "core/GameData.h"
 #include "core/Image.h"
 
-namespace redux {
+namespace reaction {
 
 // The text fields of the original's RastPort (MPS.H) that the driver reads.
 struct TextAttr {
@@ -126,4 +126,4 @@ private:
     std::vector<Font> fonts_;
 };
 
-}  // namespace redux
+}  // namespace reaction

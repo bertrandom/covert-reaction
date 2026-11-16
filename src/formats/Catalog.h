@@ -13,9 +13,9 @@
 #include <span>
 #include <string_view>
 
-namespace redux {
+namespace reaction {
 
 // The offset of `name` in the catalog, nullopt if it isn't listed.
 std::optional<std::size_t> catalogFind(std::span<const std::uint8_t> cat, std::string_view name);
 
-}  // namespace redux
+}  // namespace reaction

@@ -12,7 +12,7 @@
 #include "app/UserFiles.h"
 #include "game/SaveGame.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -106,7 +106,7 @@ std::unique_ptr<Scene> makeFinalLoadGameScene(App& app, const Frame& last) {
     });
 }
 
-REDUX_SCENE("load-game", [](App& app) -> std::unique_ptr<Scene> {
+REACTION_SCENE("load-game", [](App& app) -> std::unique_ptr<Scene> {
     Frame f;
     f.image = Image(320, 200, 0);
     return makeFinalLoadGameScene(app, f);
@@ -114,7 +114,7 @@ REDUX_SCENE("load-game", [](App& app) -> std::unique_ptr<Scene> {
 
 // The save menu on its own, saving a case played by the simulation (a save
 // between cases, as the debriefing's "Save Game" makes).
-REDUX_SCENE("save-game", [](App& app) -> std::unique_ptr<Scene> {
+REACTION_SCENE("save-game", [](App& app) -> std::unique_ptr<Scene> {
     makeDemoFinishedCase(app.game, app.data, 1990);
     app.game.world.hdr.options = static_cast<std::int16_t>(app.game.world.hdr.options | 0x40);
     Frame f;
@@ -122,4 +122,4 @@ REDUX_SCENE("save-game", [](App& app) -> std::unique_ptr<Scene> {
     return makeSaveGameScene(app, 0, f, [&app](const Frame& last) { return makeMainMenuSceneOver(app, last.image); });
 });
 
-}  // namespace redux
+}  // namespace reaction

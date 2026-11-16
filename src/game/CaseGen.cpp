@@ -3,7 +3,7 @@
 #include <cstring>
 #include <stdexcept>
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -347,4 +347,4 @@ void CaseGenerator::caseBriefing() {
     }
 }
 
-}  // namespace redux
+}  // namespace reaction

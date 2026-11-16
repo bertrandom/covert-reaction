@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -162,4 +162,4 @@ TextResult Font::draw(Image& img, int x, int y, std::string_view s, const TextAt
     return {x, fg};
 }
 
-}  // namespace redux
+}  // namespace reaction

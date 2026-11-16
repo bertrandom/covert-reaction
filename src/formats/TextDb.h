@@ -15,7 +15,7 @@
 
 #include "core/GameData.h"
 
-namespace redux {
+namespace reaction {
 
 // A placeholder and its replacement, e.g. {"$VICTIM", "Max Remington"}.
 using Substitution = std::pair<std::string, std::string>;
@@ -44,4 +44,4 @@ private:
     std::vector<std::string> lines_;
 };
 
-}  // namespace redux
+}  // namespace reaction

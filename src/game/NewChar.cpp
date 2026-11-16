@@ -5,7 +5,7 @@
 #include "game/Face.h"
 #include "game/Paper.h"
 
-namespace redux {
+namespace reaction {
 
 // clang-format off
 const std::array<PlotDef, 16> kPlotDefs = {{
@@ -252,4 +252,4 @@ CaseSetup caseSetupFor(const GameState& g) {
     return s;
 }
 
-}  // namespace redux
+}  // namespace reaction

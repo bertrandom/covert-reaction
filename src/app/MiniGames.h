@@ -12,7 +12,7 @@
 #include "game/CodeBreak.h"
 #include "game/Tac.h"
 
-namespace redux {
+namespace reaction {
 
 using ChaseDone = std::function<std::unique_ptr<Scene>(App&, const ChaseResult&)>;
 std::unique_ptr<Scene> makeChaseScene(App& app, const ChaseSetup& setup, ChaseDone onDone);
@@ -23,4 +23,4 @@ std::unique_ptr<Scene> makeCodeScene(App& app, const CodeSetup& setup, CodeDone 
 using TacDone = std::function<std::unique_ptr<Scene>(App&, const TacResult&)>;
 std::unique_ptr<Scene> makeTacScene(App& app, TacSetup setup, std::shared_ptr<TacHooks> hooks, TacDone onDone);
 
-}  // namespace redux
+}  // namespace reaction

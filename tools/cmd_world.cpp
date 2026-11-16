@@ -1,13 +1,13 @@
-// redux-tool world N / crime N / save-roundtrip FILE
+// reaction-tool world N / crime N / save-roundtrip FILE
 #include <cstdio>
 #include <fstream>
 
 #include "Tool.h"
 #include "game/World.h"
 
-using namespace redux;
+using namespace reaction;
 
-REDUX_COMMAND("world", "world N: cities and organizations of worldN.dta",
+REACTION_COMMAND("world", "world N: cities and organizations of worldN.dta",
               [](const GameData& d, const std::vector<std::string>& a) {
                   World w;
                   w.loadWorld(d, a.empty() ? 0 : std::stoi(a[0]));
@@ -21,7 +21,7 @@ REDUX_COMMAND("world", "world N: cities and organizations of worldN.dta",
                   return 0;
               });
 
-REDUX_COMMAND("crime", "crime N: suspects, plot steps and items of crimeN.dta",
+REACTION_COMMAND("crime", "crime N: suspects, plot steps and items of crimeN.dta",
               [](const GameData& d, const std::vector<std::string>& a) {
                   World w;
                   w.loadCrime(d, a.empty() ? 0 : std::stoi(a[0]));
@@ -37,7 +37,7 @@ REDUX_COMMAND("crime", "crime N: suspects, plot steps and items of crimeN.dta",
                   return 0;
               });
 
-REDUX_COMMAND("save-roundtrip", "save-roundtrip FILE: load a saved game and check it saves back identically",
+REACTION_COMMAND("save-roundtrip", "save-roundtrip FILE: load a saved game and check it saves back identically",
               [](const GameData&, const std::vector<std::string>& a) {
                   if (a.empty()) return 2;
                   std::ifstream f(a[0], std::ios::binary);

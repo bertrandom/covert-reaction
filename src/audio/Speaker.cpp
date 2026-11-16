@@ -14,7 +14,7 @@
 
 #include "audio/Driver.h"
 
-namespace redux::audio {
+namespace reaction::audio {
 namespace {
 
 enum : std::uint16_t {
@@ -330,4 +330,4 @@ std::unique_ptr<SoundDriver> makeSpeaker(const DriverImage& image) {
     return std::make_unique<Speaker>(image);
 }
 
-}  // namespace redux::audio
+}  // namespace reaction::audio

@@ -32,7 +32,7 @@
 #include "game/Tac.h"
 #include "game/World.h"
 
-namespace redux {
+namespace reaction {
 
 class TacCaseHooks : public TacHooks {
 public:
@@ -82,4 +82,4 @@ private:
     int gameDifficulty_ = 0;
 };
 
-}  // namespace redux
+}  // namespace reaction

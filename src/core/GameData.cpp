@@ -6,7 +6,7 @@
 #include <fstream>
 #include <stdexcept>
 
-namespace redux {
+namespace reaction {
 
 namespace fs = std::filesystem;
 
@@ -67,4 +67,4 @@ Bytes GameData::read(std::string_view name) const {
     return Bytes(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
 }
 
-}  // namespace redux
+}  // namespace reaction

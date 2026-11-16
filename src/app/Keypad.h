@@ -11,7 +11,7 @@
 
 #include <SDL.h>
 
-namespace redux {
+namespace reaction {
 
 // SDLK_1..SDLK_9 -> SDLK_KP_1..SDLK_KP_9; other keys unchanged.
 inline SDL_Keycode digitAsKeypad(SDL_Keycode k) {
@@ -49,4 +49,4 @@ inline SDL_Keycode letterKeypad(SDL_Keycode k) {
     }
 }
 
-}  // namespace redux
+}  // namespace reaction

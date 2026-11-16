@@ -7,7 +7,7 @@
 
 namespace fs = std::filesystem;
 
-namespace redux::audio {
+namespace reaction::audio {
 
 std::vector<fs::path> mt32RomDirs(const std::optional<fs::path>& explicitDir, const fs::path& gameDir,
                                   const std::vector<fs::path>& extra) {
@@ -165,4 +165,4 @@ void AudioEngine::render(std::int16_t* out, int frames) {
     }
 }
 
-}  // namespace redux::audio
+}  // namespace reaction::audio

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Differential test of the sound driver ports: runs the original drivers in
 # DOSBox-X (SNDDUMP.C, built with covert-decomp's MSC 5.1) and compares what
-# they send to the device with `redux-tool sound-events`.
+# they send to the device with `reaction-tool sound-events`.
 #   tests/msc-sound/run.sh [BUILD_DIR]     (default: build; SND_DRIVERS=RAI picks drivers)
 # Needs DOSBox-X, covert-decomp next to this repository (toolchain/msc51) and the
 # game files in resources/Covert (or COVERT_DATA).
@@ -24,4 +24,4 @@ node "$HERE/cases.js" bat "$W"
   -c "MOUNT C \"$TOOLCHAIN\"" -c "MOUNT D \"$W\"" -c "MOUNT E \"$DATA\"" \
   -c "SET PATH=C:\\BIN" -c "SET INCLUDE=C:\\INCLUDE" -c "SET LIB=C:\\LIB" -c "SET TMP=D:\\" \
   -c "D:" -c "CALL D:\\RUN.BAT" -c "EXIT" > /dev/null 2>&1 || true
-node "$HERE/cases.js" compare "$W" "$BUILD/redux-tool" "$DATA"
+node "$HERE/cases.js" compare "$W" "$BUILD/reaction-tool" "$DATA"

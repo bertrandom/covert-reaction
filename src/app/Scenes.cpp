@@ -5,7 +5,7 @@
 #include "app/FrontEnd.h"
 #include "app/Menu.h"
 
-namespace redux {
+namespace reaction {
 
 namespace {
 
@@ -26,14 +26,14 @@ class MenuDemoScene : public Scene {
 public:
     explicit MenuDemoScene(App& app)
         : app_(app),
-          menu_(app.fonts.font(1), "Covert Redux\n New Game\n Load Game\n Credits\n Quit\n", 104, 70) {}
+          menu_(app.fonts.font(1), "Covert Reaction\n New Game\n Load Game\n Credits\n Quit\n", 104, 70) {}
 
     void handle(const SDL_Event& e) override { menu_.handle(e, app_.mouse(e)); }
     void tick() override {
         menu_.tick();
         if (auto r = menu_.result()) {
             if (*r == 3 || *r < 0) quit = true;
-            else menu_ = Menu(app_.fonts.font(1), "Covert Redux\n New Game\n Load Game\n Credits\n Quit\n", 104, 70);
+            else menu_ = Menu(app_.fonts.font(1), "Covert Reaction\n New Game\n Load Game\n Credits\n Quit\n", 104, 70);
         }
     }
     void draw(Frame& f) override {
@@ -60,6 +60,6 @@ std::unique_ptr<Scene> makeScene(App& app, const std::string& name) {
     return it == r.end() ? nullptr : it->second(app);
 }
 
-REDUX_SCENE("menu-demo", [](App& app) { return std::make_unique<MenuDemoScene>(app); });
+REACTION_SCENE("menu-demo", [](App& app) { return std::make_unique<MenuDemoScene>(app); });
 
-}  // namespace redux
+}  // namespace reaction
