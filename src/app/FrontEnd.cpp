@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "app/FrontEnd.h"
+#include "app/LoadGame.h"
 #include "app/Scenes.h"
 #include "app/Menu.h"
 #include "app/NewCharScenes.h"
@@ -61,6 +62,13 @@ public:
             // The menu comes back over the screen the Hall of Fame leaves.
             auto back = [this](const Frame& last) { return makeMainMenuSceneOver(app_, last.image); };
             next_ = sel == 0 ? makeScene(app_, "new-character") : makeHallOfFameScene(app_, std::nullopt, back);
+            return;
+        }
+        if (sel == 1) {               // load_game_menu
+            Frame f;
+            f.image = background_;
+            f.palette = palette_;
+            next_ = makeFinalLoadGameScene(app_, f);
             return;
         }
         if (sel == 2) {               // practice_menu

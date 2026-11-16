@@ -27,7 +27,8 @@ scenes sharing one `World`.
    - [ ] sound (the effects the sound drivers play; AdLib/MT-32 music later)
 2. **Title and front end** (FINAL.C): [x] title animation, credits, main menu,
    [x] new character (NEWCHAR.C), [x] plot briefing and leader line-up,
-   [x] Hall of Fame, [ ] load game, [ ] practice menu.
+   [x] Hall of Fame, [x] load game (and the save menu: cv0-3.sve in the
+   original's format, src/game/SaveGame.*), [ ] practice menu.
 3. **Case generation** (CASE.C + GAMELIB CLUE.C): [x] a new case from the
    crime/world files, byte-identical to the original's C for the same seed
    (`tests/msc`).
@@ -37,8 +38,10 @@ scenes sharing one `World`.
    (`tests/msc-*`); hooking them to a real case comes with the city loop.
 5. **The city loop** (GAME): travel, CIA office, intelligence screens, messages and
    decoding, time and events, suspects and arrests.
-6. **End of case** (ENDCASE.C): debriefing, timeline, scoring, Hall of Fame, next
-   case.
+6. **End of case** (ENDCASE.C): [x] debriefing, timeline, efficiency report,
+   MasterMind clue, vacation, Hall of Fame, career, promotion, retirement and the
+   continue/save menu (src/game/EndCase.*, src/app/EndCaseScene.cpp), [x] the next
+   case's briefing and generate_case; [ ] hooked to the city loop (both ways).
 7. **Modern extras**, behind options: window scaling and full screen (done),
    remappable keys, save anywhere, a faster pace, higher-resolution text.
 

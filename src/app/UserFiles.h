@@ -2,6 +2,7 @@
 // per-user data folder (SDL_GetPrefPath: ~/Library/Application Support/CovertRedux
 // on macOS, %APPDATA%\CovertRedux\CovertRedux on Windows, ~/.local/share/CovertRedux/
 // CovertRedux on Linux), never the game directory, which may be read-only.
+// COVERT_REDUX_USER_DIR in the environment replaces that folder.
 #pragma once
 
 #include <filesystem>
