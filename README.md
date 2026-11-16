@@ -86,6 +86,13 @@ Cross-compiling for Windows from macOS or Linux works with mingw-w64 (`brew inst
 mingw-w64`) and the official SDL2 "devel mingw" package; see
 `cmake/mingw-w64-x86_64.cmake`. Put `SDL2.dll` next to `covert-reaction.exe`.
 
+On macOS, `cmake --build build --target dmg` then makes `build/Covert Reaction.dmg`:
+the app with its SDL libraries inside, ad-hoc signed, next to a shortcut to
+Applications, so it can be dragged there. It runs on the same kind of Mac it was
+built on and newer (Homebrew's SDL is built for the current macOS and CPU), and
+other Macs warn about an "unidentified developer" the first time (Control-click,
+Open) until it's signed with a Developer ID and notarized.
+
 On macOS the result is `build/Covert Reaction.app` (bundle identifier
 `org.bert.covertreaction`); elsewhere `build/covert-reaction`. The app isn't
 code-signed: it runs on the Mac that built it, but sharing it would need signing

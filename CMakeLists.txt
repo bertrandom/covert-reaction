@@ -100,6 +100,26 @@ if(APPLE)
     MACOSX_BUNDLE_GUI_IDENTIFIER "org.bert.covertreaction"
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION})
+  # `cmake --build build --target dmg`: "Covert Reaction.dmg" with the app and its
+  # SDL libraries inside, ad-hoc signed, next to an /Applications shortcut
+  # (cmake/MakeDmg.cmake). sdl2-compat loads SDL3 at run time, so it goes in too.
+  get_target_property(reaction_sdl2_lib SDL2::SDL2 LOCATION)
+  find_library(REACTION_SDL3_LIBRARY NAMES SDL3.0 SDL3)
+  set(reaction_sdl3_lib "")
+  file(REAL_PATH "${reaction_sdl2_lib}" reaction_sdl2_real)   # (Homebrew: lib/ symlinks into Cellar/sdl2-compat)
+  if(reaction_sdl2_real MATCHES "sdl2-compat" AND REACTION_SDL3_LIBRARY)
+    set(reaction_sdl3_lib ${REACTION_SDL3_LIBRARY})
+  endif()
+  add_custom_target(dmg
+    COMMAND ${CMAKE_COMMAND}
+      "-DAPP=$<TARGET_BUNDLE_DIR:covert-reaction>"
+      "-DSDL2_LIB=${reaction_sdl2_lib}"
+      "-DSDL3_LIB=${reaction_sdl3_lib}"
+      "-DOUT_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+      "-DVOLUME=Covert Reaction"
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/MakeDmg.cmake
+    DEPENDS covert-reaction
+    VERBATIM)
 elseif(WIN32)
   set_target_properties(covert-reaction PROPERTIES WIN32_EXECUTABLE ON)
 elseif(EMSCRIPTEN)
