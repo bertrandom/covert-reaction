@@ -15,6 +15,7 @@ struct Command {
     std::string help;
     // args: everything after the command name. Returns the exit status.
     std::function<int(const GameData&, const std::vector<std::string>& args)> run;
+    bool needsData = true;   // false: runs without the game files (the GameData is empty)
 };
 
 std::map<std::string, Command>& registry();
@@ -30,4 +31,7 @@ struct Registrar {
 // REACTION_COMMAND("name", "usage and help", [](const GameData& d, const auto& args) {...})
 // (variadic, so lambdas with commas in their capture lists work)
 #define REACTION_COMMAND(name, help, ...) \
-    static ::reaction::tool::Registrar REACTION_CONCAT(reg_, __LINE__)(name, ::reaction::tool::Command{help, __VA_ARGS__})
+    static ::reaction::tool::Registrar REACTION_CONCAT(reg_, __LINE__)(name, ::reaction::tool::Command{help, __VA_ARGS__, true})
+// The same, for a command that doesn't need the game files (e.g. import).
+#define REACTION_COMMAND_NO_DATA(name, help, ...) \
+    static ::reaction::tool::Registrar REACTION_CONCAT(reg_, __LINE__)(name, ::reaction::tool::Command{help, __VA_ARGS__, false})

@@ -39,6 +39,14 @@ int main(int argc, char** argv) {
         for (const auto& [name, c] : reg) std::fprintf(stderr, "  %s\n", c.help.c_str());
         return 2;
     }
+    if (!reg[args[0]].needsData) {
+        try {
+            return reg[args[0]].run(GameData(std::filesystem::path()), std::vector<std::string>(args.begin() + 1, args.end()));
+        } catch (const std::exception& e) {
+            std::fprintf(stderr, "error: %s\n", e.what());
+            return 1;
+        }
+    }
     auto data = GameData::locate(dir, {});
     if (!data) {
         std::fprintf(stderr, "game data not found: use --data DIR or COVERT_DATA\n");

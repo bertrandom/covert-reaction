@@ -89,6 +89,36 @@ enable_language(C)
 add_library(nuked_opl3 STATIC ${nuked_opl3_SOURCE_DIR}/opl3.c)
 target_include_directories(nuked_opl3 PUBLIC ${nuked_opl3_SOURCE_DIR})
 
+# Decompressors for importing the game from its releases (formats/GameImport.h),
+# also fetched and pinned, and built here (neither ships a CMake build):
+#  - miniz (MIT): deflate, for zip, gzip and the xar of GOG's macOS .pkg.
+#  - Igor Pavlov's LZMA SDK (public domain), its C code: 7z archives (the floppy
+#    sets) and LZMA / LZMA2 (GOG's Windows installer, Inno Setup). The official
+#    .7z from 7-zip.org, which CMake unpacks itself.
+# (SOURCE_SUBDIR names a folder that doesn't exist: download only, no add_subdirectory.)
+FetchContent_Declare(miniz
+  URL https://github.com/richgel999/miniz/releases/download/3.0.2/miniz-3.0.2.zip
+  URL_HASH SHA256=ada38db0b703a56d3dd6d57bf84a9c5d664921d870d8fea4db153979fb5332c5
+  SOURCE_SUBDIR none
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+FetchContent_Declare(lzma_sdk
+  URL https://www.7-zip.org/a/lzma2501.7z
+  URL_HASH SHA256=cbc3babd589d971e45971d787ff100be8aaa5eab15b2694497ec3e447009e1f2
+  SOURCE_SUBDIR none
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+FetchContent_MakeAvailable(miniz lzma_sdk)
+add_library(reaction_miniz STATIC ${miniz_SOURCE_DIR}/miniz.c)
+target_include_directories(reaction_miniz SYSTEM PUBLIC ${miniz_SOURCE_DIR})
+target_compile_definitions(reaction_miniz PUBLIC
+  MINIZ_NO_STDIO MINIZ_NO_TIME MINIZ_NO_ARCHIVE_APIS MINIZ_NO_ZLIB_COMPATIBLE_NAMES)
+set(REACTION_LZMA_FILES 7zArcIn 7zBuf 7zBuf2 7zCrc 7zCrcOpt 7zDec 7zStream Bcj2 Bra Bra86 BraIA64
+  CpuArch Delta Lzma2Dec LzmaDec Ppmd7 Ppmd7Dec)
+list(TRANSFORM REACTION_LZMA_FILES PREPEND ${lzma_sdk_SOURCE_DIR}/C/)
+list(TRANSFORM REACTION_LZMA_FILES APPEND .c)
+add_library(reaction_lzma STATIC ${REACTION_LZMA_FILES})
+target_include_directories(reaction_lzma SYSTEM PUBLIC ${lzma_sdk_SOURCE_DIR}/C)
+target_compile_definitions(reaction_lzma PRIVATE Z7_PPMD_SUPPORT Z7_EXTRACT_ONLY)
+
 # The engine: file formats, the platform-independent core and the sound drivers.
 # No SDL here, so the command-line tools and tests can use it without a window.
 file(GLOB_RECURSE REACTION_CORE_SOURCES CONFIGURE_DEPENDS
@@ -96,7 +126,11 @@ file(GLOB_RECURSE REACTION_CORE_SOURCES CONFIGURE_DEPENDS
 add_library(reaction_core STATIC ${REACTION_CORE_SOURCES})
 target_include_directories(reaction_core PUBLIC src)
 target_compile_options(reaction_core PRIVATE ${REACTION_WARNINGS})
-target_link_libraries(reaction_core PUBLIC mt32emu nuked_opl3)
+target_link_libraries(reaction_core PUBLIC mt32emu nuked_opl3 PRIVATE reaction_miniz reaction_lzma)
+if(NOT EMSCRIPTEN)   # (formats/GameImport.h's background job)
+  find_package(Threads REQUIRED)
+  target_link_libraries(reaction_core PUBLIC Threads::Threads)
+endif()
 
 # The game application (SDL2 window, input, audio).
 file(GLOB_RECURSE REACTION_APP_SOURCES CONFIGURE_DEPENDS src/app/*.cpp)
