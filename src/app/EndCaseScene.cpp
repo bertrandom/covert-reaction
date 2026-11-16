@@ -279,6 +279,16 @@ REDUX_SCENE("endcase", [](App& app) -> std::unique_ptr<Scene> {
     return makeEndOfCaseScene(app);
 });
 
+// The same at the end of a ten-year career, with five MasterMinds arrested
+// before: the career's faces, the retirement and the rogues' gallery.
+REDUX_SCENE("endcase-retire", [](App& app) -> std::unique_ptr<Scene> {
+    makeDemoFinishedCase(app.game, app.data, 1990);
+    app.game.career.curMonth = 119;
+    app.game.career.mastermindsArrested = 0x0210A5;
+    app.game.storeCareer();
+    return makeEndOfCaseScene(app);
+});
+
 // The next case's briefing on its own (as after "Continue Game").
 REDUX_SCENE("next-case", [](App& app) -> std::unique_ptr<Scene> {
     makeDemoFinishedCase(app.game, app.data, 1990);
