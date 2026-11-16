@@ -10,10 +10,11 @@ namespace fs = std::filesystem;
 namespace reaction::audio {
 
 std::vector<fs::path> mt32RomDirs(const std::optional<fs::path>& explicitDir, const fs::path& gameDir,
-                                  const std::vector<fs::path>& extra) {
+                                  const std::vector<fs::path>& extra, const fs::path& savedDir) {
     std::vector<fs::path> out;
     if (explicitDir) out.push_back(*explicitDir);
     if (const char* env = std::getenv("COVERT_MT32_ROMS"); env && *env) out.emplace_back(env);
+    if (!savedDir.empty()) out.push_back(savedDir);
     for (const fs::path& base : {gameDir, gameDir.parent_path()}) {
         if (base.empty()) continue;
         if (base == gameDir) out.push_back(base);
@@ -66,16 +67,29 @@ AudioEngine::Unit AudioEngine::build(std::optional<Device> want, std::string& wh
             }
             const DriverImage img = DriverImage::parse(data_.read(driverFile(d)));
             if (d == Device::Mt32) {
-                if (!romsSearched_) {
-                    roms_ = findMt32Roms(romDirs_);
-                    romsSearched_ = true;
+                std::optional<Mt32Roms> roms;
+                std::vector<fs::path> dirs;
+                bool searched;
+                {
+                    std::lock_guard lock(mu_);
+                    searched = romsSearched_;
+                    if (searched) roms = roms_;
+                    else dirs = romDirs_;
                 }
-                if (!roms_) {
+                if (!searched) {   // (outside the lock: it reads files)
+                    roms = findMt32Roms(dirs);
+                    std::lock_guard lock(mu_);
+                    if (dirs == romDirs_) {
+                        roms_ = roms;
+                        romsSearched_ = true;
+                    }
+                }
+                if (!roms) {
                     why += "no MT-32 / CM-32L ROMs found; ";
                     continue;
                 }
-                u.synth = makeMt32Synth(*roms_, rate_);
-                why += std::string("MT-32 (") + roms_->describe() + ")";
+                u.synth = makeMt32Synth(*roms, rate_);
+                why += std::string("MT-32 (") + roms->describe() + ")";
             } else if (d == Device::Adlib) {
                 u.synth = makeOplSynth(rate_);
                 why += "AdLib (OPL2 emulation)";
@@ -107,6 +121,15 @@ void AudioEngine::select(const std::string& setting) {
     selected_ = u.device;
     status_ = why;
     pending_ = std::move(u);
+}
+
+void AudioEngine::setMt32RomDirs(std::vector<fs::path> dirs) {
+    std::lock_guard lock(mu_);
+    if (dirs == romDirs_) return;
+    romDirs_ = std::move(dirs);
+    roms_.reset();
+    romsSearched_ = false;
+    setting_.clear();   // the next select() builds the device again
 }
 
 void AudioEngine::setSampleRate(int rate) {

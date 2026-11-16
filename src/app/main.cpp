@@ -12,10 +12,13 @@
 //
 // Finding the game files: --data, COVERT_DATA, the folder saved in settings.ini
 // (game_data), the bundle and per-user Covert folders (bundleCandidates). There is
-// no search of the disk: if all fail, the window opens on PickerScene, a folder browser, and
-// the game starts once a folder with the game files is chosen (saved too).
-// --scene picker or COVERT_FORCE_PICKER=1 shows that screen anyway (tests);
-// COVERT_PICKER_DIR sets the folder it opens in.
+// no search of the disk: if all fail, the window opens on SetupScene, where the
+// player chooses the game folder (and, optionally, the MT-32 ROMs' folder) with
+// macOS's own folder panel or the in-game browser (PickerScene); START saves
+// both (game_data, mt32_roms) and starts the game.
+// --scene picker or COVERT_FORCE_PICKER=1 shows that screen anyway, and makes it
+// use the in-game browser on macOS too (tests: scripted runs never open the
+// panel); COVERT_PICKER_DIR sets the folder the browser opens in.
 //
 // One frame of work is Runner::step(). The desktop calls it in a loop; in a browser
 // (Emscripten), which can't run a blocking loop, emscripten_set_main_loop calls it
@@ -45,10 +48,9 @@ EM_JS(void, reaction_js_exit, (int status), {
 #endif
 
 #include "app/App.h"
-#include "app/MacFolderPanel.h"
-#include "app/PickerScene.h"
 #include "app/Scenes.h"
 #include "app/Screen.h"
+#include "app/SetupScene.h"
 #include "app/Sound.h"
 #include "app/UserFiles.h"
 #include "core/GameData.h"
@@ -80,13 +82,26 @@ std::vector<fs::path> bundleCandidates() {
     return out;
 }
 
+// The per-user places for the MT-32 ROMs (after the game's, see audio::mt32RomDirs).
+std::vector<fs::path> userRomDirs() {
+    std::vector<fs::path> out;
+    if (auto dir = userDataDir(); !dir.empty()) {
+        out.push_back(dir);
+        out.push_back(dir / "MT32");
+    }
+    return out;
+}
+
+fs::path pathSetting(const std::string& utf8) { return utf8.empty() ? fs::path() : folders::fromUtf8(utf8); }
+
 #ifndef __EMSCRIPTEN__
-// game_data in settings.ini (the rest of the file is kept as it is).
-void rememberGameData(const fs::path& dir) {
+// game_data and mt32_roms in settings.ini (the rest of the file is kept as it is).
+void rememberSetup(const fs::path& game, const fs::path& roms) {
     const fs::path file = userFile("settings.ini");
     if (file.empty()) return;
     Settings s = Settings::load(file);
-    s.gameData = folders::toUtf8(dir);
+    s.gameData = folders::toUtf8(game);
+    s.mt32Roms = roms.empty() ? std::string() : folders::toUtf8(roms);
     if (!s.save(file)) std::fprintf(stderr, "can't write %s\n", file.string().c_str());
 }
 
@@ -166,19 +181,21 @@ void pushKey(ScriptKey sk) {
 // Everything a run owns, so a frame can be one call (the browser's main loop
 // can't keep these as locals of a loop that never returns).
 //
-// Without the game files the run starts on PickerScene (no App yet); the game
-// itself (App, sound, the first scene) starts once a folder is chosen.
+// Without the game files the run starts on SetupScene (no App yet); the game
+// itself (App, sound, the first scene) starts once START is pressed.
 class Runner {
 public:
-    // `data`: the game files, or nullopt to ask for them first (PickerScene,
-    // opening in `pickerStart`).
+    // `data`: the game files, or nullopt to ask for them first (SetupScene).
+    // `setup`: how the setup screen chooses folders (and, without `data`, what
+    // it shows first); the Options reach it too.
     Runner(std::optional<GameData> data, std::string sceneName, Script script, bool headless, SoundArgs sound,
-           bool fullscreen = false, const fs::path& pickerStart = {})
+           SetupConfig setup, bool fullscreen = false)
         : script_(std::move(script)),
           scripted_(script_.shot.has_value()),
           headless_(headless),
           sceneName_(std::move(sceneName)),
           soundArgs_(std::move(sound)),
+          setupConfig_(std::move(setup)),
           screen_("Covert Reaction", 3, headless) {
 #ifndef __EMSCRIPTEN__
         if (!headless && fullscreen) screen_.setFullscreen(true);
@@ -188,9 +205,9 @@ public:
         if (data) {
             startGame(std::move(*data));
         } else {
-            auto picker = std::make_unique<PickerScene>(screen_, pickerStart);
-            picker_ = picker.get();
-            scene_ = std::move(picker);
+            auto setupScene = std::make_unique<SetupScene>(screen_, setupConfig_);
+            setup_ = setupScene.get();
+            scene_ = std::move(setupScene);
         }
         freq_ = SDL_GetPerformanceFrequency();
         tickLen_ = freq_ / kTicksPerSecond;
@@ -219,13 +236,14 @@ public:
             else
                 scene_->handle(e);
         }
-        // The game files' folder was just chosen: keep it, start the game.
-        if (picker_ && picker_->chosen()) {
-            const fs::path dir = *picker_->chosen();
-            picker_ = nullptr;
+        // START on the setup screen: keep the folders, start the game.
+        if (setup_ && setup_->accepted()) {
+            const fs::path dir = setup_->gameDir(), roms = setup_->romDir();
+            setup_ = nullptr;
             std::fprintf(stderr, "game data: %s (chosen)\n", dir.string().c_str());
+            if (!roms.empty()) std::fprintf(stderr, "MT-32 ROMs: %s (chosen)\n", roms.string().c_str());
 #ifndef __EMSCRIPTEN__
-            rememberGameData(dir);
+            rememberSetup(dir, roms);
 #endif
             startGame(GameData(dir));
         }
@@ -246,8 +264,12 @@ public:
             scene_->tick();
             ++tick_;
         }
-        // The Options menu may have changed the device: switch at once.
+        // The Options menu may have changed the device or the ROM folder: switch at once.
         if (sound_) {
+            if (app_->settings.mt32Roms != romSetting_) {
+                romSetting_ = app_->settings.mt32Roms;
+                sound_->engine().setMt32RomDirs(romDirs());
+            }
             sound_->engine().select(wantedSound());
             sound_->engine().setMt32CleanMixing(app_->settings.mt32CleanMixing);
         }
@@ -266,6 +288,9 @@ private:
     void startGame(GameData data) {
         data_.emplace(std::move(data));
         app_.reset(new App{*data_, screen_, FontSet::load(*data_)});
+        app_->setup = setupConfig_;
+        app_->setup.gameDir.clear();
+        app_->setup.romDir.clear();
         if (!headless_) {   // scripted runs keep the defaults, so they stay reproducible
             app_->settingsFile = userFile("settings.ini");
             app_->settings = Settings::load(app_->settingsFile);
@@ -277,13 +302,8 @@ private:
         // browser only lets a page play sound after a click or a key.
         if (!headless_) {
             soundDevice_ = soundArgs_.device;
-            std::vector<fs::path> extra;
-            if (auto dir = userDataDir(); !dir.empty()) {
-                extra.push_back(dir);
-                extra.push_back(dir / "MT32");
-            }
-            sound_ = std::make_unique<SoundOut>(*data_, audio::mt32RomDirs(soundArgs_.mt32Roms, data_->dir(), extra),
-                                                wantedSound());
+            romSetting_ = app_->settings.mt32Roms;
+            sound_ = std::make_unique<SoundOut>(*data_, romDirs(), wantedSound());
             app_->audio = &sound_->engine();
 #ifndef __EMSCRIPTEN__
             sound_->open();
@@ -295,11 +315,19 @@ private:
 
     std::string wantedSound() const { return soundDevice_.empty() ? app_->settings.sound : soundDevice_; }
 
+    // Where the sound engine looks for the MT-32 ROMs: --mt32-roms,
+    // COVERT_MT32_ROMS, the saved mt32_roms folder, then the usual places.
+    std::vector<fs::path> romDirs() const {
+        return audio::mt32RomDirs(soundArgs_.mt32Roms, data_->dir(), userRomDirs(), pathSetting(romSetting_));
+    }
+
     Script script_;
     bool scripted_;
     bool headless_;
     std::string sceneName_;
     SoundArgs soundArgs_;
+    SetupConfig setupConfig_;
+    std::string romSetting_;            // the mt32_roms the sound engine was given
     // Declared in the order they're built; destroyed in reverse (scenes first).
     std::optional<GameData> data_;
     Screen screen_;
@@ -307,7 +335,7 @@ private:
     std::string soundDevice_;
     std::unique_ptr<SoundOut> sound_;   // before scene_: outlives the scenes that play sounds
     std::unique_ptr<Scene> scene_;
-    PickerScene* picker_ = nullptr;     // scene_ while it's the picker
+    SetupScene* setup_ = nullptr;       // scene_ while it's the first-run setup screen
     Frame frame_;
     Uint64 freq_ = 0, tickLen_ = 0, last_ = 0, acc_ = 0;
     long tick_ = 0;
@@ -380,7 +408,8 @@ int main(int argc, char** argv) {
     std::fprintf(stderr, "game data: %s\n", data->dir().string().c_str());
     gHeadless = headless;
     try {
-        gRunner = std::make_unique<Runner>(std::move(*data), sceneName, std::move(script), headless, std::move(sound));
+        gRunner = std::make_unique<Runner>(std::move(*data), sceneName, std::move(script), headless, std::move(sound),
+                                           SetupConfig{});
     } catch (const std::exception& ex) {
         reportError(ex.what(), headless);
         finish(1);
@@ -391,7 +420,7 @@ int main(int argc, char** argv) {
     emscripten_set_main_loop(webFrame, 0, true);
     return 0;
 #else
-    // The folder saved in settings.ini (read in scripted runs too: only this key).
+    // The folders saved in settings.ini (read in scripted runs too: only these keys).
     const Settings saved = Settings::load(userFile("settings.ini"));
     const fs::path savedDir = saved.gameData.empty() ? fs::path() : folders::fromUtf8(saved.gameData);
     bool forcePicker = envFlag("COVERT_FORCE_PICKER");
@@ -409,64 +438,27 @@ int main(int argc, char** argv) {
         data = GameData::locate(dataDir, candidates);
         if (data) std::fprintf(stderr, "game data: %s\n", data->dir().string().c_str());
     }
+    // The setup screen: on macOS it chooses with the system's folder panel (no
+    // folder permission prompts), except in tests (COVERT_FORCE_PICKER, scripted
+    // runs), which keep the in-game browser.
+    SetupConfig setup;
 #ifdef __APPLE__
-    // Not found on macOS: ask with the system's open panel (no folder permission
-    // prompts), until the player picks a folder with the game or cancels.
-    // COVERT_FORCE_PICKER (tests) and scripted runs keep the in-game browser.
-    if (!data && !headless && !forcePicker) {
-        fs::path start;
-        std::error_code ec;
-        for (fs::path p = savedDir; !p.empty(); p = p.parent_path()) {
-            if (fs::is_directory(p, ec)) { start = p; break; }
-            if (p == p.parent_path()) break;
-        }
-        for (;;) {
-            auto dir = macChooseFolder(start, "Choose the folder with Sid Meier's Covert Action (1990): the one "
-                                              "that contains TEXT.DTA, from GOG's release or the original disks.");
-            if (!dir) {
-                SDL_Quit();
-                return 0;
-            }
-            if (GameData::isGameDir(*dir)) {
-                rememberGameData(*dir);
-                data.emplace(*dir);
-                std::fprintf(stderr, "game data: %s (chosen)\n", dir->string().c_str());
-                break;
-            }
-            std::string missing;
-            for (const auto& m : GameData::missingFiles(*dir)) missing += (missing.empty() ? "" : ", ") + m;
-            if (!macAlert("That folder doesn't have Covert Action's files",
-                          "Covert Reaction needs the original game's files. Missing here: " + missing + ".",
-                          "Choose Again", "Quit")) {
-                SDL_Quit();
-                return 0;
-            }
-            start = *dir;
-        }
-    }
+    setup.nativePanel = !headless && !forcePicker;
 #endif
-    // Not found: ask, in COVERT_PICKER_DIR, or near the folder saved before, or
-    // in the home folder (PickerScene's default).
-    fs::path pickerStart;
+    setup.autoRomDirs = [romArg = sound.mt32Roms](const fs::path& game) {
+        return audio::mt32RomDirs(romArg, game, userRomDirs());
+    };
+    if (const char* env = std::getenv("COVERT_PICKER_DIR"); env && *env) setup.browserStart = env;
     if (!data) {
-        std::fprintf(stderr, "game data not found: showing the folder browser\n");
-        std::error_code ec;
-        if (const char* env = std::getenv("COVERT_PICKER_DIR"); env && *env) {
-            pickerStart = env;
-        } else {
-            for (fs::path p = savedDir; !p.empty(); p = p.parent_path()) {
-                if (fs::is_directory(p, ec)) {
-                    pickerStart = p;
-                    break;
-                }
-                if (p == p.parent_path()) break;
-            }
-        }
+        // Not found: it shows what was tried (--data, or the saved folder).
+        std::fprintf(stderr, "game data not found: showing the setup screen\n");
+        setup.gameDir = dataDir ? *dataDir : savedDir;
+        setup.romDir = pathSetting(saved.mt32Roms);
     }
     int status = 0;
     try {
-        Runner runner(std::move(data), sceneName, std::move(script), headless, std::move(sound), saved.fullscreen,
-                      pickerStart);
+        Runner runner(std::move(data), sceneName, std::move(script), headless, std::move(sound), std::move(setup),
+                      saved.fullscreen);
         while (runner.step()) {}
     } catch (const std::exception& ex) {
         reportError(ex.what(), headless);

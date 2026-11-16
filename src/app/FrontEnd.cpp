@@ -8,6 +8,8 @@
 #include "app/Scenes.h"
 #include "app/Menu.h"
 #include "app/NewCharScenes.h"
+#include "app/SetupScene.h"
+#include "core/Folders.h"
 #include "formats/McgaPalette.h"
 #include "formats/Pan.h"
 #include "formats/Pic.h"
@@ -28,10 +30,13 @@ TextWindowOptions fill5(int selected = 0) {
 
 class MainMenuScene : public Scene {
 public:
-    MainMenuScene(App& app, Image background)
+    // `optionsAt` >= 0: open on the Options window, that item selected (back from
+    // the setup screen).
+    MainMenuScene(App& app, Image background, int optionsAt = -1)
         : app_(app), background_(std::move(background)), screen_(background_),
           palette_(mcgaPalette(palettes::kGame)) {
-        openMain();
+        if (optionsAt >= 0) openOptions(optionsAt);
+        else openMain();
     }
 
     void handle(const SDL_Event& e) override { menu_->handle(e, app_.mouse(e)); }
@@ -42,6 +47,9 @@ public:
         if (!r || next_) return;
         if (options_) {               // the Options window: change one, show it again
             if (*r < 0 || *r == kOptionsDone) { options_ = false; openMain(); return; }
+#ifndef __EMSCRIPTEN__
+            if (*r == kOptionsSetup) { openSetup(); return; }
+#endif
             changeOption(*r);
             openOptions(*r);
             return;
@@ -124,9 +132,31 @@ private:
     static constexpr const char* kSounds[] = {"auto", "mt32", "adlib", "speaker", "none"};
     static constexpr const char* kSoundNames[] = {"Automatic", "Roland MT-32", "AdLib", "PC speaker", "Off"};
 #ifdef __EMSCRIPTEN__
-    static constexpr int kOptionsDone = 6;   // (the page has its own full-screen button)
+    static constexpr int kOptionsDone = 6;   // (the page has its own full-screen button and file picker)
 #else
-    static constexpr int kOptionsDone = 7;
+    static constexpr int kOptionsSetup = 7;
+    static constexpr int kOptionsDone = 8;
+
+    // "Game files and ROMs...": the setup screen (SetupScene), then this window
+    // again. Done saves both folders; the game folder is used from the next
+    // start, the ROM folder at once (main.cpp gives the sound engine the new
+    // places to look when settings.mt32Roms changes).
+    void openSetup() {
+        SetupConfig c = app_.setup;
+        c.gameDir = app_.settings.gameData.empty() ? app_.data.dir() : folders::fromUtf8(app_.settings.gameData);
+        c.romDir = app_.settings.mt32Roms.empty() ? std::filesystem::path() : folders::fromUtf8(app_.settings.mt32Roms);
+        c.inGame = true;
+        App& app = app_;
+        Image bg = background_;
+        next_ = std::make_unique<SetupScene>(app_.screen, std::move(c), [&app, bg](bool ok, const SetupScene& s) {
+            if (ok) {
+                if (s.gameChanged()) app.settings.gameData = folders::toUtf8(s.gameDir());
+                app.settings.mt32Roms = s.romDir().empty() ? std::string() : folders::toUtf8(s.romDir());
+                app.saveSettings();
+            }
+            return std::unique_ptr<Scene>(std::make_unique<MainMenuScene>(app, bg, kOptionsSetup));
+        });
+    }
 #endif
 
     void openOptions(int selected) {
@@ -141,6 +171,7 @@ private:
         text += std::string(" Pause after break-in: ") + onOff(s.tacEndPause) + "\n";
 #ifndef __EMSCRIPTEN__
         text += std::string(" Full screen: ") + onOff(app_.screen.fullscreen()) + "\n";
+        text += " Game files and ROMs...\n";
 #endif
         text += " Done\n";
         TextWindowOptions opt;

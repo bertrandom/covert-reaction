@@ -40,6 +40,7 @@ Settings Settings::load(const std::filesystem::path& file) {
         else if (key == "tac_end_pause") readBool(value, s.tacEndPause);
         else if (key == "animations") readBool(value, s.animations);
         else if (key == "game_data") s.gameData = value;
+        else if (key == "mt32_roms") s.mt32Roms = value;
         else if (key == "sound" && (value == "auto" || value == "mt32" || value == "adlib" ||
                                     value == "speaker" || value == "none"))
             s.sound = value;
@@ -61,6 +62,7 @@ bool Settings::save(const std::filesystem::path& file) const {
         << "mt32_clean_mixing = " << onOff(mt32CleanMixing) << "\n"
         << "fullscreen = " << onOff(fullscreen) << "\n";
     if (!gameData.empty()) out << "game_data = " << gameData << "\n";
+    if (!mt32Roms.empty()) out << "mt32_roms = " << mt32Roms << "\n";
     return static_cast<bool>(out);
 }
 

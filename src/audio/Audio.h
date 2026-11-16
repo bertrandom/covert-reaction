@@ -25,11 +25,13 @@
 namespace reaction::audio {
 
 // Where to look for MT-32 ROMs: `explicitDir` (--mt32-roms), COVERT_MT32_ROMS,
-// the game directory and its MT32 / ROMs subfolders, a sibling MT32 (/roms)
-// folder, then `extra` (e.g. the per-user folder and its MT32 subfolder).
+// `savedDir` (settings.ini's mt32_roms, if set), the game directory and its
+// MT32 / ROMs subfolders, a sibling MT32 (/roms) folder, then `extra` (e.g. the
+// per-user folder and its MT32 subfolder).
 std::vector<std::filesystem::path> mt32RomDirs(const std::optional<std::filesystem::path>& explicitDir,
                                                const std::filesystem::path& gameDir,
-                                               const std::vector<std::filesystem::path>& extra = {});
+                                               const std::vector<std::filesystem::path>& extra = {},
+                                               const std::filesystem::path& savedDir = {});
 
 // "auto", "mt32", "adlib", "speaker", "none" (anything else: auto).
 std::optional<Device> parseDevice(const std::string& setting);   // nullopt = auto
@@ -45,6 +47,11 @@ public:
     // The new driver starts as at COVERT's start-up (init: for the MT-32, the
     // reset and the timbre upload). Nothing changes if it's the current device.
     void select(const std::string& setting);
+
+    // New places to look for the MT-32 ROMs (the player chose another folder):
+    // they are searched again and the device is selected again on the next
+    // select(), so "auto" becomes the MT-32 if a set is found there.
+    void setMt32RomDirs(std::vector<std::filesystem::path> dirs);
 
     // play_sound(n, a, b) (the caller checks options & 4, as the programs do).
     void play(int n, int a = 0, int b = 0);
@@ -72,9 +79,9 @@ private:
     Unit build(std::optional<Device> want, std::string& why);
 
     const GameData& data_;
-    std::vector<std::filesystem::path> romDirs_;
-    std::optional<Mt32Roms> roms_;
-    bool romsSearched_ = false;
+    std::vector<std::filesystem::path> romDirs_;   // guarded by mu_
+    std::optional<Mt32Roms> roms_;                 // guarded by mu_
+    bool romsSearched_ = false;                    // guarded by mu_
     int rate_;
     double clocksPerFrame_;
 

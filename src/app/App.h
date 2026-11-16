@@ -6,6 +6,7 @@
 #include <filesystem>
 
 #include "app/Screen.h"
+#include "app/SetupScene.h"
 #include "audio/Audio.h"
 #include "core/GameData.h"
 #include "core/Settings.h"
@@ -30,6 +31,10 @@ struct App {
     void saveSettings() const {
         if (!settingsFile.empty()) settings.save(settingsFile);
     }
+    // The setup screen the Options open ("Game files and ROMs...", desktop only):
+    // how it chooses folders and where the ROMs are looked for (main.cpp sets
+    // it; the folders themselves come from the settings when it opens).
+    SetupConfig setup{};
     // Options bit 8 (animations) follows Settings::animations: the main menu's
     // Options and Alt-A (appHotkeys) change the setting, and the setting wins
     // where the original turns the bit back on (options |= 0Ch on a fresh start

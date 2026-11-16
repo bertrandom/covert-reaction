@@ -151,15 +151,36 @@ floppies both work. It looks, in order, in:
    `Contents/Resources`), and `resources/Covert` in this repository
 5. `Covert` in the per-user folder
 
-It doesn't search the disk. If none of these has the game, it asks: on macOS
-with the system's own folder panel ("Use This Folder"), which needs none of
-macOS's folder permissions; on Windows and Linux the window opens on a folder browser: pick the folder with
-`TEXT.DTA` (folders that hold the game are marked "<- game files"; Enter opens a
-folder or takes a marked one, Backspace goes up, U uses the current folder, Esc
-quits; the mouse wheel and clicks work too). The choice is saved as `game_data`
-and the game starts. `--scene picker` or `COVERT_FORCE_PICKER=1` shows the browser
-anyway, and `COVERT_PICKER_DIR` sets the folder it opens in (for testing). The web
-build has its own page for this (see [Web](#web)).
+It doesn't search the disk. If none of these has the game (the first run, or
+the saved folder is gone), the window opens on a small **setup screen**:
+
+- **Game files:** the folder chosen so far (or "Not chosen"), and in red what's
+  missing if it isn't the game's; **Choose game files...** asks for the folder
+  with `TEXT.DTA`.
+- **MT-32 ROMs (optional):** the ROM set found in the chosen folder (e.g. "MT-32
+  Control v1.07 + MT-32 PCM ROM"), a red note if that folder has no usable
+  control + PCM pair, or a set found anyway in the usual places (see
+  [Sound](#sound)); **Choose MT-32 ROMs...** asks for the folder with your ROM
+  files. Without ROMs the music plays on the AdLib.
+- **START** (greyed until the game files are chosen) saves both folders
+  (`game_data`, `mt32_roms` in `settings.ini`) and starts the game; **Quit**
+  (Esc) leaves.
+
+Up/Down or Tab move between the buttons, Enter presses one; the mouse works too.
+"Choose..." opens the system's own folder panel on macOS (which needs none of
+macOS's folder permissions), and an in-game folder browser on Windows and Linux:
+folders that hold what's asked for are marked in green; Enter opens a folder or
+takes a marked one, Backspace goes up, U uses the folder, Esc goes back; the
+mouse wheel and clicks work too.
+
+The same screen is in the main menu's Options (**Game files and ROMs...**), to
+change either folder later: a new game folder is used from the next start, a
+new ROM folder at once.
+
+`--scene picker` or `COVERT_FORCE_PICKER=1` shows the setup screen anyway, with
+the in-game browser on macOS too, and `COVERT_PICKER_DIR` sets the folder the
+browser opens in (for testing; scripted `--shot` runs never open the system's
+panel). The web build has its own page for this (see [Web](#web)).
 
 File names are matched case-insensitively.
 
@@ -195,6 +216,7 @@ own settings:
 | MT-32 clean mixing | Mixes all of the MT-32's partials in phase. The real chip adds half of them in opposite phase, which can silence a sound such as TAC's gunshot while the music holds partials; Off is the faithful sound | Off |
 | Pause after break-in | The original waits about 2 seconds after you dismiss a break-in's closing message ("You quickly slip out of the building."); Off goes straight back | On |
 | Full screen | Desktop only | Off |
+| Game files and ROMs... | Desktop only: the [setup screen](#the-game-files), to choose the game folder (used from the next start) or the MT-32 ROMs' folder (used at once) | |
 
 ### Sound
 
@@ -217,14 +239,19 @@ downloads them. Put your own dumps in one of these places (the first found wins)
 
 1. `--mt32-roms <folder>` on the command line
 2. the `COVERT_MT32_ROMS` environment variable
-3. the game folder, or an `MT32`, `MT32/roms`, `mt32-roms` or `roms` folder in it
+3. the folder saved as `mt32_roms` in `settings.ini`: the one chosen on the
+   setup screen (**Choose MT-32 ROMs...**, at the first start or from Options ›
+   Game files and ROMs...)
+4. the game folder, or an `MT32`, `MT32/roms`, `mt32-roms` or `roms` folder in it
    or next to it
-4. the per-user folder, or `MT32` in it
+5. the per-user folder, or `MT32` in it
 
 The ROMs are recognized by their contents, so any file names work (Munt/DOSBox
 names such as `MT32_CONTROL.ROM`, MAME names such as `mt32_ctrl_1_07.rom`, split
 halves). With several sets, the original MT-32 is preferred (control ROM 1.07
-first), then the CM-32L. `reaction-tool sound-roms` lists what it finds.
+first), then the CM-32L. `reaction-tool sound-roms` lists what it finds (with
+the `mt32_roms` folder from `--settings <file>`, or from `settings.ini` in
+`COVERT_REACTION_USER_DIR`).
 
 ### Saved games and settings
 

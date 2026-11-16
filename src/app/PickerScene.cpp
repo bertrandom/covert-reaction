@@ -4,6 +4,7 @@
 #include <system_error>
 #include <utility>
 
+#include "audio/Synth.h"
 #include "core/BuiltinFont.h"
 #include "core/GameData.h"
 #include "core/Folders.h"
@@ -29,15 +30,23 @@ constexpr int kHeaderY = 2, kPathY = 64, kListY = 74, kRowY = 77, kRows = 11, kS
 constexpr int kListX = 4, kListW = 311, kTextX = 10, kNameCols = 36, kArrowX = 304;
 constexpr int kUseX = 6, kUseW = 8 * 18 + 5, kExitW = 8 * 9 + 5, kExitX = 315 - kExitW, kButtonH = 10;
 
-constexpr const char* kHeader[] = {
-    "Covert Reaction needs the files from",
+// The help at the top, per mode (two title lines, then four).
+constexpr const char* kGameHeader[] = {
+    "Choose the game files' folder:",
     "Sid Meier's Covert Action (1990).",
-    "Choose the folder with TEXT.DTA, from",
-    "GOG's release or the original disks.",
-    "MT-32 ROMs, if you have any, go in a",
-    "folder named MT32 next to the game.",
+    "The folder with TEXT.DTA, from GOG's",
+    "release or the original disks.",
+    "Folders that hold the game files are",
+    "marked in green.",
 };
-constexpr const char* kMarker = "<- game files";
+constexpr const char* kRomHeader[] = {
+    "Choose the MT-32 ROMs' folder:",
+    "Roland MT-32 or CM-32L ROM dumps.",
+    "The folder with the control ROM and",
+    "the PCM ROM (e.g. MT32_CONTROL.ROM",
+    "and MT32_PCM.ROM). Folders with a",
+    "usable pair are marked in green.",
+};
 
 bool inside(int x, int y, int rx, int ry, int rw, int rh) {
     return x >= rx && y >= ry && x <= rx + rw && y <= ry + rh;
@@ -47,7 +56,13 @@ std::string displayName(const fs::path& p) { return bf::fromUtf8(gs::toUtf8(p));
 
 }  // namespace
 
-PickerScene::PickerScene(const Screen& screen, fs::path start) : screen_(screen) {
+bool PickerScene::holds(Mode mode, const fs::path& dir) {
+    if (dir.empty()) return false;
+    if (mode == Mode::GameFiles) return GameData::isGameDir(dir);
+    return audio::findMt32Roms({dir}).has_value();
+}
+
+PickerScene::PickerScene(const Screen& screen, fs::path start, Mode mode) : screen_(screen), mode_(mode) {
     std::error_code ec;
     if (start.empty() || !fs::is_directory(start, ec)) start = gs::homeDir();
     if (start.empty() || !fs::is_directory(start, ec)) start = fs::current_path(ec);
@@ -70,7 +85,7 @@ void PickerScene::enter(const fs::path& dir, const fs::path& select) {
         list = gs::subfolders(cur_);
     }
     for (auto& e : list) items_.push_back({Kind::Folder, bf::fromUtf8(e.name), std::move(e.path)});
-    curValid_ = !cur_.empty() && GameData::isGameDir(cur_);
+    curValid_ = !cur_.empty() && holds(mode_, cur_);
     sel_ = top_ = 0;
     if (!select.empty())
         for (int i = 0; i < static_cast<int>(items_.size()); ++i)
@@ -97,7 +112,7 @@ bool PickerScene::valid(int index, bool ask) {
     Item& it = items_[static_cast<std::size_t>(index)];
     if (it.kind != Kind::Folder) return false;
     if (it.valid < 0 && !ask && gs::needsPermission(it.path)) return false;
-    if (it.valid < 0) it.valid = GameData::isGameDir(it.path) ? 1 : 0;
+    if (it.valid < 0) it.valid = holds(mode_, it.path) ? 1 : 0;
     return it.valid == 1;
 }
 
@@ -105,28 +120,18 @@ void PickerScene::open(int index) {
     if (index < 0 || index >= static_cast<int>(items_.size())) return;
     const Item& it = items_[static_cast<std::size_t>(index)];
     if (it.kind == Kind::Up) return goUp();
-    if (valid(index, true)) return choose(it.path);
+    if (valid(index, true)) {
+        chosen_ = it.path;
+        return;
+    }
     const fs::path p = it.path;
     enter(p);
 }
 
 void PickerScene::use() {
-    if (valid(sel_, true)) return choose(items_[static_cast<std::size_t>(sel_)].path);
-    if (curValid_) return choose(cur_);
-    if (cur_.empty()) return say("Choose a drive first.", kRed);
-    std::string missing;
-    for (const auto& m : GameData::missingFiles(cur_)) missing += " " + m;
-    say("Missing:" + missing, kRed);
-}
-
-void PickerScene::choose(const fs::path& dir) {
-    if (auto missing = GameData::missingFiles(dir); !missing.empty()) {
-        std::string m;
-        for (const auto& f : missing) m += " " + f;
-        return say("Missing:" + m, kRed);
-    }
-    chosen_ = dir;
-    say("Loading the game...", kGreen);
+    if (valid(sel_, true)) chosen_ = items_[static_cast<std::size_t>(sel_)].path;
+    else if (cur_.empty()) say("Choose a drive first.", kRed);
+    else chosen_ = cur_;   // (the setup screen says what it lacks)
 }
 
 void PickerScene::moveTo(int index) {
@@ -191,9 +196,11 @@ void PickerScene::draw(Frame& frame) {
     img.fill(kBlack);
 
     // What's needed.
+    const bool roms = mode_ == Mode::Mt32Roms;
+    const char* const* header = roms ? kRomHeader : kGameHeader;
     drawBevelBox(img, kListX, kHeaderY, kListW, 6 * 8 + 10, kBox);
     for (int i = 0; i < 6; ++i)   // (a gap between the title and the help)
-        bf::drawText(img, kTextX - 2, kHeaderY + 3 + i * 8 + (i < 2 ? 0 : 4), kHeader[i], i < 2 ? kYellow : kWhite);
+        bf::drawText(img, kTextX - 2, kHeaderY + 3 + i * 8 + (i < 2 ? 0 : 4), header[i], i < 2 ? kYellow : kWhite);
 
     // Where we are.
     const std::string where = cur_.empty() ? std::string("Drives") : displayName(cur_);
@@ -216,7 +223,8 @@ void PickerScene::draw(Frame& frame) {
         if (it.kind == Kind::Folder && !cur_.empty()) label += "/";
         if (ok) {
             bf::drawText(img, kTextX, y, bf::fitRight(label, kNameCols - 14), c);
-            bf::drawText(img, kTextX + (kNameCols - 13) * 8, y, kMarker, isSel ? kBlack : kGreen);
+            bf::drawText(img, kTextX + (kNameCols - 13) * 8, y, roms ? "<- MT-32 ROMs" : "<- game files",
+                         isSel ? kBlack : kGreen);
         } else {
             bf::drawText(img, kTextX, y, bf::fitRight(label, kNameCols), c);
         }
@@ -226,21 +234,22 @@ void PickerScene::draw(Frame& frame) {
         bf::drawText(img, kArrowX, kRowY + (kRows - 1) * 8, std::string(1, bf::kArrowDown), kWhite);
 
     // What to do.
-    const bool canUse = valid(sel_) || curValid_;
+    const bool found = valid(sel_) || curValid_;
+    const std::string what = roms ? "MT-32 ROMs" : "Game files";
     std::string status = message_;
     std::uint8_t statusColor = messageColor_;
     if (status.empty()) {
-        if (valid(sel_)) status = "Game files found: press Enter or U.", statusColor = kGreen;
-        else if (curValid_) status = "Game files here: press U to use them.", statusColor = kGreen;
-        else status = "Enter: open  Backspace: up  Esc: exit", statusColor = kGrey;
+        if (valid(sel_)) status = what + " found: press Enter or U.", statusColor = kGreen;
+        else if (curValid_) status = what + " here: press U to use them.", statusColor = kGreen;
+        else status = "Enter: open  Backspace: up  Esc: back", statusColor = kGrey;
     }
     bf::drawText(img, kListX, kStatusY, bf::fitRight(status, 39), statusColor);
 
-    const std::uint8_t useColor = canUse ? kWhite : kDarkGrey;
-    drawRectOutline(img, kUseX, kButtonY, kUseW, kButtonH, canUse ? kGreen : kDarkGrey);
-    bf::drawText(img, kUseX + 3, kButtonY + 2, "U: Use this folder", useColor);
+    const bool canUse = !cur_.empty() || valid(sel_);
+    drawRectOutline(img, kUseX, kButtonY, kUseW, kButtonH, found ? kGreen : canUse ? kEdge : kDarkGrey);
+    bf::drawText(img, kUseX + 3, kButtonY + 2, "U: Use this folder", canUse ? kWhite : kDarkGrey);
     drawRectOutline(img, kExitX, kButtonY, kExitW, kButtonH, kEdge);
-    bf::drawText(img, kExitX + 3, kButtonY + 2, "Esc: Exit", kWhite);
+    bf::drawText(img, kExitX + 3, kButtonY + 2, "Esc: Back", kWhite);
 }
 
 }  // namespace reaction

@@ -28,17 +28,4 @@ std::optional<std::filesystem::path> macChooseFolder(const std::filesystem::path
     }
 }
 
-bool macAlert(const std::string& title, const std::string& text, const std::string& primary,
-              const std::string& secondary) {
-    @autoreleasepool {
-        NSAlert* alert = [[NSAlert alloc] init];
-        alert.messageText = ns(title);
-        alert.informativeText = ns(text);
-        [alert addButtonWithTitle:ns(primary)];
-        [alert addButtonWithTitle:ns(secondary)];
-        [NSApp activateIgnoringOtherApps:YES];
-        return [alert runModal] == NSAlertFirstButtonReturn;
-    }
-}
-
 }  // namespace reaction

@@ -33,8 +33,12 @@ struct Settings {
     // Desktop only: start in full screen (Alt+Enter also changes it).
     bool fullscreen = false;
     // Desktop only: the game files' folder, as UTF-8 (empty: not chosen yet). Set
-    // when the start-up search finds the game or the player picks its folder.
+    // by the setup screen (app/SetupScene.h), at start-up or from the Options.
     std::string gameData;
+    // Desktop only: the folder with the player's MT-32 ROMs, as UTF-8 (empty:
+    // not chosen; the usual places are searched anyway, see audio::mt32RomDirs).
+    // Set by the setup screen too.
+    std::string mt32Roms;
 
     static Settings load(const std::filesystem::path& file);
     bool save(const std::filesystem::path& file) const;   // false if it can't be written

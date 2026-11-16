@@ -10,6 +10,8 @@
 
 #include "Tool.h"
 #include "audio/Audio.h"
+#include "core/Folders.h"
+#include "core/Settings.h"
 
 using namespace reaction;
 using namespace reaction::audio;
@@ -205,13 +207,26 @@ REACTION_COMMAND("sound-wav",
               });
 
 REACTION_COMMAND("sound-roms",
-              "sound-roms [DIR]: list the MT-32 / CM-32L ROMs found (DIR, COVERT_MT32_ROMS, next to the "
-              "game data) and the set that would be used",
+              "sound-roms [DIR] [--settings FILE]: list the MT-32 / CM-32L ROMs found (DIR, "
+              "COVERT_MT32_ROMS, the mt32_roms folder saved in FILE or in "
+              "$COVERT_REACTION_USER_DIR/settings.ini, next to the game data) and the set that would be used",
               [](const GameData& d, const std::vector<std::string>& args) {
                   std::optional<std::filesystem::path> dir;
-                  if (!args.empty()) dir = args[0];
+                  std::filesystem::path settings;
+                  if (const char* user = std::getenv("COVERT_REACTION_USER_DIR"); user && *user)
+                      settings = std::filesystem::path(user) / "settings.ini";
+                  for (std::size_t i = 0; i < args.size(); ++i) {
+                      if (args[i] == "--settings" && i + 1 < args.size()) settings = args[++i];
+                      else dir = args[i];
+                  }
+                  std::filesystem::path saved;
+                  if (!settings.empty()) {
+                      const std::string s = Settings::load(settings).mt32Roms;
+                      if (!s.empty()) saved = folders::fromUtf8(s);
+                  }
+                  if (!saved.empty()) std::printf("saved mt32_roms: %s\n", saved.string().c_str());
                   std::vector<std::string> log;
-                  auto dirs = mt32RomDirs(dir, d.dir());
+                  auto dirs = mt32RomDirs(dir, d.dir(), {}, saved);
                   auto roms = findMt32Roms(dirs, &log);
                   for (const auto& l : log) std::printf("found: %s\n", l.c_str());
                   if (!roms) {
