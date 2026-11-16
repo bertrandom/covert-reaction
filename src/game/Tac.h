@@ -176,8 +176,9 @@ public:
     const TacMap& map() const { return map_; }
     const TacSetup& setup() const { return setup_; }
     TacGfx& gfx() { return gfx_; }
-    // the sound effects asked for since the last call (play_sound numbers; no driver yet)
-    std::vector<int> takeSounds() { return std::exchange(sounds_, {}); }
+    // the play_sound calls since the last call: n, sfx_tempo, sfx_variant (effect 44,
+    // the break-in score, takes the alarm level and a variant from them)
+    std::vector<std::array<int, 3>> takeSounds() { return std::exchange(sounds_, {}); }
 
     // mutable state the hooks may need
     std::string msg_buf;
@@ -328,7 +329,7 @@ private:
     TacMap map_;
     Rng rng_;
     PaletteMap palette_{};
-    std::vector<int> sounds_;
+    std::vector<std::array<int, 3>> sounds_;   // play_sound(n, sfx_tempo, sfx_variant)
 
     Task<void> main_;
     std::coroutine_handle<> resume_;

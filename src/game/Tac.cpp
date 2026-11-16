@@ -264,7 +264,7 @@ Task<void> Tac::lib_play() {
 // ---------------------------------------------------------------- TAC.C
 
 void Tac::play_sound(int n) {
-    if (options & 4) sounds_.push_back(n);
+    if (options & 4) sounds_.push_back({n, sfx_tempo, sfx_variant});
 }
 
 void Tac::play_tune(int n) {

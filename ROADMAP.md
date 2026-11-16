@@ -56,7 +56,7 @@ scenes sharing one `World`.
    files, dossiers, the arrest, the terminal's searches, run by GAME's library
    port on the case's tables with TAC's random() and globals; `redux-tool
    tac-case` scripts a break-in and prints what changed), [x] BUG's intercepts
-   in a case (src/game/BugCase.*, the same way; `redux-tool bug-case`), [ ] sound effects, [ ] Alt-A/Alt-S/Alt-Q in GAME's text windows.
+   in a case (src/game/BugCase.*, the same way; `redux-tool bug-case`), [x] sound effects, [ ] Alt-A/Alt-S/Alt-Q in GAME's text windows.
 6. **End of case** (ENDCASE.C): [x] debriefing, timeline, efficiency report,
    MasterMind clue, vacation, Hall of Fame, career, promotion, retirement and the
    continue/save menu (src/game/EndCase.*, src/app/EndCaseScene.cpp), [x] the next

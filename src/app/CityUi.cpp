@@ -529,6 +529,7 @@ void CityUi::incomingMessage(const std::string& title, const std::string& text) 
     for (n = 0; n < (y - 0x4C) / 8; ++n) {
         scroll(n);
         fill(0x32, 0x9B, 0xDC, 8, 15);
+        app_.sound(0x1F);   // the teleprinter types
         for (x = 0x34; x < 0xF0; ++x) {
             screen.blit(work, x - 2, n * 8 + 0x4A, 2, 10, x - 2, 0x99);
             drawLineC(x - 1, 0xA3, x - 1, 0xA6, 7);
@@ -536,6 +537,7 @@ void CityUi::incomingMessage(const std::string& title, const std::string& text) 
             wait((x & 7) ? 1 : 3);
             if (keyPending()) break;
         }
+        app_.sound(0x20);   // ...and returns the carriage
         wait(15);
         screen.blit(work, x - 2, n * 8 + 0x4A, 0x20, 10, x - 2, 0x99);
         fill(x - 1, 0xA3, 0x20, 4, 7);

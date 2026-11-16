@@ -141,7 +141,7 @@ public:
             nextRepeat_ += 70.0 / 15.0;
         }
         tac_.tick();
-        tac_.takeSounds();
+        for (const auto& s : tac_.takeSounds()) app_.driverSound(s[0], s[1], s[2]);
         if (tac_.waiting() == Tac::Wait::Menu && !menu_) {
             const auto& req = tac_.menuRequest();
             TextWindowOptions opt;

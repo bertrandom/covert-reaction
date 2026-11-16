@@ -506,6 +506,8 @@ void CityGame::flyToCity(int from, int to) {
     int dir = kHeadings[sign(dx) + 1][sign(dy) + 1];
     int alt = 0, frames = 0;
     long guard = 0;
+    app_.sound(0x23);   // the plane takes off
+    int lastAlt = 0;
     do {
         if (const int ddir = kHeadings[sign(dx) + 1][sign(dy) + 1] - dir; ddir != 0) {
             if ((ddir & 7) < 4) ++dir;
@@ -514,6 +516,11 @@ void CityGame::flyToCity(int from, int to) {
         }
         alt = clampTo((frames++ & 1) + alt, 0, (std::abs(dx) + std::abs(dy)) / 2);
         if (alt > 8) alt = 8;
+        if (alt < lastAlt) {   // ...and comes down: the landing
+            app_.sound(0x24);
+            lastAlt = -1;
+        }
+        if (lastAlt != -1) lastAlt = alt;
         x += kHeadingDx[dir];
         y += kHeadingDy[dir];
         const int sx = clampTo(x - 5, 0, 999);
