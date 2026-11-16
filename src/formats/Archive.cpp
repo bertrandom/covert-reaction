@@ -402,7 +402,7 @@ void xarWalk(const XmlNode& el, const std::string& prefix, const Shared& file, s
             out.push_back({path, [file, heap, off, len, size, enc, path] {
                                const Span raw = slice(*file, heap + off, len);
                                if (enc.find("gzip") != std::string::npos)
-                                   return inflate(raw, true, size < (1u << 30) ? size : 0);
+                                   return inflate(raw, true, size < (1u << 30) ? static_cast<std::size_t>(size) : 0);
                                if (enc.find("bzip2") != std::string::npos)
                                    fail("xar: " + path + " is bzip2-compressed (not supported)");
                                return copyOf(raw);
@@ -418,7 +418,7 @@ Entries xarEntries(Shared file) {
     const Span f(*file);
     if (!isXar(f)) fail("not a xar archive");
     const std::uint64_t hsize = be(f, 4, 2), clen = be(f, 8, 8), ulen = be(f, 16, 8);
-    const Bytes tocXml = inflate(slice(f, hsize, clen), true, ulen < (1u << 30) ? ulen : 0);
+    const Bytes tocXml = inflate(slice(f, hsize, clen), true, ulen < (1u << 30) ? static_cast<std::size_t>(ulen) : 0);
     const XmlNode doc =
         XmlParser(std::string_view(reinterpret_cast<const char*>(tocXml.data()), tocXml.size())).parse();
     const XmlNode* xar = doc.child("xar");
@@ -433,13 +433,13 @@ Entries xarEntries(Shared file) {
 
 namespace {
 
-std::uint64_t number(Span d, std::size_t p, std::size_t n, int base) {
+std::size_t number(Span d, std::size_t p, std::size_t n, int base) {
     const Span s = slice(d, p, n);
     const std::string str(s.begin(), s.end());
     char* end = nullptr;
-    const std::uint64_t v = std::strtoull(str.c_str(), &end, base);
-    if (end != str.c_str() + str.size()) fail("cpio: bad header");
-    return v;
+    const unsigned long long v = std::strtoull(str.c_str(), &end, base);
+    if (end != str.c_str() + str.size() || v > SIZE_MAX / 2) fail("cpio: bad header");
+    return static_cast<std::size_t>(v);
 }
 
 }  // namespace
@@ -450,7 +450,7 @@ Entries cpioEntries(Shared file) {
     std::size_t p = 0;
     while (p + 6 <= d.size()) {
         const std::string_view magic(reinterpret_cast<const char*>(d.data() + p), 6);
-        std::uint64_t mode, nlen, fsize;
+        std::size_t mode, nlen, fsize;
         std::string name;
         std::size_t body;
         if (magic == "070707") {

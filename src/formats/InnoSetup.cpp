@@ -488,9 +488,9 @@ Entries innoEntries(Shared file) {
     }
 
     Entries out;
-    auto clean = [](std::string p) {
-        std::replace(p.begin(), p.end(), '\\', '/');
-        return p;
+    auto clean = [](std::string s) {
+        std::replace(s.begin(), s.end(), '\\', '/');
+        return s;
     };
     for (std::size_t i = 0; i < files.size(); ++i) {
         const FileEntry& fe = files[i];
@@ -513,8 +513,8 @@ Entries innoEntries(Shared file) {
             out.push_back({path, [inst, locations, path] {
                                Bytes all;
                                for (std::size_t loc : locations) {
-                                   const Bytes part = inst->read(loc, path, true);
-                                   all.insert(all.end(), part.begin(), part.end());
+                                   const Bytes piece = inst->read(loc, path, true);
+                                   all.insert(all.end(), piece.begin(), piece.end());
                                }
                                return all;
                            }});
