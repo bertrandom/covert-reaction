@@ -31,35 +31,40 @@ std::unique_ptr<Scene> resumeCityLoop(App& app, const Frame& last) { return make
 }  // namespace
 
 std::unique_ptr<Scene> makeLoadGameScene(App& app, const Frame& last,
-                                         std::function<std::unique_ptr<Scene>(bool, const Frame&)> then) {
+                                         std::function<std::unique_ptr<Scene>(bool, const Frame&)> then,
+                                         std::function<void(int)> chose) {
     auto done = std::make_shared<std::function<std::unique_ptr<Scene>(bool, const Frame&)>>(std::move(then));
-    return std::make_unique<ScriptScene>(app, last, [done](ScriptScene& s) {
+    return std::make_unique<ScriptScene>(app, last, [done, chose](ScriptScene& s) {
         // (select_drive leaves the screen cleared to 0)
         s.screen().fill(0);
         auto slots = readSlots(s.app());
         auto end = [done](bool loaded) {
             return ScriptScene::finishStep([done, loaded](const Frame& f) { return (*done)(loaded, f); });
         };
-        s.insert({ScriptScene::menuStep(savegame::slotMenu(true, *slots), 4, 16, [&s, slots, end](int r) {
+        s.insert({ScriptScene::menuStep(savegame::slotMenu(true, *slots), 4, 16, [&s, slots, end, chose](int r) {
             const int slot = r >= 0 ? r / 3 : -1;
             if (slot < 0 || slot >= savegame::kSlots || !(*slots)[static_cast<std::size_t>(slot)]) {
+                if (chose) chose(-1);
                 s.insert({end(false)});
                 return;
             }
             if (!savegame::loadBytes(s.app().game, *(*slots)[static_cast<std::size_t>(slot)])) {
+                if (chose) chose(-1);
                 // load_env: "File Error: name"
                 s.insert({ScriptScene::menuStep("File Error: " + savegame::slotFileName(slot) + "\n", 100, 80),
                           end(false)});
                 return;
             }
+            if (chose) chose(slot);
             s.insert({end(true)});
         })});
     });
 }
 
-std::unique_ptr<Scene> makeSaveGameScene(App& app, int defaultSlot, const Frame& last, Then then) {
+std::unique_ptr<Scene> makeSaveGameScene(App& app, int defaultSlot, const Frame& last, Then then,
+                                         std::function<void(int)> chose) {
     auto done = std::make_shared<Then>(std::move(then));
-    return std::make_unique<ScriptScene>(app, last, [done, defaultSlot](ScriptScene& s) {
+    return std::make_unique<ScriptScene>(app, last, [done, defaultSlot, chose](ScriptScene& s) {
         s.screen().fill(0);
         auto slots = readSlots(s.app());
         auto end = ScriptScene::Step([done](ScriptScene& s2) {
@@ -68,12 +73,13 @@ std::unique_ptr<Scene> makeSaveGameScene(App& app, int defaultSlot, const Frame&
         });
         s.insert({ScriptScene::menuStep(
             savegame::slotMenu(false, *slots), 4, 16,
-            [&s, end](int r) {
+            [&s, end, chose](int r) {
                 const int slot = r >= 0 ? r / 3 : -1;
                 if (slot < 0 || slot >= savegame::kSlots) {
                     s.insert({end});
                     return;
                 }
+                if (chose) chose(slot);   // save_slot = choice
                 const std::string name = savegame::slotFileName(slot);
                 const auto bytes = savegame::saveBytes(s.app().game);
                 // write_save_file: the file is opened first ("File Error" if it

@@ -18,16 +18,20 @@ namespace reaction {
 // (options &= ~80h). `then(loaded, last)`; loaded is false on Esc, an empty slot
 // or a file that can't be read. GAME's hotel uses it as is (and then keeps its
 // joystick option and runs advance_time(0)).
+// `chose` gets GAME's save_slot afterwards: the slot loaded, or -1.
 std::unique_ptr<Scene> makeLoadGameScene(App& app, const Frame& last,
-                                         std::function<std::unique_ptr<Scene>(bool loaded, const Frame&)> then);
+                                         std::function<std::unique_ptr<Scene>(bool loaded, const Frame&)> then,
+                                         std::function<void(int slot)> chose = {});
 
 // save_game_menu: the slots (`defaultSlot` highlighted: default_sel = save_slot),
 // save_env of app.game into the chosen one, "Game has been saved." / "Game NOT
 // saved.", then the screen cleared to colour 5 and `then`. The caller does what
 // the original does first: EndOfCase::beforeSave between cases, or
 // savegame::beforeCitySave at the hotel.
+// `chose` gets the slot saved to (save_slot = choice), not called on Esc.
 std::unique_ptr<Scene> makeSaveGameScene(App& app, int defaultSlot, const Frame& last,
-                                         std::function<std::unique_ptr<Scene>(const Frame&)> then);
+                                         std::function<std::unique_ptr<Scene>(const Frame&)> then,
+                                         std::function<void(int slot)> chose = {});
 
 // FINAL's main menu, "Load a Saved Game": the load menu; back to the main menu if
 // nothing was loaded; a game saved between cases goes on to the next case's

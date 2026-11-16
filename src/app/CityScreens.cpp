@@ -47,7 +47,9 @@ void CityGame::hotelScreen() {
         case 3: {
             savegame::beforeCitySave(app_.game);   // options &= ~40h, ENV+50h = difficulty
             const Frame f = ui_.runScene([this](const Frame& last, auto then) {
-                return makeSaveGameScene(app_, saveSlot_, last, std::move(then));
+                // default_sel = save_slot: the slot number used as the item number,
+                // as the original does (so not always that slot's line).
+                return makeSaveGameScene(app_, saveSlot_, last, std::move(then), [this](int s) { saveSlot_ = s; });
             });
             ui_.screen = f.image;
             break;
@@ -55,7 +57,8 @@ void CityGame::hotelScreen() {
         case 4: {
             const int oldOptions = h().options;
             const Frame f = ui_.runScene([this](const Frame& last, auto then) {
-                return makeLoadGameScene(app_, last, [then](bool, const Frame& fr) { return then(fr); });
+                return makeLoadGameScene(app_, last, [then](bool, const Frame& fr) { return then(fr); },
+                                         [this](int s) { saveSlot_ = s; });
             });
             ui_.screen = f.image;
             h().options = static_cast<std::int16_t>((oldOptions & 0x10) | (h().options & ~0x10));
