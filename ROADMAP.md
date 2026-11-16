@@ -21,8 +21,9 @@ scenes sharing one `World`.
    - [x] world tables, `crimeN.dta`/`worldN.dta`, saved-game layout
    - [x] the original's random numbers (MSC `rand`, `random(n)`)
    - [x] pictures (`.PIC`, LZW) and palettes
-   - [x] fonts (`FONTS.CV`) and text drawing; text windows and menus (TEXTWIN.C)
-   - [x] animations (`.PAN` bytecode player)
+   - [x] fonts (`FONTS.CV`) and text drawing; text windows and menus (TEXTWIN.C),
+     with text_window's Alt-A/Alt-S/Alt-J/Alt-Q (src/app/Menu.h setHotkeys)
+   - [x] animations (`.PAN` bytecode player), their opcode-3 sounds (takeSounds)
    - [x] input: keyboard, mouse, the menu conventions
    - [x] sound: the drivers (RSOUND, ASOUND, ISOUND) ported in src/audio, on the
      emulated MT-32 (Munt, the player's ROMs), AdLib (Nuked-OPL3) or PC speaker;
@@ -56,7 +57,8 @@ scenes sharing one `World`.
    files, dossiers, the arrest, the terminal's searches, run by GAME's library
    port on the case's tables with TAC's random() and globals; `reaction-tool
    tac-case` scripts a break-in and prints what changed), [x] BUG's intercepts
-   in a case (src/game/BugCase.*, the same way; `reaction-tool bug-case`), [x] sound effects, [ ] Alt-A/Alt-S/Alt-Q in GAME's text windows.
+   in a case (src/game/BugCase.*, the same way; `reaction-tool bug-case`), [x] sound effects, [x] Alt-A/Alt-S/Alt-Q in FINAL's text windows (main and practice menus, new
+   character, briefings, debriefing, save/load), [ ] in GAME's text windows (CityUi).
 6. **End of case** (ENDCASE.C): [x] debriefing, timeline, efficiency report,
    MasterMind clue, vacation, Hall of Fame, career, promotion, retirement and the
    continue/save menu (src/game/EndCase.*, src/app/EndCaseScene.cpp), [x] the next

@@ -1,3 +1,4 @@
+| Animations | The animations behind the briefings and GAME's screens (the original's Alt-A, which changes this setting too); the game keeps to it where the original turns them back on at a new case | On |
 # Covert Reaction
 
 A modern, portable reimplementation of Sid Meier's Covert Action (MicroProse, 1990)
@@ -87,6 +88,10 @@ settings, saved in `settings.ini` in the per-user folder:
 | Full screen | Desktop only; Alt+Enter also switches it | Off |
 
 Scripted test runs (`--shot`) ignore the saved settings and use the defaults.
+
+As in the original, inside any text window Alt-A switches the animations, Alt-S the
+sound (each plays a short sound, one for on and one for off; turning the sound
+off is silent) and Alt-Q asks whether to quit.
 
 ## Sound
 
