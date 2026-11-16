@@ -38,10 +38,23 @@ scenes sharing one `World`.
    (`tests/msc-*`); hooking them to a real case comes with the city loop.
 5. **The city loop** (GAME): travel, CIA office, intelligence screens, messages and
    decoding, time and events, suspects and arrests.
+   [x] the world simulation (src/game/Sim*, `tests/msc-game`),
+   [x] the city screen, status bar and clock, city pictures (cities.cat),
+   [x] travel and the flight, [x] the hotel (lounge, sleep, save/load, quit),
+   [x] buildings (wiretap, break in, watch, followed), [x] CIA contact and HQ
+   (intelligence scans, wiretaps, double agent, research office, crypto),
+   [x] data files (clues, suspects, documents, news/chronology, organization and
+   city summaries, activity report), [x] teletype, new-information boxes, clue
+   cards, dossiers, decoded messages, [x] interrogations, capture, prisoner
+   exchange, jailbreaks (from the Sim's routines, untested in play),
+   [x] the mini-games started with the case's data and their results taken back
+   (src/app/CityLoop.cpp), [ ] TAC's case hooks (TacHooks: dossiers, new
+   information, the master plan and clue searches inside a building do nothing
+   yet), [ ] sound effects, [ ] Alt-A/Alt-S/Alt-Q in GAME's text windows.
 6. **End of case** (ENDCASE.C): [x] debriefing, timeline, efficiency report,
    MasterMind clue, vacation, Hall of Fame, career, promotion, retirement and the
    continue/save menu (src/game/EndCase.*, src/app/EndCaseScene.cpp), [x] the next
-   case's briefing and generate_case; [ ] hooked to the city loop (both ways).
+   case's briefing and generate_case; [x] hooked to the city loop (both ways).
 7. **Modern extras**, behind options: window scaling and full screen (done),
    remappable keys, save anywhere, a faster pace, higher-resolution text.
    [x] a web build (Emscripten/WebAssembly): the player picks their own game
