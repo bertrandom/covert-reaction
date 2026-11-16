@@ -28,5 +28,6 @@ struct Registrar {
 #define REDUX_CONCAT2(a, b) a##b
 #define REDUX_CONCAT(a, b) REDUX_CONCAT2(a, b)
 // REDUX_COMMAND("name", "usage and help", [](const GameData& d, const auto& args) {...})
-#define REDUX_COMMAND(name, help, fn) \
-    static ::redux::tool::Registrar REDUX_CONCAT(reg_, __LINE__)(name, ::redux::tool::Command{help, fn})
+// (variadic, so lambdas with commas in their capture lists work)
+#define REDUX_COMMAND(name, help, ...) \
+    static ::redux::tool::Registrar REDUX_CONCAT(reg_, __LINE__)(name, ::redux::tool::Command{help, __VA_ARGS__})
