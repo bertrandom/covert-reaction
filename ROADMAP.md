@@ -44,6 +44,8 @@ scenes sharing one `World`.
    case's briefing and generate_case; [ ] hooked to the city loop (both ways).
 7. **Modern extras**, behind options: window scaling and full screen (done),
    remappable keys, save anywhere, a faster pace, higher-resolution text.
+   [x] a web build (Emscripten/WebAssembly): the player picks their own game
+   files, kept in the browser with the saves (README.md, "Web").
 
 ## Verification
 

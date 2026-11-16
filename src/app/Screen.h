@@ -1,5 +1,6 @@
 // The SDL2 window: shows a 320x200 indexed frame, stretched to 4:3 like a CRT, with
-// nearest-neighbour scaling.
+// nearest-neighbour scaling. In a browser the canvas is the bare 320x200 frame and
+// the page (web/shell.html) does the 4:3 scaling.
 #pragma once
 
 #include <SDL.h>

@@ -5,6 +5,10 @@
 // --shot/--ticks/--input script a run for testing: KEYs (SDL key names, e.g.
 // "Down", "Return") are injected at the given ticks, and after N ticks the frame
 // is saved as a BMP and the program exits.
+//
+// One frame of work is Runner::step(). The desktop calls it in a loop; in a browser
+// (Emscripten), which can't run a blocking loop, emscripten_set_main_loop calls it
+// once per animation frame. The timing is the same: fixed 70 ticks per second.
 #include <SDL.h>
 
 #include <cstdio>
@@ -13,8 +17,21 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+
+// The page (web/shell.html) shows errors and the end of the run.
+EM_JS(void, redux_js_error, (const char* msg), {
+    if (Module.reduxError) Module.reduxError(UTF8ToString(msg));
+});
+EM_JS(void, redux_js_exit, (int status), {
+    if (Module.reduxExit) Module.reduxExit(status);
+});
+#endif
 
 #include "app/App.h"
 #include "app/Scenes.h"
@@ -41,6 +58,18 @@ std::vector<fs::path> bundleCandidates() {
         SDL_free(pref);
     }
     return out;
+}
+
+// Shows a fatal error: a message box on the desktop, the page in a browser (the
+// web shell defines Module.reduxError), and stderr everywhere.
+void reportError(const char* msg, bool headless) {
+    std::fprintf(stderr, "error: %s\n", msg);
+#ifdef __EMSCRIPTEN__
+    (void)headless;
+    redux_js_error(msg);
+#else
+    if (!headless) SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Covert Redux", msg, nullptr);
+#endif
 }
 
 struct ScriptKey {
@@ -93,6 +122,96 @@ void pushKey(ScriptKey sk) {
     SDL_PushEvent(&e);
 }
 
+// Everything a run owns, so a frame can be one call (the browser's main loop
+// can't keep these as locals of a loop that never returns).
+class Runner {
+public:
+    Runner(GameData data, const std::string& sceneName, Script script, bool headless)
+        : data_(std::move(data)),
+          script_(std::move(script)),
+          scripted_(script_.shot.has_value()),
+          screen_("Covert Redux", 3, headless),
+          app_{data_, screen_, FontSet::load(data_)} {
+        scene_ = makeScene(app_, sceneName);
+        if (!scene_) throw std::runtime_error("unknown scene: " + sceneName);
+        freq_ = SDL_GetPerformanceFrequency();
+        tickLen_ = freq_ / kTicksPerSecond;
+        last_ = SDL_GetPerformanceCounter();
+    }
+
+    // One frame: events, the ticks that are due, draw, present, scene switch.
+    // False when the run is over (quit, or the scripted shot is saved).
+    bool step() {
+        if (!scene_ || scene_->quit) return false;
+        SDL_Event e;
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT) scene_->quit = true;
+            else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN &&
+                     (e.key.keysym.mod & KMOD_ALT))
+                screen_.toggleFullscreen();
+            else
+                scene_->handle(e);
+        }
+        int steps = 0;
+        if (scripted_) {
+            steps = 1;      // deterministic: one tick per frame
+        } else {
+            Uint64 now = SDL_GetPerformanceCounter();
+            acc_ += now - last_;
+            last_ = now;
+            for (; acc_ >= tickLen_ && steps < 10; acc_ -= tickLen_) ++steps;
+            if (acc_ > tickLen_ * 10) acc_ = 0;
+        }
+        for (int n = 0; n < steps; ++n) {
+            auto [lo, hi] = script_.keys.equal_range(tick_);
+            for (auto it = lo; it != hi; ++it) pushKey(it->second);
+            scene_->tick();
+            ++tick_;
+        }
+        scene_->draw(frame_);
+        if (scripted_ && tick_ >= script_.ticks) {
+            writeBmp(*script_.shot, frame_.image, frame_.palette);
+            return false;
+        }
+        screen_.present(frame_.image, frame_.palette);
+        if (auto nxt = scene_->next(); nxt) scene_ = std::move(nxt);
+        return scene_ && !scene_->quit;
+    }
+
+private:
+    GameData data_;
+    Script script_;
+    bool scripted_;
+    Screen screen_;
+    App app_;
+    std::unique_ptr<Scene> scene_;
+    Frame frame_;
+    Uint64 freq_ = 0, tickLen_ = 0, last_ = 0, acc_ = 0;
+    long tick_ = 0;
+};
+
+#ifdef __EMSCRIPTEN__
+std::unique_ptr<Runner> gRunner;
+bool gHeadless = false;
+
+// The page learns the run ended (quit, scripted shot, error) through Module.reduxExit.
+void finish(int status) {
+    emscripten_cancel_main_loop();
+    gRunner.reset();
+    SDL_Quit();
+    redux_js_exit(status);
+}
+
+void webFrame() {
+    try {
+        if (!gRunner->step()) finish(0);
+    } catch (const std::exception& ex) {
+        reportError(ex.what(), gHeadless);
+        finish(1);
+    }
+}
+#endif
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -112,74 +231,49 @@ int main(int argc, char** argv) {
     // Scripted runs are headless: no video or audio at all, just the event queue,
     // so tests never open windows or dialogs on the desktop.
     const bool headless = script.shot.has_value();
-    if (SDL_Init(headless ? SDL_INIT_EVENTS : SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS) != 0) {
-        std::fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
+    if (SDL_Init(headless ? SDL_INIT_EVENTS : SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
+        reportError((std::string("SDL_Init: ") + SDL_GetError()).c_str(), headless);
         return 1;
     }
+    // Audio is optional: no device (or a browser that holds audio until the first
+    // click or key) must not stop the game.
+    if (!headless && SDL_InitSubSystem(SDL_INIT_AUDIO) != 0)
+        std::fprintf(stderr, "no audio: %s\n", SDL_GetError());
     auto data = GameData::locate(dataDir, bundleCandidates());
     if (!data) {
         const char* msg =
             "Covert Redux needs the files of the original Covert Action (1990).\n\n"
             "Run it with --data <directory>, set COVERT_DATA, or put the game's files in a "
             "folder named Covert next to the program.";
-        if (!headless) SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Covert Redux", msg, nullptr);
-        std::fprintf(stderr, "%s\n", msg);
+        reportError(msg, headless);
         SDL_Quit();
         return 1;
     }
     std::fprintf(stderr, "game data: %s\n", data->dir().string().c_str());
 
+#ifdef __EMSCRIPTEN__
+    gHeadless = headless;
+    try {
+        gRunner = std::make_unique<Runner>(std::move(*data), sceneName, std::move(script), headless);
+    } catch (const std::exception& ex) {
+        reportError(ex.what(), headless);
+        finish(1);
+        return 1;
+    }
+    // fps 0: the browser's animation frame (the 70 Hz ticks come from the clock).
+    // Never returns (simulate_infinite_loop), so nothing after it runs.
+    emscripten_set_main_loop(webFrame, 0, true);
+    return 0;
+#else
     int status = 0;
     try {
-        Screen screen("Covert Redux", 3, headless);
-        App app{*data, screen, FontSet::load(*data)};
-        std::unique_ptr<Scene> scene = makeScene(app, sceneName);
-        if (!scene) throw std::runtime_error("unknown scene: " + sceneName);
-        Frame frame;
-        const Uint64 freq = SDL_GetPerformanceFrequency();
-        const Uint64 tickLen = freq / kTicksPerSecond;
-        Uint64 last = SDL_GetPerformanceCounter(), acc = 0;
-        long tick = 0;
-        const bool scripted = script.shot.has_value();
-        while (scene && !scene->quit) {
-            SDL_Event e;
-            while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_QUIT) scene->quit = true;
-                else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN &&
-                         (e.key.keysym.mod & KMOD_ALT))
-                    screen.toggleFullscreen();
-                else
-                    scene->handle(e);
-            }
-            int steps = 0;
-            if (scripted) {
-                steps = 1;      // deterministic: one tick per loop
-            } else {
-                Uint64 now = SDL_GetPerformanceCounter();
-                acc += now - last;
-                last = now;
-                for (; acc >= tickLen && steps < 10; acc -= tickLen) ++steps;
-                if (acc > tickLen * 10) acc = 0;
-            }
-            for (int n = 0; n < steps; ++n) {
-                auto [lo, hi] = script.keys.equal_range(tick);
-                for (auto it = lo; it != hi; ++it) pushKey(it->second);
-                scene->tick();
-                ++tick;
-            }
-            scene->draw(frame);
-            if (scripted && tick >= script.ticks) {
-                writeBmp(*script.shot, frame.image, frame.palette);
-                break;
-            }
-            screen.present(frame.image, frame.palette);
-            if (auto nxt = scene->next(); nxt) scene = std::move(nxt);
-        }
+        Runner runner(std::move(*data), sceneName, std::move(script), headless);
+        while (runner.step()) {}
     } catch (const std::exception& ex) {
-        if (!headless) SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Covert Redux", ex.what(), nullptr);
-        std::fprintf(stderr, "error: %s\n", ex.what());
+        reportError(ex.what(), headless);
         status = 1;
     }
     SDL_Quit();
     return status;
+#endif
 }

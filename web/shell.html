@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Covert Redux</title>
+<!--
+  The web page of Covert Redux (Emscripten --shell-file; CMake configures it into
+  the build directory). The original game's files are copyrighted and never part
+  of the build: the player picks their own copy, which is copied into the
+  Emscripten file system at /Covert and kept in this browser (IndexedDB), so it is
+  asked for once. The saves (SDL's pref path, under /libsdl) are kept there too.
+-->
+<style>
+  :root {
+    --bg: #0b0d12;
+    --panel: #151923;
+    --line: #2a3142;
+    --text: #d9dee8;
+    --muted: #8b93a7;
+    --accent: #e0b04a;
+    --accent-ink: #1a1405;
+    --error: #ff7a6b;
+    --ok: #7fd18b;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+  button {
+    font: inherit; cursor: pointer; border-radius: 6px; padding: 0.55em 1.1em;
+    border: 1px solid var(--line); background: #1d2230; color: var(--text);
+  }
+  button:hover { border-color: var(--muted); }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  button.link { background: none; border: none; color: var(--muted); padding: 0.2em 0; text-decoration: underline; }
+
+  /* Landing */
+  #landing {
+    position: fixed; inset: 0; overflow: auto;
+    display: flex; align-items: center; justify-content: center; padding: 24px 16px;
+  }
+  .card {
+    width: 100%; max-width: 560px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 12px; padding: 28px;
+  }
+  h1 { margin: 0 0 4px; font-size: 26px; letter-spacing: 0.02em; }
+  .sub { margin: 0 0 20px; color: var(--muted); }
+  p { margin: 0 0 14px; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.92em; color: var(--accent); }
+  #drop {
+    border: 2px dashed var(--line); border-radius: 10px; padding: 26px 16px;
+    text-align: center; margin: 18px 0 12px; transition: border-color .15s, background .15s;
+  }
+  #drop.over { border-color: var(--accent); background: rgba(224,176,74,0.06); }
+  #drop .hint { color: var(--muted); margin: 10px 0 0; font-size: 13px; }
+  #status { min-height: 1.5em; margin: 8px 0 0; }
+  #status.error { color: var(--error); white-space: pre-line; }
+  #status.ok { color: var(--ok); }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .fine { color: var(--muted); font-size: 13px; margin-top: 18px; }
+
+  /* Game: the 320x200 canvas, stretched to 4:3 and fitted to the window, crisp pixels */
+  #game {
+    position: fixed; inset: 0; background: #000;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #canvas {
+    display: block; outline: none; background: #000;
+    width: min(100vw, calc(100vh * 4 / 3)) !important;
+    height: min(100vh, calc(100vw * 3 / 4)) !important;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    cursor: default;
+  }
+  #bar {
+    position: fixed; top: 8px; right: 8px; display: flex; gap: 6px;
+    opacity: 0.15; transition: opacity .2s;
+  }
+  #bar:hover, #bar:focus-within { opacity: 1; }
+  #bar button { font-size: 12px; padding: 0.35em 0.8em; background: rgba(20,24,34,0.85); }
+
+  /* Messages over everything (errors, end of game) */
+  #overlay {
+    position: fixed; inset: 0; background: rgba(5,6,9,0.82);
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+  }
+  #overlay .card { max-width: 620px; }
+  #overlay pre {
+    white-space: pre-wrap; word-break: break-word; background: #0d1017; border: 1px solid var(--line);
+    border-radius: 8px; padding: 12px; color: var(--error); max-height: 40vh; overflow: auto;
+  }
+</style>
+</head>
+<body>
+
+<div id="landing">
+  <div class="card">
+    <h1>Covert Redux</h1>
+    <p class="sub">Sid Meier's Covert Action (1990), reimplemented.</p>
+
+    <div id="need-files">
+      <p>Covert Redux plays with the files of your own copy of the original game
+         (GOG or the floppies): the folder with <code>TEXT.DTA</code>,
+         <code>TITLE2.PAN</code>, <code>FACES.PIC</code> and the rest.</p>
+      <div id="drop">
+        <div class="row" style="justify-content:center">
+          <button class="primary" id="pick">Choose your Covert Action folder</button>
+        </div>
+        <p class="hint">or drop the folder (or its files) here</p>
+        <input type="file" id="folder" webkitdirectory directory multiple hidden>
+      </div>
+    </div>
+
+    <div id="have-files" hidden>
+      <p>Your game files are stored in this browser.</p>
+      <div class="row">
+        <button class="primary" id="play">Play</button>
+        <button class="link" id="forget">Forget the game files</button>
+      </div>
+    </div>
+
+    <p id="status" role="status"></p>
+    <p class="fine">The files are copied into this browser's storage (IndexedDB) and
+       never leave your computer. Saved games stay here too. Alt+Enter toggles full screen.</p>
+  </div>
+</div>
+
+<div id="game" hidden>
+  <canvas id="canvas" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+  <div id="bar">
+    <button id="fs" title="Full screen (Alt+Enter)">Full screen</button>
+    <button id="forget2" title="Remove the game files from this browser">Forget game files</button>
+  </div>
+</div>
+
+<div id="overlay" hidden>
+  <div class="card">
+    <h1 id="ov-title">Something went wrong</h1>
+    <p id="ov-text" class="sub"></p>
+    <pre id="ov-detail" hidden></pre>
+    <div class="row"><button class="primary" id="reload">Reload</button></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  // True in a build made with REDUX_WEB_PRELOAD_DATA=ON (local testing only): the
+  // game files are already in /Covert and are not stored or asked for.
+  const PRELOADED = @REDUX_WEB_PRELOADED@;
+  const DATA_DIR = '/Covert';
+  const USER_DIR = '/libsdl';          // SDL_GetPrefPath() lives under it
+  const MARKERS = ['TEXT.DTA', 'TITLE2.PAN', 'FACES.PIC'];
+
+  const $ = (id) => document.getElementById(id);
+  const landing = $('landing'), game = $('game'), canvas = $('canvas');
+  const statusEl = $('status');
+  let running = false;
+  let FS = null;   // Module.FS, once the runtime is up (preRun)
+
+  function setStatus(text, kind) {
+    statusEl.textContent = text || '';
+    statusEl.className = kind || '';
+  }
+
+  function showOverlay(title, text, detail) {
+    $('ov-title').textContent = title;
+    $('ov-text').textContent = text || '';
+    const d = $('ov-detail');
+    d.hidden = !detail;
+    d.textContent = detail || '';
+    $('overlay').hidden = false;
+  }
+  $('reload').onclick = () => location.reload();
+
+  // ---- Persistence (IndexedDB through IDBFS) ----
+  let syncing = false, syncAgain = false;
+  function persist(done) {
+    if (syncing) { syncAgain = true; if (done) setTimeout(() => persist(done), 50); return; }
+    syncing = true;
+    FS.syncfs(false, (err) => {
+      syncing = false;
+      if (err) console.warn('Covert Redux: saving to IndexedDB failed', err);
+      if (syncAgain) { syncAgain = false; persist(); }
+      if (done) done(err);
+    });
+  }
+
+  function mountIdb(dir) {
+    try { FS.mkdir(dir); } catch (e) { /* exists */ }
+    FS.mount(Module.IDBFS || IDBFS, {}, dir);
+  }
+
+  function listUpper(dir) {
+    try {
+      return FS.readdir(dir).filter((n) => n !== '.' && n !== '..')
+        .filter((n) => FS.isFile(FS.stat(dir + '/' + n).mode))
+        .map((n) => n.toUpperCase());
+    } catch (e) { return []; }
+  }
+  const missingIn = (names) => MARKERS.filter((m) => !names.includes(m));
+  const haveGameFiles = () => missingIn(listUpper(DATA_DIR)).length === 0;
+
+  function clearDataDir() {
+    for (const n of FS.readdir(DATA_DIR)) {
+      if (n === '.' || n === '..') continue;
+      const p = DATA_DIR + '/' + n;
+      if (FS.isFile(FS.stat(p).mode)) FS.unlink(p);
+    }
+  }
+
+  // ---- Importing the player's files ----
+  // `entries`: [{path: 'Covert/TEXT.DTA', file: File}]. Takes the files of the one
+  // folder that has all the marker files (a GOG install has other folders too).
+  async function importFiles(entries) {
+    if (!entries.length) return;
+    const groups = new Map();
+    for (const e of entries) {
+      const slash = e.path.lastIndexOf('/');
+      const dir = slash < 0 ? '' : e.path.slice(0, slash);
+      const name = e.path.slice(slash + 1);
+      if (!groups.has(dir)) groups.set(dir, []);
+      groups.get(dir).push({ name, file: e.file });
+    }
+    let best = null, bestMissing = MARKERS;
+    for (const [dir, files] of groups) {
+      const missing = missingIn(files.map((f) => f.name.toUpperCase()));
+      if (missing.length < bestMissing.length ||
+          (missing.length === bestMissing.length && best && missing.length === 0 && dir.length < best.dir.length)) {
+        best = { dir, files }; bestMissing = missing;
+      }
+    }
+    if (!best || bestMissing.length) {
+      setStatus('These don’t look like Covert Action’s files: ' +
+        (best ? 'missing ' + bestMissing.join(', ') : 'no files found') + '.\n' +
+        'Pick the folder where the game is installed (it has TEXT.DTA, TITLE2.PAN, FACES.PIC, ...).',
+        'error');
+      return;
+    }
+    setStatus('Copying ' + best.files.length + ' files…');
+    try {
+      clearDataDir();
+      for (const f of best.files) {
+        const buf = new Uint8Array(await f.file.arrayBuffer());
+        FS.writeFile(DATA_DIR + '/' + f.name, buf);
+      }
+    } catch (err) {
+      setStatus('Could not copy the files: ' + err, 'error');
+      return;
+    }
+    persist((err) => {
+      setStatus(err ? 'Copied (but this browser would not store them for next time).' : 'Game files stored.', err ? 'error' : 'ok');
+      start();
+    });
+  }
+
+  $('pick').onclick = () => $('folder').click();
+  $('folder').onchange = (ev) => {
+    const files = Array.from(ev.target.files || []);
+    importFiles(files.map((f) => ({ path: f.webkitRelativePath || f.name, file: f })));
+    ev.target.value = '';
+  };
+
+  // Drag and drop: folders through the entries API, or loose files.
+  function readEntry(entry, prefix, out) {
+    return new Promise((resolve) => {
+      if (entry.isFile) {
+        entry.file((f) => { out.push({ path: prefix + entry.name, file: f }); resolve(); }, () => resolve());
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const all = [];
+        const next = () => reader.readEntries(async (batch) => {
+          if (!batch.length) {
+            for (const e of all) await readEntry(e, prefix + entry.name + '/', out);
+            resolve();
+          } else { all.push(...batch); next(); }
+        }, () => resolve());
+        next();
+      } else resolve();
+    });
+  }
+  const drop = $('drop');
+  ['dragenter', 'dragover'].forEach((t) => landing.addEventListener(t, (e) => {
+    e.preventDefault(); drop.classList.add('over');
+  }));
+  ['dragleave', 'drop'].forEach((t) => landing.addEventListener(t, (e) => {
+    e.preventDefault(); if (t === 'drop' || e.target === landing) drop.classList.remove('over');
+  }));
+  landing.addEventListener('drop', async (e) => {
+    if ($('need-files').hidden) return;
+    const out = [];
+    const items = Array.from(e.dataTransfer.items || []);
+    const entries = items.map((i) => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+    if (entries.length) {
+      for (const en of entries) await readEntry(en, '', out);
+    } else {
+      for (const f of Array.from(e.dataTransfer.files || [])) out.push({ path: f.name, file: f });
+    }
+    importFiles(out);
+  });
+
+  function forget() {
+    if (PRELOADED) { setStatus('This test build has the game files built in.', 'error'); return; }
+    if (running && !confirm('Remove the game files from this browser? The page will reload. Saved games are kept.')) return;
+    try { clearDataDir(); } catch (e) { /* nothing stored */ }
+    persist(() => location.reload());
+  }
+  $('forget').onclick = forget;
+  $('forget2').onclick = () => { forget(); canvas.focus(); };
+
+  // ---- Running the game ----
+  function toggleFullscreen() {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else if (game.requestFullscreen) game.requestFullscreen().catch((e) => console.warn(e));
+  }
+  $('fs').onclick = (e) => { toggleFullscreen(); e.currentTarget.blur(); canvas.focus(); };
+
+  // Keep the page still: no scrolling or browser navigation from game keys.
+  const STILL = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown',
+                         'Home', 'End', 'Tab', 'Backspace']);
+  window.addEventListener('keydown', (e) => {
+    if (running && STILL.has(e.key) && e.target.tagName !== 'INPUT') e.preventDefault();
+  }, true);
+
+  function start() {
+    if (running) return;
+    running = true;
+    landing.hidden = true;
+    game.hidden = false;
+    canvas.focus();
+    // Saves are written by the C++ code at any moment; push them to IndexedDB
+    // regularly and when the page goes away.
+    setInterval(() => persist(), 2000);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) persist(); });
+    window.addEventListener('pagehide', () => persist());
+    try {
+      Module.callMain(['--data', DATA_DIR]);
+    } catch (e) {
+      if (e !== 'unwind') fatal(e);
+    }
+  }
+  $('play').onclick = start;
+
+  function fatal(err) {
+    running = false;
+    const text = (err && (err.message || err.toString())) || String(err);
+    showOverlay('Something went wrong', 'Covert Redux stopped with this error:', text);
+  }
+
+  function ready() {
+    if (PRELOADED) { start(); return; }
+    if (haveGameFiles()) {
+      $('need-files').hidden = true;
+      $('have-files').hidden = false;
+      $('play').focus();
+    } else {
+      $('need-files').hidden = false;
+      $('have-files').hidden = true;
+    }
+  }
+
+  window.Module = {
+    canvas: canvas,
+    print: (t) => console.log(t),
+    printErr: (t) => console.warn(t),
+    preRun: [function () {
+      FS = Module.FS;
+      mountIdb(USER_DIR);
+      if (!PRELOADED) mountIdb(DATA_DIR);
+      Module.addRunDependency('idbfs');
+      FS.syncfs(true, (err) => {
+        if (err) console.warn('Covert Redux: reading IndexedDB failed', err);
+        Module.removeRunDependency('idbfs');
+      });
+    }],
+    onAbort: (what) => fatal(what),
+    // Called from C++ (main.cpp, Screen.cpp).
+    reduxError: (msg) => {
+      running = false;
+      showOverlay('Something went wrong', 'Covert Redux stopped with this error:', msg);
+    },
+    reduxExit: (status) => {
+      persist();
+      running = false;
+      if (status === 0) showOverlay('Game over', 'Thanks for playing Covert Redux.', '');
+    },
+    reduxToggleFullscreen: toggleFullscreen,
+  };
+  window.addEventListener('error', (e) => { if (e.error !== 'unwind') console.error(e.error || e.message); });
+  setStatus('Loading…');
+  Module.onRuntimeInitialized = () => { setStatus(''); ready(); };
+})();
+</script>
+{{{ SCRIPT }}}
+</body>
+</html>

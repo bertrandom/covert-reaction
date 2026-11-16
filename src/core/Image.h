@@ -2,6 +2,7 @@
 // palette indices (MCGA mode 13h), so the engine does too.
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <filesystem>

@@ -45,6 +45,35 @@ vcpkg install sdl2
 cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake && cmake --build build --config Release
 ```
 
+## Web
+
+The game also builds to WebAssembly with Emscripten, using Emscripten's own SDL2
+port (downloaded on the first build). Needs a recent Emscripten with native
+WebAssembly exceptions (`brew install emscripten`, or the
+[emsdk](https://emscripten.org/docs/getting_started/downloads.html)).
+
+```bash
+emcmake cmake -S . -B build-web -DCMAKE_BUILD_TYPE=Release && cmake --build build-web -j8
+```
+
+This makes `build-web/index.html`, `index.js` and `index.wasm`. Serve the
+directory over HTTP (browsers don't run WebAssembly from `file://`) and open
+<http://localhost:8080/>:
+
+```bash
+python3 -m http.server -d build-web 8080
+```
+
+No game data is in the web build: the page asks each player for their own copy
+of Covert Action (pick the game's folder, or drop it on the page). The files are
+copied into the browser's storage (IndexedDB) and never uploaded, so they are
+asked for only once; "Forget the game files" removes them. Saved games and the
+Hall of Fame are kept in IndexedDB too.
+
+For local testing only, `-DREDUX_WEB_PRELOAD_DATA=ON` packs `resources/Covert`
+into the build (`index.data`) and starts straight away. That build contains the
+original, copyrighted game files: never publish or share it.
+
 ## The game files
 
 Covert Redux needs an installed copy of the original game (the directory with
