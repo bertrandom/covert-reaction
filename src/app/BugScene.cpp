@@ -318,7 +318,11 @@ std::unique_ptr<Scene> makeBugScene(App& app, const WiretapSetup& setup, BugDone
     return std::make_unique<BugScene>(app, setup, std::move(onDone));
 }
 
-REDUX_SCENE("bug", [](App& app) { return makeBugScene(app, practiceSetup(false), backToMenu); });
+REDUX_SCENE("bug", [](App& app) {
+    WiretapSetup s = practiceSetup(false);
+    if (app.practiceLevel >= 0) s.difficulty = app.practiceLevel;
+    return makeBugScene(app, s, backToMenu);
+});
 REDUX_SCENE("bug-car", [](App& app) { return makeBugScene(app, practiceSetup(true), backToMenu); });
 
 }  // namespace redux

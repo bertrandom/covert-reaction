@@ -193,6 +193,10 @@ TacSetup practiceSetup() {
 
 }  // namespace
 
-REDUX_SCENE("tac", [](App& app) { return std::make_unique<TacScene>(app, practiceSetup()); });
+REDUX_SCENE("tac", [](App& app) {
+    TacSetup s = practiceSetup();
+    if (app.practiceLevel >= 0) s.difficulty = app.practiceLevel;
+    return std::make_unique<TacScene>(app, s);
+});
 
 }  // namespace redux

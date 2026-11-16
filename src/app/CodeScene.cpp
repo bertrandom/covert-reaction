@@ -427,7 +427,7 @@ std::unique_ptr<Scene> makePracticeCodeScene(App& app) {
     CodeSetup setup;
     setup.seed = static_cast<std::uint32_t>(
         envInt("COVERT_CODE_SEED", static_cast<int>(std::time(nullptr) & 0x7FFF)));
-    setup.gameDifficulty = clampTo(envInt("COVERT_CODE_LEVEL", 0), 0, 3);
+    setup.gameDifficulty = clampTo(envInt("COVERT_CODE_LEVEL", app.practiceLevel >= 0 ? app.practiceLevel : 0), 0, 3);
     setup.skillLevels = 0x555;
     setup.options = 0x24;
     if (const char* d = std::getenv("COVERT_CODE_DIFFICULTY"); d && *d) setup.difficultyOverride = std::atoi(d);

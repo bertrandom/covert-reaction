@@ -14,6 +14,9 @@ struct App {
     FontSet fonts;
     // The game in progress: the original's tables, the career, the random numbers.
     GameState game{};
+    // The difficulty picked in FINAL's practice menu (0-3), -1 if none: the
+    // practice mini-games use it instead of their defaults.
+    int practiceLevel = -1;
 
     // The mouse position of an event, in 320x200 frame coordinates.
     SDL_Point mouse(const SDL_Event& e) const {

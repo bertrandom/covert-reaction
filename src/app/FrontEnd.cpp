@@ -38,12 +38,37 @@ public:
             openMain();
             return;
         }
+        if (practiceStep_ == 1) {     // practice_menu: the difficulty
+            if (*r < 0) { practiceStep_ = 0; openMain(); return; }
+            app_.practiceLevel = *r;
+            practiceStep_ = 2;
+            menu_.emplace(app_.fonts.font(1),
+                          "Which skill?\n Combat (break-in)\n Driving (car chase)\n"
+                          " Cryptography (codes)\n Electronics (wiretap)\n",
+                          80, 128);
+            return;
+        }
+        if (practiceStep_ == 2) {     // training_screen's choice -> start_practice
+            practiceStep_ = 0;
+            if (*r < 0) { openMain(); return; }
+            static const char* scenes[] = {"tac", "chase", "code", "bug"};
+            next_ = makeScene(app_, scenes[*r]);
+            return;
+        }
         // FINAL.C: -1 (Esc) and 0 create a new character.
         int sel = *r < 0 ? 0 : *r;
         if (sel == 0 || sel == 3) {
             // The menu comes back over the screen the Hall of Fame leaves.
             auto back = [this](const Frame& last) { return makeMainMenuSceneOver(app_, last.image); };
             next_ = sel == 0 ? makeScene(app_, "new-character") : makeHallOfFameScene(app_, std::nullopt, back);
+            return;
+        }
+        if (sel == 2) {               // practice_menu
+            practiceStep_ = 1;
+            menu_.emplace(app_.fonts.font(1),
+                          "Which difficulty level?\n Local Disturbance\n National Threat\n"
+                          " Regional Conflict\n Global Crisis\n",
+                          80, 128);
             return;
         }
         static const char* what[] = {"Creating a character", "Loading a saved game",
@@ -76,6 +101,7 @@ private:
     Palette palette_;
     std::optional<Menu> menu_;
     bool notice_ = false;
+    int practiceStep_ = 0;    // 1: difficulty menu, 2: skill menu
     std::unique_ptr<Scene> next_;
 };
 

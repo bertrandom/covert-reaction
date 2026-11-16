@@ -665,7 +665,7 @@ std::unique_ptr<Scene> makePracticeChaseScene(App& app, int mode) {
     setup.orgMask = static_cast<std::uint16_t>(
         envInt("COVERT_CHASE_ORGMASK", world.cities[static_cast<std::size_t>(setup.cityId)].orgsKnown));
     for (std::size_t i = 0; i < 16; ++i) setup.orgAbbrev[i] = world.orgs[i].abbrev.str();
-    setup.difficulty = clampTo(envInt("COVERT_CHASE_LEVEL", 0), 0, 3);
+    setup.difficulty = clampTo(envInt("COVERT_CHASE_LEVEL", app.practiceLevel >= 0 ? app.practiceLevel : 0), 0, 3);
     setup.gameTime = static_cast<std::uint16_t>(envInt("COVERT_CHASE_TIME", 0));
     setup.options = 0x24;
     setup.envFlags = 0x555;
