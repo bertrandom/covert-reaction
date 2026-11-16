@@ -138,44 +138,69 @@ copyrighted game files: never publish or share it.
 
 ## The game files
 
-Covert Reaction needs an installed copy of the original game: the folder with
-`TEXT.DTA`, `TITLE2.PAN`, `FACES.PIC` and so on. GOG's release and the original
-floppies both work. It looks, in order, in:
+Covert Reaction needs the files of the original game: `TEXT.DTA`, `TITLE2.PAN`,
+`FACES.PIC` and so on. You give it any of the game's releases, as you have it,
+and it copies the game out of it into its own **data folder**, the per-user
+folder's `data` (`~/Library/Application Support/Covert Reaction/data` on macOS,
+`%APPDATA%\Covert Reaction\data` on Windows, `~/.local/share/Covert Reaction/data`
+on Linux). These all work, told apart by their content, not their names:
+
+- GOG's Windows installer (`setup_sid_meiers_covert_action_*.exe`, Inno Setup)
+- GOG's macOS installer (`.pkg`)
+- GOG's Linux installer (`.sh`)
+- eXoDOS's archive (`Covert Action (1990).zip`), or any zip with the game
+- the original floppy disks: a `.7z` of disk images, a folder of disk images
+  (`.img`, `.ima`, `.dsk`, `.vfd`), or a single image; the disks are copied in
+  order as the game's `INSTALL.BAT` does
+- a folder that already holds the game (an installed copy, from DOSBox or GOG)
+
+The game's folder inside is the one with `GAME.EXE` and `COVERT.EXE`, and only
+its DOS file names are kept (a repack's launchers and so on are left out). The
+installers aren't run: they're read directly, nothing else is installed. (This
+is a port of covert-decomp's `tools/extract_game.py`; `reaction-tool import
+SOURCE OUTDIR [--compare DIR]` does the same from the command line.)
+
+It looks for the game, in order, in:
 
 1. `--data <folder>` on the command line
 2. the `COVERT_DATA` environment variable
 3. the folder saved as `game_data` in `settings.ini` (see
-   [Saved games and settings](#saved-games-and-settings)): the one chosen on an
-   earlier start
-4. a folder named `Covert` next to the program or next to the macOS app (or in its
+   [Saved games and settings](#saved-games-and-settings)): the data folder
+   once the game was imported (or a folder chosen by an earlier version)
+4. the data folder
+5. a folder named `Covert` next to the program or next to the macOS app (or in its
    `Contents/Resources`), and `resources/Covert` in this repository
-5. `Covert` in the per-user folder
+6. `Covert` in the per-user folder
 
 It doesn't search the disk. If none of these has the game (the first run, or
 the saved folder is gone), the window opens on a small **setup screen**:
 
-- **Game files:** the folder chosen so far (or "Not chosen"), and in red what's
-  missing if it isn't the game's; **Choose game files...** asks for the folder
-  with `TEXT.DTA`.
+- **Game files:** where the game files come from (or "Not chosen");
+  **Choose game files...** asks for the game: an installer, an archive, a disk
+  image or a folder. What's chosen is imported into the data folder at once,
+  with its progress in the row, then "Covert Action's files: OK", or in red why
+  not. The data folder is replaced only once a new import is complete, so a
+  failed one leaves the old copy as it was.
 - **MT-32 ROMs (optional):** the ROM set found in the chosen folder (e.g. "MT-32
   Control v1.07 + MT-32 PCM ROM"), a red note if that folder has no usable
   control + PCM pair, or a set found anyway in the usual places (see
   [Sound](#sound)); **Choose MT-32 ROMs...** asks for the folder with your ROM
-  files. Without ROMs the music plays on the AdLib.
-- **START** (greyed until the game files are chosen) saves both folders
+  files (they're used where they are). Without ROMs the music plays on the AdLib.
+- **START** (greyed until the game files are there) saves both folders
   (`game_data`, `mt32_roms` in `settings.ini`) and starts the game; **Quit**
   (Esc) leaves.
 
 Up/Down or Tab move between the buttons, Enter presses one; the mouse works too.
-"Choose..." opens the system's own folder panel on macOS (which needs none of
-macOS's folder permissions), and an in-game folder browser on Windows and Linux:
-folders that hold what's asked for are marked in green; Enter opens a folder or
-takes a marked one, Backspace goes up, U uses the folder, Esc goes back; the
-mouse wheel and clicks work too.
+"Choose..." opens the system's own panel on macOS (which needs none of macOS's
+folder permissions), and an in-game browser on Windows and Linux: folders that
+hold what's asked for are marked in green and the releases' files are listed
+after the folders; Enter opens a folder or takes a marked one or a file,
+Backspace goes up, U uses the folder, Esc goes back; the mouse wheel and clicks
+work too.
 
 The same screen is in the main menu's Options (**Game files and ROMs...**), to
-change either folder later: a new game folder is used from the next start, a
-new ROM folder at once.
+change either later: new game files are used from the next start, a new ROM
+folder at once.
 
 `--scene picker` or `COVERT_FORCE_PICKER=1` shows the setup screen anyway, with
 the in-game browser on macOS too, and `COVERT_PICKER_DIR` sets the folder the
@@ -267,7 +292,9 @@ folder:
 The four save slots are `cv0.sve` to `cv3.sve`, in the original's format: saves
 from the DOS game load (drop them in this folder; a slot with no file here is
 also looked for in the game folder). The Hall of Fame is `fame.dta`, the settings
-`settings.ini`. `COVERT_REACTION_USER_DIR` uses another folder instead.
+`settings.ini`, and the game files imported by the setup screen are in `data`
+(see [The game files](#the-game-files)). `COVERT_REACTION_USER_DIR` uses another
+folder instead.
 
 ### Differences from the original
 
@@ -335,6 +362,8 @@ libraries; none of their code is in this repository:
 |---|---|---|---|
 | [Munt](https://github.com/munt/munt) libmt32emu | 2.8.4 | LGPL-2.1-or-later | the MT-32 / CM-32L emulation |
 | [Nuked-OPL3](https://github.com/nukeykt/Nuked-OPL3) | 765ec96 (2024) | LGPL-2.1-or-later | the AdLib's OPL2 |
+| [miniz](https://github.com/richgel999/miniz) | 3.0.2 | MIT | deflate: importing the game from zip, gzip and GOG's .pkg |
+| [LZMA SDK](https://www.7-zip.org/sdk.html) (Igor Pavlov), the C code | 25.01 | public domain | 7z, LZMA and LZMA2: importing the game from the floppy sets' .7z and GOG's Windows installer |
 | SDL2 | system | zlib | window, input, audio output |
 
 Included in the source:
@@ -342,3 +371,4 @@ Included in the source:
 | Code | Version | License | Used for |
 |---|---|---|---|
 | [font8x8](https://github.com/dhepper/font8x8) (Daniel Hepper, after Marcel Sondaar and IBM's VGA fonts), `font8x8_basic.h`, in `src/core/BuiltinFont.cpp` | 8e279d2 (2019) | public domain | the 8x8 font of the screen that asks for the game files (the game's own fonts are game files) |
+| [innoextract](https://constexpr.org/innoextract/) (Daniel Scharrer), adapted: the format knowledge behind `src/formats/InnoSetup.cpp`, with its CALL/JMP filter and GOG Galaxy part parsing ported from it | master (2025) | zlib | reading GOG's Windows installer |
