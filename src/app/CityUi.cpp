@@ -143,6 +143,7 @@ int CityUi::textWindow(const std::string& text, int x, int y, unsigned flags) {
     }
     menu_.emplace(font(), text, x, y, opt);
     animSw_ = std::min(screenW, 320);
+    animStripY_ = (animActive && (y & 1) && y >= 144) ? y : -1;
     keys_.clear();   // flush_input
     Request r;
     r.kind = Request::Menu;
@@ -189,6 +190,7 @@ void CityUi::playAnimation(const std::string& name, int x) {
     playing_ = true;
     bldFlag_ = false;
     animSw_ = 0;
+    animStripY_ = -1;
     Request r;
     r.kind = Request::Delay;
     r.ticks = -1;   // until the animation ends (or a key)
@@ -309,7 +311,8 @@ bool CityUi::tick() {
 Image CityUi::composite() const {
     if (!anim_) return screen;
     Image img = anim_->frame();
-    if (animSw_ > 0) img.blit(screen, 0, 0, animSw_, 200, 0, 0);
+    if (animStripY_ >= 0) img.blit(screen, 0, animStripY_, 320, 200 - animStripY_, 0, animStripY_);
+    else if (animSw_ > 0) img.blit(screen, 0, 0, animSw_, 200, 0, 0);
     if (bldFlag_) img.blit(screen, 0, 0, 160, 30, 0, 0);   // restore_background's status bar
     return img;
 }

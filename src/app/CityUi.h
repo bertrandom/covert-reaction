@@ -162,6 +162,9 @@ private:
     std::array<int, PanPlayer::kVars> vars_{};    // set_scene_var
     std::unique_ptr<PanPlayer> anim_;             // playing behind a text window
     int animSw_ = 320;                            // screen_width while it plays
+    // A window in the bottom strip (odd y >= 144) over an animation: text_window
+    // fills only the strip, and the animation shows everywhere above it.
+    int animStripY_ = -1;
     bool bldFlag_ = false;                        // bld_flag: a building's .PAN keeps the status bar
     bool playing_ = false;                        // play_animation: the .PAN alone
 
