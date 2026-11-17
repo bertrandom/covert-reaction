@@ -332,6 +332,7 @@ ImportResult importGame(const fs::path& source, const fs::path& dest, const Impo
             fail("can't create " + utf8(dest) + ": " + why);
         }
         fs::remove_all(old, ec);
+        res.check = checkGameFiles(dest);
         res.ok = true;
         res.files = files.size();
         report(progress, 1.0, "Done");

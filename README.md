@@ -155,6 +155,12 @@ it some, go next to it in `data/mt32`. These all work, told apart by their conte
   order as the game's `INSTALL.BAT` does
 - a folder that already holds the game (an installed copy, from DOSBox or GOG)
 
+Each imported file is checked against the known releases (size and CRC-32 of
+GOG's files, which eXoDOS's match, and of the 1990 floppy disks): a file that
+matches none, such as one from a badly read disk image, is named in a warning on
+the setup screen. The game can still be started, since other releases may exist.
+`reaction-tool import` prints the same check.
+
 The game's folder inside is the one with `GAME.EXE` and `COVERT.EXE`, and only
 its DOS file names are kept (a repack's launchers and so on are left out). The
 installers aren't run: they're read directly, nothing else is installed. (This

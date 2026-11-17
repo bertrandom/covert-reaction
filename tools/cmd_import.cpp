@@ -81,6 +81,13 @@ REACTION_COMMAND_NO_DATA(
         }
         std::printf("%s (%s): %zu files -> %s\n", pos[0].c_str(), describeGameSource(r.source), r.files,
                     pos[1].c_str());
+        if (r.check.ok()) std::printf("  all %zu known files match a known release\n", r.check.checked);
+        else std::printf("  check: %s\n", r.check.describe().c_str());
+        if (!r.check.damaged.empty()) {
+            std::printf("    damaged:");
+            for (const auto& f : r.check.damaged) std::printf(" %s", f.c_str());
+            std::printf("\n");
+        }
         if (!ref.empty()) compare(pos[1], ref);
         return 0;
     });

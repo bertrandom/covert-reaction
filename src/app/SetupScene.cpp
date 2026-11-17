@@ -180,6 +180,8 @@ SetupScene::~SetupScene() = default;
 void SetupScene::refresh() {
     gameMissing_ = game_.empty() ? std::vector<std::string>{} : GameData::missingFiles(game_);
     gameOk_ = !game_.empty() && gameMissing_.empty();
+    // (A damaged copy is shown, not refused: START still works.)
+    gameCheck_ = gameOk_ ? checkGameFiles(game_) : GameFileCheck{};
     romSet_.reset();
     romFoundIn_.clear();
     if (!roms_.empty()) {
@@ -693,6 +695,10 @@ float SetupScene::paint(Canvas* cv, float W, float H, float top) {
                                         std::to_string(lastImport_.files) + " files",
                                     color::kText);
             card.detail = displayPath(importFrom_);
+            if (!gameCheck_.ok()) {
+                card.status = Status::Warning;
+                card.lines.emplace_back(gameCheck_.describe(), color::kAmber);
+            }
         } else if (game_.empty()) {
             card.status = Status::Empty;
             card.lines.emplace_back("Not chosen", color::kText2);
@@ -709,8 +715,9 @@ float SetupScene::paint(Canvas* cv, float W, float H, float top) {
             card.lines.emplace_back(missing, color::kRed);
             card.detail = displayPath(game_);
         } else {
-            card.status = Status::Ok;
+            card.status = gameCheck_.ok() ? Status::Ok : Status::Warning;
             card.lines.emplace_back("Covert Action’s files are ready", color::kText);
+            if (!gameCheck_.ok()) card.lines.emplace_back(gameCheck_.describe(), color::kAmber);
             card.detail = displayPath(game_);
         }
         drawCard(card);

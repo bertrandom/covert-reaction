@@ -120,6 +120,7 @@ private:
     std::filesystem::path game_, roms_;
     bool gameOk_ = false;
     std::vector<std::string> gameMissing_;   // marker files the game folder lacks
+    GameFileCheck gameCheck_;                // the game folder against the known releases (gameOk_ only)
     std::optional<audio::Mt32Roms> romSet_;  // found in roms_ (or, with none chosen, the usual places)
     std::filesystem::path romFoundIn_;       // where (with none chosen)
     std::vector<Button> buttons_;            // in focus order

@@ -29,6 +29,8 @@
 #include <thread>
 #include <vector>
 
+#include "formats/KnownFiles.h"
+
 namespace reaction {
 
 enum class GameSource {
@@ -69,6 +71,7 @@ struct ImportResult {
     std::size_t files = 0;   // copied into the destination
     GameSource source = GameSource::Unknown;
     std::string error;       // why not, for the player (when !ok)
+    GameFileCheck check;     // the imported files against the known releases (formats/KnownFiles.h)
 };
 
 // Imports the game from `source` (a file or a folder) into `dest` (e.g. the
