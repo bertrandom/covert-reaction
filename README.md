@@ -196,7 +196,7 @@ the game's. It has two cards:
 
 - **Game files** (required): a status icon and line: "Not chosen", the import
   under way (a progress bar with its stage), "Imported from GOG's Windows
-  installer · 98 files", or in red why not (the full message). **Choose…**
+  installer · 78 files", or in red why not (the full message). **Choose…**
   asks for the game: an installer, an archive, a disk image or a folder. What's
   chosen is imported into the data folder at once. The data folder is replaced
   only once a new import is complete, so a failed one leaves the old copy as
