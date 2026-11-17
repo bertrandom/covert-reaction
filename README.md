@@ -265,7 +265,7 @@ notes:
 
 The main menu has an **Options** item, not in the original (and ` brings up the
 same window anywhere in the game), for Covert Reaction's
-own settings:
+own settings. A box under the window explains the highlighted one:
 
 | Option | What it does | Default |
 |---|---|---|

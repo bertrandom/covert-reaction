@@ -62,6 +62,8 @@ public:
     // The chosen item (0-based) or -1 (Esc / no items), once the menu is done.
     std::optional<int> result() const { return done_ ? std::optional<int>(result_) : std::nullopt; }
     const TextWindowLayout& layout() const { return layout_; }
+    // The highlighted item (keys or mouse), -1 if none.
+    int selection() const { return sel_; }
 
     // The Alt-Q window is open: text_window sets anim_active = 0 for it, so a
     // scene playing an animation behind this window holds it while this is true.

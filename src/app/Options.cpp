@@ -1,11 +1,15 @@
 #include "app/Options.h"
 
+#include <algorithm>
 #include <array>
+#include <iterator>
+#include <string_view>
 #include <filesystem>
 
 #include "app/SetupScene.h"
 #include "core/Folders.h"
 #include "formats/McgaPalette.h"
+#include "formats/TextWindow.h"
 
 namespace reaction {
 
@@ -19,6 +23,53 @@ constexpr int kDone = 6;   // (the page has its own full-screen button and file 
 constexpr int kSetup = 7;
 constexpr int kDone = 8;
 #endif
+
+// What each item does, shown under the window while it's highlighted.
+const char* const kHelp[] = {
+    "7 8 9, U I O and J K L work as the numeric keypad in break-ins and wiretaps, "
+    "for keyboards without one.",
+    "The leader line-up after a briefing counts: a wrong face means a practice "
+    "mission, as in the 1990 release. GOG's release has no check.",
+    "What plays the music and sounds. Automatic: the MT-32 if its ROMs are found, "
+    "else the AdLib.",
+    "The animations behind the briefings and the city's windows. Alt-A switches "
+    "them in the game too.",
+    "Mixes the MT-32's sounds in phase. The real MT-32 can cancel some out, such "
+    "as a gunshot while music plays. Off is the original sound.",
+    "After a break-in's last message, the original waits about 2 seconds. Off "
+    "goes straight back.",
+#ifndef __EMSCRIPTEN__
+    "Fills the whole screen. Alt+Enter switches it too.",
+    "Choose the game's files or your MT-32 ROMs again.",
+#endif
+    "Close the Options.",
+};
+
+// `text` wrapped into lines at most `width` pixels wide (at spaces).
+std::string wrap(const Font& font, std::string_view text, int width) {
+    std::string out, line;
+    auto widthOf = [&](const std::string& s) {
+        int w = 0;
+        for (char ch : s) w += font.charWidth(static_cast<std::uint8_t>(ch));
+        return w;
+    };
+    std::size_t i = 0;
+    while (i < text.size()) {
+        std::size_t j = text.find(' ', i);
+        if (j == std::string_view::npos) j = text.size();
+        const std::string word(text.substr(i, j - i));
+        const std::string tryLine = line.empty() ? word : line + " " + word;
+        if (!line.empty() && widthOf(tryLine) > width) {
+            out += line + "\n";
+            line = word;
+        } else {
+            line = tryLine;
+        }
+        i = j + 1;
+    }
+    if (!line.empty()) out += line + "\n";
+    return out;
+}
 
 // `f` in the game's palette, at half brightness: each of its colours becomes the
 // game palette's nearest to it.
@@ -94,7 +145,23 @@ void OptionsScene::tick() {
 void OptionsScene::draw(Frame& f) {
     f.palette = background_.palette;
     f.image = background_.image;
-    if (menu_ && !closed_) menu_->draw(f.image);
+    if (!menu_ || closed_) return;
+    menu_->draw(f.image);
+    // The highlighted item's description, in a box of its own under the window.
+    const int item = menu_->selection();
+    if (item < 0 || item >= static_cast<int>(std::size(kHelp))) return;
+    const Font& font = app_.fonts.font(1);
+    constexpr int kX = 16, kW = 320 - 2 * kX;   // the box: 16 pixels from each side
+    const int y = menu_->layout().boxY2 + 6;
+    std::string text = wrap(font, kHelp[item], kW - 8);
+    // The same height for every item (3 lines), so the box doesn't jump.
+    for (int lines = static_cast<int>(std::count(text.begin(), text.end(), '\n')); lines < 3; ++lines) text += "\n";
+    TextWindowOptions opt;
+    opt.noSelect = true;
+    const TextWindowLayout lay = layoutTextWindow(font, text, kX, y);
+    // (drawTextWindow sizes the box to the text: widen it to kW.)
+    drawBevelBox(f.image, kX, y, kW, lay.boxY2 - y, textWindowColors(y, opt).box);
+    drawWrappedText(f.image, font, text, 64, kX + 5, y + 5, textWindowColors(y, opt).text);
 }
 
 void OptionsScene::close() {
@@ -120,7 +187,10 @@ void OptionsScene::open(int selected) {
     text += " Done\n";
     TextWindowOptions opt;
     opt.selected = selected;
-    menu_.emplace(app_.fonts.font(1), std::move(text), 64, 80, opt).setHotkeys(appHotkeys(app_, *this));
+    // Centred, near the top: the description box goes under it.
+    const TextWindowLayout lay = layoutTextWindow(app_.fonts.font(1), text, 0, 0);
+    const int x = (320 - (lay.maxWidth + 8)) / 2;
+    menu_.emplace(app_.fonts.font(1), std::move(text), x, 24, opt).setHotkeys(appHotkeys(app_, *this));
 }
 
 int OptionsScene::soundIndex() const {
