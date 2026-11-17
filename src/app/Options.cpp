@@ -106,7 +106,7 @@ void OptionsScene::close() {
 void OptionsScene::open(int selected) {
     const Settings& s = app_.settings;
     auto onOff = [](bool b) { return b ? "On" : "Off"; };
-    std::string text = "Options\n";
+    std::string text = "Options\n\n";   // (a blank line under the title)
     text += std::string(" Keypad on 789/UIO/JKL: ") + onOff(s.keypadKeys) + "\n";
     text += std::string(" Copy protection: ") + onOff(s.copyProtection) + "\n";
     text += std::string(" Sound: ") + kSoundNames[soundIndex()] + "\n";
