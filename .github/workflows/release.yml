@@ -1,0 +1,136 @@
+# Builds Covert Reaction for macOS, Windows and Linux. A pushed tag `v*` (e.g.
+# v0.1.0) publishes the builds as a GitHub release; "Run workflow" on the
+# Actions page builds them as artifacts only. No game files are involved: the
+# players bring their own copy.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # The SDL2 "devel mingw" package the Windows build links (and ships SDL2.dll from).
+  SDL2_VERSION: "2.30.9"
+  SDL2_MINGW_SHA256: b188d165dc4a0372042bff3d0c18e9bb90772581e92a7b8b47b521b47714f75c
+
+jobs:
+  macos:
+    name: macOS (universal DMG)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Configure
+        # SDL2 built from source and linked in: Apple Silicon + Intel, macOS 11+.
+        run: >
+          cmake -S . -B build-dist -DCMAKE_BUILD_TYPE=Release -DREACTION_VENDORED_SDL=ON
+          "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+      - name: Build the DMG
+        run: cmake --build build-dist --target dmg -j "$(sysctl -n hw.ncpu)"
+      - name: Check
+        run: |
+          app="build-dist/dmg-root/Covert Reaction.app"
+          lipo -archs "$app/Contents/MacOS/Covert Reaction"
+          codesign --verify --deep --strict "$app"
+          mkdir dist && cp "build-dist/Covert Reaction.dmg" dist/Covert-Reaction-macOS.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/*
+
+  windows:
+    name: Windows (x86-64)
+    # Cross-compiled with mingw-w64, as cmake/mingw-w64-x86_64.cmake describes.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install mingw-w64
+        run: sudo apt-get update -q && sudo apt-get install -y -q mingw-w64 cmake zip
+      - name: Get SDL2 for mingw
+        run: |
+          mkdir -p deps
+          curl -fsSL -o deps/sdl2-mingw.tar.gz \
+            "https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VERSION}/SDL2-devel-${SDL2_VERSION}-mingw.tar.gz"
+          echo "${SDL2_MINGW_SHA256}  deps/sdl2-mingw.tar.gz" | sha256sum -c -
+          tar xzf deps/sdl2-mingw.tar.gz -C deps
+      - name: Configure
+        run: >
+          cmake -S . -B build-win -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-x86_64.cmake
+          -DCMAKE_BUILD_TYPE=Release
+          -DSDL2_DIR="$PWD/deps/SDL2-${SDL2_VERSION}/x86_64-w64-mingw32/lib/cmake/SDL2"
+      - name: Build
+        run: cmake --build build-win -j "$(nproc)"
+      - name: Package
+        run: |
+          d=Covert-Reaction-Windows
+          mkdir -p "$d" dist
+          cp build-win/covert-reaction.exe "$d/Covert Reaction.exe"
+          cp "deps/SDL2-${SDL2_VERSION}/x86_64-w64-mingw32/bin/SDL2.dll" "$d/"
+          cp LICENSE "$d/LICENSE.txt"
+          zip -r "dist/$d.zip" "$d"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*
+
+  linux:
+    name: Linux (${{ matrix.arch }})
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-22.04
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+    # Ubuntu 22.04: an older glibc, so the binary runs on more distributions.
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install SDL2
+        run: sudo apt-get update -q && sudo apt-get install -y -q cmake g++ libsdl2-dev
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j "$(nproc)"
+      - name: Package
+        run: |
+          d=Covert-Reaction-Linux-${{ matrix.arch }}
+          mkdir -p "$d" dist
+          cp build/covert-reaction "$d/"
+          cp LICENSE "$d/"
+          cp assets/icon/icon-source.png "$d/covert-reaction.png"
+          tar czf "dist/$d.tar.gz" "$d"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: dist/*
+
+  release:
+    name: Publish the release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [macos, windows, linux]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -la dist
+          cat > notes.md <<'NOTES'
+          You need your own copy of Sid Meier's Covert Action (GOG's release or the original disks): the first start asks for it.
+
+          - **macOS 11+** (Apple Silicon and Intel): open the DMG and drag Covert Reaction to Applications. The first time, macOS won't open it until you click **Open Anyway** in System Settings › Privacy & Security (see the README's [Installing](https://github.com/bertrandom/covert-reaction#installing)).
+          - **Windows** (64-bit): unzip and run `Covert Reaction.exe` (keep `SDL2.dll` next to it). Windows SmartScreen may ask before the first run.
+          - **Linux** (x86-64 or ARM64): unpack and run `covert-reaction`; it needs SDL2 (`sudo apt install libsdl2-2.0-0` on Debian/Ubuntu).
+          NOTES
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --title "Covert Reaction ${TAG#v}" --notes-file notes.md --generate-notes
