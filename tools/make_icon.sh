@@ -1,9 +1,10 @@
 #!/bin/sh
 # Builds the app icon's files from assets/icon/icon-source.png (1024x1024,
 # full-bleed art; made with Google's Nano Banana 2.1 image model):
-#   assets/icon/icon-1024.png    the art on a rounded square, macOS's icon grid
-#                                (824 px plate in 1024, 185 px corners, a shadow)
-#   assets/icon/icon.icns        macOS (the .app bundle)
+#   assets/icon/icon.icns        macOS (the .app bundle): the art full-bleed. macOS 26
+#                                rounds it itself (an icon with its own plate and
+#                                margins is shrunk onto a grey tile there); earlier
+#                                versions show it square.
 #   assets/icon/icon.ico         Windows (linked into the .exe)
 #   src/app/WindowIcon.inc       a 64x64 RGBA copy SDL sets on the window (Windows, Linux)
 #   web/favicon.inc              a 64x64 PNG as a data: URI for the web page
@@ -15,17 +16,10 @@ D=assets/icon
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
 
-magick "$D/icon-source.png" -resize 824x824 \
-  \( -size 824x824 xc:none -fill white -draw "roundrectangle 0,0 823,823 185,185" \) \
-  -alpha set -compose DstIn -composite "$T/plate.png"
-magick -size 1024x1024 xc:none \
-  \( "$T/plate.png" -background black -shadow 40x12+0+10 \) -gravity center -geometry +0+6 -composite \
-  "$T/plate.png" -gravity center -composite "$D/icon-1024.png"
-
 mkdir "$T/icon.iconset"
 for s in 16 32 128 256 512; do
-  magick "$D/icon-1024.png" -resize ${s}x${s} "$T/icon.iconset/icon_${s}x${s}.png"
-  magick "$D/icon-1024.png" -resize $((s * 2))x$((s * 2)) "$T/icon.iconset/icon_${s}x${s}@2x.png"
+  magick "$D/icon-source.png" -resize ${s}x${s} -strip "$T/icon.iconset/icon_${s}x${s}.png"
+  magick "$D/icon-source.png" -resize $((s * 2))x$((s * 2)) -strip "$T/icon.iconset/icon_${s}x${s}@2x.png"
 done
 iconutil -c icns "$T/icon.iconset" -o "$D/icon.icns"
 
@@ -33,7 +27,7 @@ iconutil -c icns "$T/icon.iconset" -o "$D/icon.icns"
 magick "$D/icon-source.png" \
   \( -size 1024x1024 xc:none -fill white -draw "roundrectangle 0,0 1023,1023 120,120" \) \
   -alpha set -compose DstIn -composite "$T/win.png"
-magick "$T/win.png" -define icon:auto-resize=256,128,64,48,32,24,16 "$D/icon.ico"
+magick "$T/win.png" -strip -define icon:auto-resize=256,128,64,48,32,24,16 "$D/icon.ico"
 
 magick "$T/win.png" -resize 64x64 "$T/w64.rgba"
 python3 -I - "$T/w64.rgba" src/app/WindowIcon.inc <<'PY'
@@ -45,6 +39,6 @@ with open(sys.argv[2], "w") as f:
     for i in range(0, len(b), 24):
         f.write(", ".join(str(x) for x in b[i:i + 24]) + ",\n")
 PY
-magick "$T/win.png" -resize 64x64 "$T/fav.png"
+magick "$T/win.png" -resize 64x64 -strip "$T/fav.png"
 printf 'data:image/png;base64,%s' "$(base64 < "$T/fav.png" | tr -d '\n')" > web/favicon.inc
 echo "icon files made"
