@@ -145,6 +145,15 @@ if(APPLE AND NOT EMSCRIPTEN)
   list(APPEND REACTION_APP_SOURCES src/app/MacFolderPanel.mm)
   set_source_files_properties(src/app/MacFolderPanel.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 endif()
+# The app icon (assets/icon, made by tools/make_icon.sh): in the macOS bundle's
+# Resources, and in the Windows executable's resources.
+if(APPLE AND NOT EMSCRIPTEN)
+  set(REACTION_ICON ${CMAKE_CURRENT_SOURCE_DIR}/assets/icon/icon.icns)
+  set_source_files_properties(${REACTION_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+  list(APPEND REACTION_APP_SOURCES ${REACTION_ICON})
+elseif(WIN32)
+  list(APPEND REACTION_APP_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/assets/icon/covert-reaction.rc)
+endif()
 add_executable(covert-reaction ${REACTION_APP_SOURCES})
 if(APPLE AND NOT EMSCRIPTEN)
   target_link_libraries(covert-reaction PRIVATE "-framework AppKit" "-framework UniformTypeIdentifiers")
@@ -168,6 +177,7 @@ if(APPLE)
     OUTPUT_NAME "Covert Reaction"
     MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Info.plist.in
     MACOSX_BUNDLE_BUNDLE_NAME "Covert Reaction"
+    MACOSX_BUNDLE_ICON_FILE icon.icns
     MACOSX_BUNDLE_GUI_IDENTIFIER "org.bert.covertreaction"
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION})
@@ -207,12 +217,13 @@ elseif(EMSCRIPTEN)
   else()
     set(REACTION_WEB_PRELOADED false)
   endif()
+  file(READ web/favicon.inc REACTION_FAVICON)   # (tools/make_icon.sh: a data: URI)
   set(REACTION_SHELL ${CMAKE_CURRENT_BINARY_DIR}/shell.html)
   configure_file(web/shell.html ${REACTION_SHELL} @ONLY)
   set_target_properties(covert-reaction PROPERTIES
     OUTPUT_NAME index
     SUFFIX ".html"
-    LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/web/shell.html)
+    LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/web/shell.html;${CMAKE_CURRENT_SOURCE_DIR}/web/favicon.inc")
   target_link_options(covert-reaction PRIVATE
     --shell-file ${REACTION_SHELL}
     -lidbfs.js

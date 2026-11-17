@@ -370,6 +370,7 @@ Kept on purpose:
 | `tools` | `reaction-tool`, a command-line tool for the game files and the game logic |
 | `tests` | harnesses that compare the port with the original's C and drivers (MSC 5.1, DOSBox-X); each has a README |
 | `web` | the web page around the WebAssembly build |
+| `assets/icon` | the app icon: `icon-source.png` (made with Google's Nano Banana 2.1 image model) and what `tools/make_icon.sh` builds from it (`.icns`, `.ico`, the window icon, the web page's favicon) |
 | `third_party` | code by others kept in the source (see [Third-party code](#third-party-code)) |
 
 The engine (`src/core`, `src/formats`, `src/game`, `src/audio`) has no SDL

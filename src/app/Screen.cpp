@@ -1,6 +1,7 @@
 #include "app/Screen.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cmath>
 #include <cstdlib>
 #include <stdexcept>
@@ -47,6 +48,17 @@ Screen::Screen(const char* title, int scale, bool hidden) : headless_(hidden) {
     renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     // (The setup screen's layout needs some room; the game scales to anything.)
     SDL_SetWindowMinimumSize(window_, 480, 400);
+#ifndef __APPLE__
+    // The app icon on the window (on macOS the bundle's icon.icns is used).
+    static const std::uint8_t kIcon[] = {
+#include "app/WindowIcon.inc"
+    };
+    if (SDL_Surface* icon = SDL_CreateRGBSurfaceWithFormatFrom(const_cast<std::uint8_t*>(kIcon), 64, 64, 32, 64 * 4,
+                                                               SDL_PIXELFORMAT_RGBA32)) {
+        SDL_SetWindowIcon(window_, icon);
+        SDL_FreeSurface(icon);
+    }
+#endif
 #endif
     if (!renderer_) renderer_ = SDL_CreateRenderer(window_, -1, 0);
     if (!renderer_) throw std::runtime_error(std::string("SDL_CreateRenderer: ") + SDL_GetError());

@@ -1,0 +1,2 @@
+// The Windows executable's icon (tools/make_icon.sh makes icon.ico).
+1 ICON "icon.ico"
