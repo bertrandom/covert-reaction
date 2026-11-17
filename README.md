@@ -247,7 +247,8 @@ The keys are the original's (see the original manual and reference card). A few
 notes:
 
 - **Text windows and menus:** Up/Down move, Enter, Space or F1 choose, Esc
-  cancels; the mouse also works. As in the original, inside any text window
+  cancels; a click also chooses (the original has no mouse at all, so pointing
+  doesn't move the highlight). As in the original, inside any text window
   Alt-A switches animations, Alt-S sound and Alt-J the joystick bit (each with a
   short sound), and Alt-Q asks whether to quit.
 - **No numeric keypad?** In TAC and BUG, 7 8 9 / U I O / J K L work as the

@@ -48,13 +48,13 @@ public:
 
     void handle(const SDL_Event& e) override {
         if (done_) return;
-        if (e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEMOTION) {   // a modern extra
+        if (e.type == SDL_MOUSEBUTTONDOWN) {   // a modern extra: a click picks the face under it
             const SDL_Point p = app_.mouse(e);
             const int cx = p.x / 64, cy = (p.y - 21) / 60;
             if (p.y >= 21 && cx >= 0 && cx < 5 && cy >= 0 && cy < 3) {
                 cx_ = cx;
                 cy_ = cy;
-                if (e.type == SDL_MOUSEBUTTONDOWN) done_ = true;
+                done_ = true;
             }
             return;
         }

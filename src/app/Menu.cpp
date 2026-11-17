@@ -112,9 +112,9 @@ void Menu::handle(const SDL_Event& e, SDL_Point mouse) {
         default:
             break;
         }
-    } else if (e.type == SDL_MOUSEMOTION && hasItems) {
-        if (int it = itemAt(mouse); it >= 0) sel_ = it;
     } else if (e.type == SDL_MOUSEBUTTONDOWN) {
+        // (The original has no mouse: a click chooses the item under it, a
+        // modern extra; moving the mouse doesn't move the highlight.)
         if (!hasItems) choose(-1);
         else if (int it = itemAt(mouse); it >= 0) { sel_ = it; choose(it); }
     }
