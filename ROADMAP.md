@@ -1,7 +1,8 @@
 # Roadmap
 
 How Covert Reaction gets from an engine skeleton to the whole game. The reference for
-every step is the reconstructed original in `../covert-decomp` (byte-exact C and
+every step is the reconstructed original in
+[covert-recomp](https://github.com/bertrandom/covert-recomp) (byte-exact C and
 assembly), so the port follows the original's rules rather than guessing them.
 
 ## How the original is organized

@@ -9,7 +9,7 @@ It plays with the files of your own copy of the original game: pictures,
 animations, fonts, text and the sound drivers' music are loaded at run time, so
 no game data is part of this repository. The game logic is ported from the
 byte-exact reconstruction of the original source in
-[covert-decomp](../covert-decomp), and the rules follow that code rather than
+[covert-recomp](https://github.com/bertrandom/covert-recomp), and the rules follow that code rather than
 guesswork: case generation, the world simulation, the four mini-games'
 generators and the sound drivers give byte-identical results to the original
 for the same random seed, checked against the original C compiled with
@@ -173,9 +173,9 @@ image, is named in a warning on the setup screen, and the game can still be
 started, since other releases may exist. `reaction-tool import` prints the same
 check.
 
-The installers aren't run: they're read directly, nothing else is installed. (This
-is a port of covert-decomp's `tools/extract_game.py`; `reaction-tool import
-SOURCE OUTDIR [--compare DIR]` does the same from the command line.)
+The installers aren't run: they're read directly, nothing else is installed.
+`reaction-tool import SOURCE OUTDIR [--compare DIR]` does the same from the
+command line.
 
 It looks for the game, in order, in:
 
