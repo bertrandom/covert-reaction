@@ -12,6 +12,7 @@ source in [covert-recomp](https://github.com/bertrandom/covert-recomp), so the
 rules are the original's, not guesswork: cases, the world simulation, the four
 mini-games and the music give the same results as the 1990 game.
 
+**[Download](https://github.com/bertrandom/covert-reaction/releases/latest)** ·
 **[Play it](#playing-covert-reaction)** · **[Develop it](#developing)**
 
 ## Status
@@ -46,8 +47,11 @@ Not done yet:
 
 ### Installing
 
-**macOS** (11 or later, Apple Silicon or Intel): open `Covert Reaction.dmg` and
-drag **Covert Reaction** to **Applications**.
+Download the latest version for your system from the
+**[Releases page](https://github.com/bertrandom/covert-reaction/releases/latest)**.
+
+**macOS** (11 or later, Apple Silicon or Intel): open `Covert-Reaction-macOS.dmg`
+and drag **Covert Reaction** to **Applications**.
 
 The first time you open it, macOS warns that it couldn't verify the app and
 won't open it: the app is ad-hoc signed, not signed with a Developer ID and
@@ -65,7 +69,16 @@ marked as "quarantined". Either:
 
 Either way, it opens normally from then on.
 
-**Windows and Linux:** build it from source for now (see [Building](#building)).
+**Windows** (64-bit): unzip `Covert-Reaction-Windows.zip` and run
+`Covert Reaction.exe`, keeping `SDL2.dll` next to it. The app isn't signed, so
+Windows SmartScreen may ask before the first run: click **More info**, then
+**Run anyway**.
+
+**Linux** (x86-64 or ARM64): unpack `Covert-Reaction-Linux-x86_64.tar.gz` (or
+`-arm64`) and run `covert-reaction`. It needs SDL2: `sudo apt install
+libsdl2-2.0-0` on Debian and Ubuntu, `sudo dnf install SDL2` on Fedora.
+
+Or build it yourself (see [Building](#building)).
 
 **In a browser:** the [web build](#web) runs the game in a page; it asks for
 your copy of the game there.
@@ -113,12 +126,12 @@ notes:
   ["Covert Reaction: use F1-F10 as standard function keys"](https://ke-complex-modifications.pqrs.org/?rule=js%2Fcovert_reaction_function_keys.js)
   does it only while Covert Reaction is in front.
 - **Full screen:** Alt+Enter (desktop).
-- **Options anywhere:** ` (the key left of 1) opens the [Options](#options) window
-  over whatever is on screen; the game waits until it closes (Done, Esc or ` again).
+- **Options anywhere:** `` ` `` (the key left of 1) opens the [Options](#options) window
+  over whatever is on screen; the game waits until it closes (Done, Esc or `` ` `` again).
 
 ### Options
 
-The main menu has an **Options** item, not in the original (and ` brings up the
+The main menu has an **Options** item, not in the original (and `` ` `` brings up the
 same window anywhere in the game), for Covert Reaction's own settings. A box
 under the window explains the highlighted one:
 
@@ -239,6 +252,17 @@ mingw-w64`) and the official SDL2 "devel mingw" package; see
 `cmake/mingw-w64-x86_64.cmake`. Put `SDL2.dll` next to `covert-reaction.exe`.
 
 The result is `build/covert-reaction` (`.exe` on Windows).
+
+### Releases
+
+`.github/workflows/release.yml` builds the macOS DMG, the Windows zip and the
+Linux tarballs on GitHub Actions. Pushing a tag `v*` (matching `project(...
+VERSION)` in `CMakeLists.txt`) publishes them as a release; **Run workflow** on
+the Actions page builds them as artifacts only.
+
+```bash
+git tag v0.1.0 && git push upstream v0.1.0
+```
 
 ### The Mac DMG
 
