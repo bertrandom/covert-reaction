@@ -71,6 +71,42 @@ std::string wrap(const Font& font, std::string_view text, int width) {
     return out;
 }
 
+// The keypad option's picture: the keys it turns into a keypad, cut out of a
+// keyboard (drawn here, no image), each with the keypad digit it sends on a
+// yellow badge; the neighbouring keys are dimmed. kKeysW x kKeysH pixels.
+constexpr int kKeysW = 108, kKeysH = 49;
+
+Image keypadKeys(const FontSet& fonts) {
+    Image img(kKeysW, kKeysH, 0);
+    constexpr int kKeyW = 21, kKeyH = 15, kStep = 23, kRowStep = 17;
+    // A keyboard's three rows, each shifted right of the one above.
+    struct Row {
+        int shift;
+        const char* keys;   // the row's keys from the one left of the keypad's
+    };
+    constexpr Row rows[] = {{0, "67890"}, {11, "YUIOP"}, {17, "HJKL;"}};
+    const char* const digits[] = {"789", "456", "123"};
+    // The keypad's keys (columns 1-3) centred.
+    const int left = (kKeysW - (rows[2].shift + 3 * kStep + kKeyW - kStep)) / 2 - kStep;
+    const Font& letters = fonts.font(1);
+    const Font& small = fonts.font(2);
+    for (int r = 0; r < 3; ++r) {
+        for (int c = 0; c < 5; ++c) {
+            const int x = left + rows[r].shift + c * kStep, y = 1 + r * kRowStep;
+            const bool keypad = c >= 1 && c <= 3;
+            fillRect(img, x, y, kKeyW, kKeyH, keypad ? 8 : 0);
+            drawRectOutline(img, x, y, kKeyW - 1, kKeyH - 1, keypad ? 7 : 8);
+            const char label[2] = {rows[r].keys[c], 0};
+            letters.draw(img, x + 3, y + 3, label, {0, static_cast<std::uint8_t>(keypad ? 15 : 8), 0});
+            if (!keypad) continue;
+            fillRect(img, x + 13, y + 5, 6, 8, 14);   // the badge
+            const char digit[2] = {digits[r][c - 1], 0};
+            small.draw(img, x + 14, y + 6, digit, {0, 0, 14});
+        }
+    }
+    return img;
+}
+
 // `f` in the game's palette, at half brightness: each of its colours becomes the
 // game palette's nearest to it.
 Frame dimmed(const Frame& f, const Palette& game) {
@@ -153,15 +189,20 @@ void OptionsScene::draw(Frame& f) {
     const Font& font = app_.fonts.font(1);
     constexpr int kX = 16, kW = 320 - 2 * kX;   // the box: 16 pixels from each side
     const int y = menu_->layout().boxY2 + 6;
-    std::string text = wrap(font, kHelp[item], kW - 8);
-    // The same height for every item (3 lines), so the box doesn't jump.
-    for (int lines = static_cast<int>(std::count(text.begin(), text.end(), '\n')); lines < 3; ++lines) text += "\n";
+    const bool keys = item == 0;   // the keypad option: its keys beside the text
+    std::string text = wrap(font, kHelp[item], kW - 8 - (keys ? kKeysW + 6 : 0));
+    // The same height for every item (the keys' height), so the box doesn't jump.
+    for (int lines = static_cast<int>(std::count(text.begin(), text.end(), '\n')); lines < 6; ++lines) text += "\n";
     TextWindowOptions opt;
     opt.noSelect = true;
     const TextWindowLayout lay = layoutTextWindow(font, text, kX, y);
     // (drawTextWindow sizes the box to the text: widen it to kW.)
     drawBevelBox(f.image, kX, y, kW, lay.boxY2 - y, textWindowColors(y, opt).box);
     drawWrappedText(f.image, font, text, 64, kX + 5, y + 5, textWindowColors(y, opt).text);
+    if (keys) {
+        const Image k = keypadKeys(app_.fonts);
+        f.image.blit(k, 0, 0, kKeysW, kKeysH, kX + kW - kKeysW - 3, y + 3);
+    }
 }
 
 void OptionsScene::close() {
