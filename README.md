@@ -102,9 +102,24 @@ cmake --build build-dist --target dmg
 That makes `build-dist/Covert Reaction.dmg`: the app, ad-hoc signed, next to a
 shortcut to Applications to drag it to. (The `dmg` target works in a normal
 Homebrew build too; it then copies Homebrew's SDL libraries into the app, which
-only run on the same kind of Mac and macOS.) Other Macs warn about an
-"unidentified developer" the first time (Control-click, Open) until the app is
-signed with a Developer ID and notarized.
+only run on the same kind of Mac and macOS.)
+
+**The first time you open it,** macOS warns about it: the app is ad-hoc signed,
+not signed with a Developer ID and notarized by Apple, so when it was downloaded
+(a browser, AirDrop or Messages mark it as "quarantined") macOS says it couldn't
+verify it and won't open it. Drag the app to Applications, then either:
+
+- open it once, close the warning, and click **Open Anyway** in System
+  Settings › Privacy & Security (near the bottom), then confirm; on macOS 14 and
+  earlier, Control-click the app and choose **Open** instead; or
+- remove the quarantine flag in Terminal, after which it opens without a warning:
+
+  ```bash
+  xattr -dr com.apple.quarantine "/Applications/Covert Reaction.app"
+  ```
+
+Either way, it opens normally from then on. A copy you built yourself isn't
+quarantined, so it opens without a warning.
 
 On macOS the result is `build/Covert Reaction.app` (bundle identifier
 `org.bert.covertreaction`); elsewhere `build/covert-reaction`. The app isn't
