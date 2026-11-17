@@ -23,6 +23,11 @@ struct GameFileCheck {
     std::string describe() const;
 };
 
+// Whether `name` (upper case, e.g. "FACES.PIC") is one of the files Covert
+// Reaction reads: the table's, and FAME.DTA (the Hall of Fame GOG's release
+// starts with; the game writes its own). The importer copies only these.
+bool isGameDataFile(const std::string& name);
+
 // Whether `name` (upper case, e.g. "FACES.PIC") with this content is one of a
 // known release's files; false for a name the table doesn't have.
 bool isKnownGameFile(const std::string& name, std::span<const std::uint8_t> data);

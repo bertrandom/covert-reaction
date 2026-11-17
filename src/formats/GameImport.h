@@ -11,8 +11,10 @@
 //    later disk's file replaces an earlier copy)
 //  - a folder that already holds the game (an installed copy)
 // The game's folder is the one with GAME.EXE and COVERT.EXE (the shallowest);
-// only its DOS 8.3 names are kept (upper case, flat), which drops what a repack
-// put next to the game (eXoDOS's "Covert Action (1990).bat" and so on).
+// only the files Covert Reaction reads are kept (formats/KnownFiles.h: the
+// pictures, animations, texts, fonts and sound drivers, not the original's
+// programs or the installer's files), upper case and flat. Each is checked
+// against the known releases; one that's missing fails the import.
 //
 // No SDL, no external tools: zip/gzip/xar with miniz, 7z and LZMA with the LZMA
 // SDK (formats/Archive.h, formats/InnoSetup.h).

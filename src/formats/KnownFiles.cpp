@@ -23,6 +23,13 @@ constexpr Known kKnown[] = {
 
 }  // namespace
 
+bool isGameDataFile(const std::string& name) {
+    if (name == "FAME.DTA") return true;
+    for (const Known& k : kKnown)
+        if (k.name == name) return true;
+    return false;
+}
+
 bool isKnownGameFile(const std::string& name, std::span<const std::uint8_t> data) {
     std::uint32_t crc = 0;
     bool computed = false;

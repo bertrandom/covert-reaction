@@ -155,15 +155,23 @@ it some, go next to it in `data/mt32`. These all work, told apart by their conte
   order as the game's `INSTALL.BAT` does
 - a folder that already holds the game (an installed copy, from DOSBox or GOG)
 
-Each imported file is checked against the known releases (size and CRC-32 of
-GOG's files, which eXoDOS's match, and of the 1990 floppy disks): a file that
-matches none, such as one from a badly read disk image, is named in a warning on
-the setup screen. The game can still be started, since other releases may exist.
-`reaction-tool import` prints the same check.
+Only the 78 files Covert Reaction reads are copied: the pictures, animations,
+texts, font, the sound drivers it ports (`RSOUND.CA`, `ASOUND.CA`, `ISOUND.CA`,
+`NSOUND.CA`) and the Hall of Fame (`FAME.DTA`, if the release has one). The
+original's programs and graphics drivers (`*.EXE`), the installer's `*.BAT` and
+`README.DOC`, the Tandy sound driver (`TSOUND.CA`) and `CAPTRD01.PAN` (which the
+original never uses either) stay behind. The game's folder inside a release is the
+one with `GAME.EXE` and `COVERT.EXE` (or, for a copy Covert Reaction made, its
+data files).
 
-The game's folder inside is the one with `GAME.EXE` and `COVERT.EXE`, and only
-its DOS file names are kept (a repack's launchers and so on are left out). The
-installers aren't run: they're read directly, nothing else is installed. (This
+Each copied file is checked against the known releases (size and CRC-32 of GOG's
+files, which eXoDOS's match, and of the 1990 floppy disks). A missing file fails
+the import; one that matches no release, such as one from a badly read disk
+image, is named in a warning on the setup screen, and the game can still be
+started, since other releases may exist. `reaction-tool import` prints the same
+check.
+
+The installers aren't run: they're read directly, nothing else is installed. (This
 is a port of covert-decomp's `tools/extract_game.py`; `reaction-tool import
 SOURCE OUTDIR [--compare DIR]` does the same from the command line.)
 

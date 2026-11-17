@@ -34,16 +34,6 @@ std::string utf8(const fs::path& p) {
 }
 
 // A DOS 8.3 name, as extract_game.py's DOS_NAME (already upper case).
-bool isDosName(const std::string& n) {
-    auto ok = [](char c) {
-        return (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || std::strchr("_$~!#%&'(){}@^`-", c);
-    };
-    const std::size_t dot = n.find('.');
-    const std::string base = n.substr(0, dot), ext = dot == std::string::npos ? std::string() : n.substr(dot + 1);
-    if (base.empty() || base.size() > 8) return false;
-    if (dot != std::string::npos && (ext.empty() || ext.size() > 3)) return false;
-    return std::all_of(base.begin(), base.end(), ok) && std::all_of(ext.begin(), ext.end(), ok);
-}
 
 Bytes readFile(const fs::path& p, std::size_t limit = SIZE_MAX) {
     std::ifstream in(p, std::ios::binary);
@@ -74,8 +64,9 @@ void readAll(const std::vector<std::pair<std::string, const Entry*>>& picked, Ga
     }
 }
 
-// extract_game.py's game_dir: the shallowest folder with GAME.EXE and COVERT.EXE,
-// its DOS 8.3 names. False if there's none.
+// extract_game.py's game_dir: the shallowest folder with GAME.EXE and COVERT.EXE
+// (or the data files), and of its files those Covert Reaction reads. False if
+// there's none.
 bool gameDir(const Entries& files, GameFiles& out, const ImportProgress& progress, double from, double to) {
     std::map<std::string, std::map<std::string, const Entry*>> dirs;
     std::vector<std::string> order;   // (the folders as found: a tie goes to the first)
@@ -89,12 +80,16 @@ bool gameDir(const Entries& files, GameFiles& out, const ImportProgress& progres
     const std::string* best = nullptr;
     for (const auto& d : order) {
         const auto& names = dirs[d];
-        if (names.count("GAME.EXE") && names.count("COVERT.EXE") && (!best || d.size() < best->size())) best = &d;
+        // An installed game (its programs), or a copy Covert Reaction made (its
+        // data files only: the setup screen's data/game, copied elsewhere).
+        const bool game = (names.count("GAME.EXE") && names.count("COVERT.EXE")) ||
+                          (names.count("TEXT.DTA") && names.count("TITLE2.PAN") && names.count("FACES.PIC"));
+        if (game && (!best || d.size() < best->size())) best = &d;
     }
     if (!best) return false;
     std::vector<std::pair<std::string, const Entry*>> picked;
     for (const auto& [name, e] : dirs[*best])
-        if (isDosName(name)) picked.emplace_back(name, e);
+        if (isGameDataFile(name)) picked.emplace_back(name, e);   // (what the port reads, no more)
     readAll(picked, out, progress, from, to);
     return true;
 }
@@ -119,7 +114,7 @@ GameFiles fromFloppies(std::vector<std::pair<std::string, Shared>> images, const
     for (const auto& [name, img] : images) {
         report(progress, from + (to - from) * i++ / static_cast<double>(images.size()), "Reading the disk " + name);
         for (const auto& e : archive::fatEntries(img))
-            if (e.path.find('/') == std::string::npos) out[upper(e.path)] = e.read();
+            if (e.path.find('/') == std::string::npos && isGameDataFile(upper(e.path))) out[upper(e.path)] = e.read();
     }
     return out;
 }
@@ -313,9 +308,12 @@ ImportResult importGame(const fs::path& source, const fs::path& dest, const Impo
             out.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
             if (!out) fail("can't write " + utf8(tmp / name));
         }
-        if (const auto missing = GameData::missingFiles(tmp); !missing.empty()) {
+        // Every file the port reads must be there; one that doesn't match a known
+        // release is only reported (res.check).
+        res.check = checkGameFiles(tmp);
+        if (!res.check.missing.empty()) {
             std::string m;
-            for (const auto& f : missing) m += " " + f;
+            for (const auto& f : res.check.missing) m += " " + f;
             fail("the game's files are incomplete (missing:" + m + ")");
         }
         // The swap: the old folder goes only once the new one is complete.
@@ -332,7 +330,6 @@ ImportResult importGame(const fs::path& source, const fs::path& dest, const Impo
             fail("can't create " + utf8(dest) + ": " + why);
         }
         fs::remove_all(old, ec);
-        res.check = checkGameFiles(dest);
         res.ok = true;
         res.files = files.size();
         report(progress, 1.0, "Done");
