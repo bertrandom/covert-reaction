@@ -273,11 +273,8 @@ notes:
 - **Function keys on a Mac:** TAC's actions are on F1-F10, which a Mac's top row
   only sends with Fn held down, unless "Use F1, F2, etc. keys as standard function
   keys" is on in System Settings › Keyboard. That setting affects every app; with
-  [Karabiner-Elements](https://karabiner-elements.pqrs.org/), the rule "Covert
-  Reaction: use F1-F10 as standard function keys" (in
-  [its rule gallery](https://ke-complex-modifications.pqrs.org/) under Application
-  Specific, or
-  [on GitHub](https://github.com/pqrs-org/KE-complex_modifications/blob/main/public/js/covert_reaction_function_keys.js))
+  [Karabiner-Elements](https://karabiner-elements.pqrs.org/), the rule
+  ["Covert Reaction: use F1-F10 as standard function keys"](https://ke-complex-modifications.pqrs.org/?rule=js%2Fcovert_reaction_function_keys.js)
   does it only while Covert Reaction is in front.
 - **Full screen:** Alt+Enter (desktop).
 - **Options anywhere:** ` (the key left of 1) opens the [Options](#options) window
