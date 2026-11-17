@@ -258,10 +258,13 @@ notes:
   only sends with Fn held down, unless "Use F1, F2, etc. keys as standard function
   keys" is on in System Settings › Keyboard.
 - **Full screen:** Alt+Enter (desktop).
+- **Options anywhere:** ` (the key left of 1) opens the [Options](#options) window
+  over whatever is on screen; the game waits until it closes (Done, Esc or ` again).
 
 ### Options
 
-The main menu has an **Options** item, not in the original, for Covert Reaction's
+The main menu has an **Options** item, not in the original (and ` brings up the
+same window anywhere in the game), for Covert Reaction's
 own settings:
 
 | Option | What it does | Default |

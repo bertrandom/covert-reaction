@@ -8,8 +8,7 @@
 #include "app/Scenes.h"
 #include "app/Menu.h"
 #include "app/NewCharScenes.h"
-#include "app/SetupScene.h"
-#include "core/Folders.h"
+#include "app/Options.h"
 #include "formats/McgaPalette.h"
 #include "formats/Pan.h"
 #include "formats/Pic.h"
@@ -30,13 +29,10 @@ TextWindowOptions fill5(int selected = 0) {
 
 class MainMenuScene : public Scene {
 public:
-    // `optionsAt` >= 0: open on the Options window, that item selected (back from
-    // the setup screen).
-    MainMenuScene(App& app, Image background, int optionsAt = -1)
+    MainMenuScene(App& app, Image background)
         : app_(app), background_(std::move(background)), screen_(background_),
           palette_(mcgaPalette(palettes::kGame)) {
-        if (optionsAt >= 0) openOptions(optionsAt);
-        else openMain();
+        openMain();
     }
 
     void handle(const SDL_Event& e) override { menu_->handle(e, app_.mouse(e)); }
@@ -45,15 +41,6 @@ public:
         menu_->tick();
         auto r = menu_->result();
         if (!r || next_) return;
-        if (options_) {               // the Options window: change one, show it again
-            if (*r < 0 || *r == kOptionsDone) { options_ = false; openMain(); return; }
-#ifndef __EMSCRIPTEN__
-            if (*r == kOptionsSetup) { openSetup(); return; }
-#endif
-            changeOption(*r);
-            openOptions(*r);
-            return;
-        }
         menu_->draw(screen_);         // a text window stays on the screen after it closes
         if (practiceStep_ == 1) {     // practice_menu: difficulty = show_menu(...)
             if (*r < 0) {
@@ -101,10 +88,7 @@ public:
                  80, 128, fill5());
             return;
         }
-        if (sel == 4) {
-            screen_ = background_;    // (the port's own window: nothing stays behind)
-            openOptions(0);
-        }
+        if (sel == 4) openOptions();   // (the port's own window: nothing stays behind)
     }
 
     void draw(Frame& f) override {
@@ -127,86 +111,15 @@ private:
              80, 80, fill5());
     }
 
-    // Covert Reaction's own options (core/Settings.h), not in the original's menu.
-    // Choosing one changes it and saves; "Done" or Esc goes back.
-    static constexpr const char* kSounds[] = {"auto", "mt32", "adlib", "speaker", "none"};
-    static constexpr const char* kSoundNames[] = {"Automatic", "Roland MT-32", "AdLib", "PC speaker", "Off"};
-#ifdef __EMSCRIPTEN__
-    static constexpr int kOptionsDone = 6;   // (the page has its own full-screen button and file picker)
-#else
-    static constexpr int kOptionsSetup = 7;
-    static constexpr int kOptionsDone = 8;
-
-    // "Game files and ROMs...": the setup screen (SetupScene), then this window
-    // again. Done saves both folders; the game folder is used from the next
-    // start, the ROM folder at once (main.cpp gives the sound engine the new
-    // places to look when settings.mt32Roms changes).
-    void openSetup() {
-        SetupConfig c = app_.setup;
-        c.gameDir = app_.settings.gameData.empty() ? app_.data.dir() : folders::fromUtf8(app_.settings.gameData);
-        c.romDir = app_.settings.mt32Roms.empty() ? std::filesystem::path() : folders::fromUtf8(app_.settings.mt32Roms);
-        c.inGame = true;
+    // Covert Reaction's own Options window (app/Options.h), back to this menu.
+    void openOptions(int selected = 0) {
+        Frame f;
+        f.image = background_;
         App& app = app_;
         Image bg = background_;
-        next_ = std::make_unique<SetupScene>(app_.screen, std::move(c), [&app, bg](bool ok, const SetupScene& s) {
-            if (ok) {
-                if (s.gameChanged()) app.settings.gameData = folders::toUtf8(s.gameDir());
-                app.settings.mt32Roms = s.romDir().empty() ? std::string() : folders::toUtf8(s.romDir());
-                app.saveSettings();
-            }
-            return std::unique_ptr<Scene>(std::make_unique<MainMenuScene>(app, bg, kOptionsSetup));
-        });
-    }
-#endif
-
-    void openOptions(int selected) {
-        const Settings& s = app_.settings;
-        auto onOff = [](bool b) { return b ? "On" : "Off"; };
-        std::string text = "Options\n";
-        text += std::string(" Keypad on 789/UIO/JKL: ") + onOff(s.keypadKeys) + "\n";
-        text += std::string(" Copy protection: ") + onOff(s.copyProtection) + "\n";
-        text += std::string(" Sound: ") + kSoundNames[soundIndex()] + "\n";
-        text += std::string(" Animations: ") + onOff(s.animations) + "\n";
-        text += std::string(" MT-32 clean mixing: ") + onOff(s.mt32CleanMixing) + "\n";
-        text += std::string(" Pause after break-in: ") + onOff(s.tacEndPause) + "\n";
-#ifndef __EMSCRIPTEN__
-        text += std::string(" Full screen: ") + onOff(app_.screen.fullscreen()) + "\n";
-        text += " Game files and ROMs...\n";
-#endif
-        text += " Done\n";
-        TextWindowOptions opt;
-        opt.selected = selected;
-        open(text, 64, 80, opt);
-        options_ = true;
-    }
-
-    int soundIndex() const {
-        for (int i = 0; i < 5; ++i)
-            if (app_.settings.sound == kSounds[i]) return i;
-        return 0;
-    }
-
-    void changeOption(int item) {
-        Settings& s = app_.settings;
-        switch (item) {
-        case 0: s.keypadKeys = !s.keypadKeys; break;
-        case 1: s.copyProtection = !s.copyProtection; break;
-        case 2: s.sound = kSounds[(soundIndex() + 1) % 5]; break;
-        case 3:                       // options bit 8 (App::syncAnimations)
-            s.animations = !s.animations;
-            app_.syncAnimations();
-            break;
-        case 4: s.mt32CleanMixing = !s.mt32CleanMixing; break;   // (main.cpp passes it to the engine)
-        case 5: s.tacEndPause = !s.tacEndPause; break;           // (TacScene passes it to TAC)
-#ifndef __EMSCRIPTEN__
-        case 6:
-            app_.screen.toggleFullscreen();
-            s.fullscreen = app_.screen.fullscreen();
-            break;
-#endif
-        default: return;
-        }
-        app_.saveSettings();
+        next_ = std::make_unique<OptionsScene>(
+            app_, std::move(f), [&app, bg] { return std::unique_ptr<Scene>(std::make_unique<MainMenuScene>(app, bg)); },
+            false, selected);
     }
 
     App& app_;
@@ -214,7 +127,6 @@ private:
     Image screen_;            // that, with the windows that closed on it
     Palette palette_;
     std::optional<Menu> menu_;
-    bool options_ = false;    // the Options window is open
     int practiceStep_ = 0;    // 1: difficulty menu, 2: skill menu
     std::unique_ptr<Scene> next_;
 };

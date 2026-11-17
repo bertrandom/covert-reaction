@@ -58,6 +58,7 @@ EM_JS(void, reaction_js_exit, (int status), {
 #endif
 
 #include "app/App.h"
+#include "app/Options.h"
 #include "app/Scenes.h"
 #include "app/Screen.h"
 #include "app/SetupScene.h"
@@ -261,8 +262,19 @@ public:
                 }
 #endif
             }
-            else
+            else if (app_ && !paused_ && !scene_->fullResolution() && OptionsScene::isOptionsKey(e)) {
+                // ` anywhere in the game: the Options window over the last frame;
+                // the scene (and the game program it runs) waits meanwhile.
+                paused_ = std::move(scene_);
+                auto opts = std::make_unique<OptionsScene>(*app_, frame_, nullptr, true);
+                overlay_ = opts.get();
+                scene_ = std::move(opts);
+            } else {
+                // A key let go while the Options were up still reaches the held
+                // scene (TAC tracks the keys held down).
+                if (paused_ && e.type == SDL_KEYUP) paused_->handle(e);
                 scene_->handle(e);
+            }
         }
         // START on the setup screen: keep the folders, start the game.
         if (setup_ && setup_->accepted()) {
@@ -324,7 +336,14 @@ public:
             }
             screen_.present(frame_.image, frame_.palette);
         }
-        if (auto nxt = scene_->next(); nxt) scene_ = std::move(nxt);
+        if (auto nxt = scene_->next(); nxt) {
+            scene_ = std::move(nxt);
+            if (paused_) overlay_ = dynamic_cast<OptionsScene*>(scene_.get());   // (the setup screen and back)
+        }
+        if (paused_ && overlay_ && overlay_->closed() && !scene_->quit) {
+            scene_ = std::move(paused_);
+            overlay_ = nullptr;
+        }
         return scene_ && !scene_->quit;
     }
 
@@ -380,6 +399,8 @@ private:
     std::string soundDevice_;
     std::unique_ptr<SoundOut> sound_;   // before scene_: outlives the scenes that play sounds
     std::unique_ptr<Scene> scene_;
+    std::unique_ptr<Scene> paused_;     // the scene held while the ` Options window is up
+    OptionsScene* overlay_ = nullptr;   // that window (scene_), or null
     SetupScene* setup_ = nullptr;       // scene_ while it's the first-run setup screen
     Frame frame_;
     Canvas canvas_;                     // for fullResolution() scenes
