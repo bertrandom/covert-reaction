@@ -34,7 +34,6 @@ public:
     void handle(const SDL_Event& e) override {
         if (next_) return;
         int key = dosKey(e);
-        if (key < 0 && e.type == SDL_MOUSEBUTTONDOWN) key = 0;   // a click: like any other key
         if (key < 0) return;
         if (vacation_) {
             if (dissolve_.active() || step_ < static_cast<int>(pics_.frames.size())) keyPending_ = true;

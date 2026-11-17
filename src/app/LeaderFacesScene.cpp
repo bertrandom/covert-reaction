@@ -48,16 +48,6 @@ public:
 
     void handle(const SDL_Event& e) override {
         if (done_) return;
-        if (e.type == SDL_MOUSEBUTTONDOWN) {   // a modern extra: a click picks the face under it
-            const SDL_Point p = app_.mouse(e);
-            const int cx = p.x / 64, cy = (p.y - 21) / 60;
-            if (p.y >= 21 && cx >= 0 && cx < 5 && cy >= 0 && cy < 3) {
-                cx_ = cx;
-                cy_ = cy;
-                done_ = true;
-            }
-            return;
-        }
         switch (dosKey(e)) {
         case 0x4900: ++cx_; [[fallthrough]];
         case 0x4800: --cy_; break;
@@ -112,7 +102,7 @@ public:
         opt.showOk = true;
         menu_.emplace(app.fonts.font(1), std::move(text), 96, 90, opt).setHotkeys(appHotkeys(app, *this));
     }
-    void handle(const SDL_Event& e) override { menu_->handle(e, app_.mouse(e)); }
+    void handle(const SDL_Event& e) override { menu_->handle(e); }
     void tick() override {
         menu_->tick();
         if (menu_->result() && !next_) next_ = makeMainMenuSceneOver(app_, back_.image);

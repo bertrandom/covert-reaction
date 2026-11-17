@@ -258,11 +258,10 @@ void CityUi::handle(const SDL_Event& e) {
         return;
     }
     if (req_.kind == Request::Menu && menu_) {
-        menu_->handle(e, app_.mouse(e));
+        menu_->handle(e);
         return;
     }
-    // (GAME takes no mouse input: MOUSE.C is linked but never called; only the
-    // Menu widget's own mouse support, the port's, works in the text windows.)
+    // (GAME takes no mouse input: MOUSE.C is linked but never called.)
     if (e.type == SDL_KEYDOWN && dosKey(e) >= 0) keys_.push_back(e);
 }
 

@@ -35,7 +35,7 @@ public:
         openMain();
     }
 
-    void handle(const SDL_Event& e) override { menu_->handle(e, app_.mouse(e)); }
+    void handle(const SDL_Event& e) override { menu_->handle(e); }
 
     void tick() override {
         menu_->tick();

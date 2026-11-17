@@ -134,7 +134,7 @@ public:
 
     void handle(const SDL_Event& e) override {
         if (menu_) {
-            menu_->handle(e, app_.mouse(e));
+            menu_->handle(e);
             return;
         }
         const int k = chaseKey(e);

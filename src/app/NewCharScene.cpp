@@ -51,7 +51,7 @@ public:
     }
 
     void handle(const SDL_Event& e) override {
-        if (menu_) menu_->handle(e, app_.mouse(e));
+        if (menu_) menu_->handle(e);
     }
 
     void tick() override {
@@ -202,7 +202,7 @@ public:
             if (k >= 0) codenameKey(k);
             return;
         }
-        if (menu_) menu_->handle(e, app_.mouse(e));
+        if (menu_) menu_->handle(e);
     }
 
     void tick() override {

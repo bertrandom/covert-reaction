@@ -120,7 +120,7 @@ void OptionsScene::handle(const SDL_Event& e) {
         close();
         return;
     }
-    if (menu_) menu_->handle(e, app_.mouse(e));
+    if (menu_) menu_->handle(e);
 }
 
 void OptionsScene::tick() {

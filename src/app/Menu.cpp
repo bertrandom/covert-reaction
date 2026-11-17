@@ -35,14 +35,6 @@ Menu& Menu::setHotkeys(TextWindowHotkeys h) {
     return *this;
 }
 
-int Menu::itemAt(SDL_Point p) const {
-    if (layout_.firstItem < 0) return -1;
-    if (p.x < x_ || p.x > layout_.boxX2) return -1;
-    int line = (p.y - y_ - 4) / 8;
-    int item = line - layout_.firstItem;
-    if (p.y - y_ - 4 < 0 || item < 0 || item >= layout_.items) return -1;
-    return item;
-}
 
 void Menu::choose(int item) {
     if (flash_ >= 0 || done_) return;
@@ -61,9 +53,9 @@ void Menu::toggle(int bit) {
     if (hotkeys_.sound) hotkeys_.sound(now > z ? 20 : 19);
 }
 
-void Menu::handle(const SDL_Event& e, SDL_Point mouse) {
+void Menu::handle(const SDL_Event& e) {
     if (confirmingQuit()) {
-        confirm_->handle(e, mouse);
+        confirm_->handle(e);
         return;
     }
     if (flash_ >= 0 || done_) return;
@@ -112,11 +104,6 @@ void Menu::handle(const SDL_Event& e, SDL_Point mouse) {
         default:
             break;
         }
-    } else if (e.type == SDL_MOUSEBUTTONDOWN) {
-        // (The original has no mouse: a click chooses the item under it, a
-        // modern extra; moving the mouse doesn't move the highlight.)
-        if (!hasItems) choose(-1);
-        else if (int it = itemAt(mouse); it >= 0) { sel_ = it; choose(it); }
     }
 }
 

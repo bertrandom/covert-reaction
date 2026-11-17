@@ -28,7 +28,7 @@ public:
         : app_(app),
           menu_(app.fonts.font(1), "Covert Reaction\n New Game\n Load Game\n Credits\n Quit\n", 104, 70) {}
 
-    void handle(const SDL_Event& e) override { menu_.handle(e, app_.mouse(e)); }
+    void handle(const SDL_Event& e) override { menu_.handle(e); }
     void tick() override {
         menu_.tick();
         if (auto r = menu_.result()) {

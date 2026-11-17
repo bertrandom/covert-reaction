@@ -1,7 +1,7 @@
 // A text window / menu with the original's interaction (TEXTWIN.C text_window):
 // Up/Down (and keypad 8/2) move the highlight, Enter/Space/F1 choose, Esc
 // cancels (-1); the chosen item flashes white for 20 retraces before the menu
-// closes. The mouse hovers and clicks items too.
+// closes. Keys only, as in the original (which has no mouse support).
 //
 // With hotkeys (setHotkeys), the window also takes text_window's Alt keys:
 // Alt-A, Alt-S, Alt-J toggle options bits 8, 4, 10h (animations, sound,
@@ -53,16 +53,15 @@ public:
     // Turns on text_window's Alt keys (see TextWindowHotkeys).
     Menu& setHotkeys(TextWindowHotkeys h);
 
-    // `frame` is the screen the menu is drawn over; `mouse` maps window to frame
-    // coordinates (Screen::toFrame).
-    void handle(const SDL_Event& e, SDL_Point mouse);
+    // Keys only: the original has no mouse support.
+    void handle(const SDL_Event& e);
     void tick();
     void draw(Image& frame) const;
 
     // The chosen item (0-based) or -1 (Esc / no items), once the menu is done.
     std::optional<int> result() const { return done_ ? std::optional<int>(result_) : std::nullopt; }
     const TextWindowLayout& layout() const { return layout_; }
-    // The highlighted item (keys or mouse), -1 if none.
+    // The highlighted item, -1 if none.
     int selection() const { return sel_; }
 
     // The Alt-Q window is open: text_window sets anim_active = 0 for it, so a
@@ -70,7 +69,6 @@ public:
     bool confirmingQuit() const { return confirm_ && !confirmClosed_; }
 
 private:
-    int itemAt(SDL_Point p) const;
     void choose(int item);
     void toggle(int bit);
 

@@ -30,8 +30,8 @@ Frame ScriptScene::frame() const {
     return f;
 }
 
-bool ScriptScene::isKeyOrClick(const SDL_Event& e) const {
-    return (e.type == SDL_KEYDOWN && dosKey(e) >= 0) || e.type == SDL_MOUSEBUTTONDOWN;
+bool ScriptScene::isKey(const SDL_Event& e) const {
+    return e.type == SDL_KEYDOWN && dosKey(e) >= 0;
 }
 
 void ScriptScene::playAnimSounds() {
@@ -188,13 +188,13 @@ void ScriptScene::apply(const DrawOp& o) {
 void ScriptScene::handle(const SDL_Event& e) {
     switch (mode_) {
     case Mode::Menu:
-        menu_->handle(e, app_.mouse(e));
+        menu_->handle(e);
         break;
     case Mode::AnyKey:
-        if (isKeyOrClick(e)) mode_ = Mode::Idle;
+        if (isKey(e)) mode_ = Mode::Idle;
         break;
     case Mode::Pages: {
-        if (page_ >= pages_.size() || !isKeyOrClick(e)) break;
+        if (page_ >= pages_.size() || !isKey(e)) break;
         const Page& p = pages_[page_];
         if (p.wait == Page::Wait::Retrace) break;
         if (p.wait == Page::Wait::KeyOrEsc && dosKey(e) == 27) {

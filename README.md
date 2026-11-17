@@ -261,10 +261,9 @@ The keys are the original's (see the original manual and reference card). A few
 notes:
 
 - **Text windows and menus:** Up/Down move, Enter, Space or F1 choose, Esc
-  cancels; a click also chooses (the original has no mouse at all, so pointing
-  doesn't move the highlight). As in the original, inside any text window
-  Alt-A switches animations, Alt-S sound and Alt-J the joystick bit (each with a
-  short sound), and Alt-Q asks whether to quit.
+  cancels (keys only: the original has no mouse support). As in the original,
+  inside any text window Alt-A switches animations, Alt-S sound and Alt-J the
+  joystick bit (each with a short sound), and Alt-Q asks whether to quit.
 - **No numeric keypad?** In TAC and BUG, 7 8 9 / U I O / J K L work as the
   keypad (7 8 9 / 4 5 6 / 1 2 3), and BUG also takes the number row. In TAC
   these walk and Shift+key dives (the arrows and Home/End/PgUp/PgDn dive, as in
