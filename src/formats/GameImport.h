@@ -3,7 +3,9 @@
 // covert-decomp's tools/extract_game.py. The source's format is told from its
 // content, not its name:
 //  - GOG's Windows installer (Inno Setup .exe)
-//  - GOG's macOS installer (.pkg: xar, gzip'd cpio payload)
+//  - GOG's macOS installer (.pkg: xar, gzip'd cpio payload), or the app it
+//    installs ("Sid Meier's Covert Action.app": the game in
+//    Contents/Resources/game/Covert, beside GOG's DOSBox)
 //  - GOG's Linux installer (.sh: a makeself script with a zip appended)
 //  - eXoDOS's archive (.zip), or any zip holding the game
 //  - the floppy disks: a .7z of disk images, a folder of images, or one FAT12
@@ -40,6 +42,7 @@ enum class GameSource {
     Folder,       // a folder (an installed game, or disk images)
     GogWindows,   // Inno Setup installer
     GogMac,       // .pkg (xar)
+    GogMacApp,    // the .app GOG's macOS installer installs (a folder inside)
     GogLinux,     // makeself .sh (a script with a zip appended)
     Zip,          // a zip (eXoDOS's, or any)
     SevenZip,     // a .7z (the floppy sets)

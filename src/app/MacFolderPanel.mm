@@ -21,7 +21,9 @@ std::optional<std::filesystem::path> run(const std::filesystem::path& start, con
         panel.message = ns(message);
         panel.prompt = extensions ? @"Choose" : @"Use This Folder";
         if (extensions) {
-            NSMutableArray<UTType*>* types = [NSMutableArray arrayWithObject:UTTypeFolder];
+            // Folders, and apps: the one GOG's macOS installer installs holds the
+            // game (the panel shows an app as one item, not as a folder).
+            NSMutableArray<UTType*>* types = [NSMutableArray arrayWithObjects:UTTypeFolder, UTTypeApplicationBundle, nil];
             for (const auto& e : *extensions) {
                 const std::string ext = !e.empty() && e[0] == '.' ? e.substr(1) : e;
                 if (UTType* t = [UTType typeWithFilenameExtension:ns(ext)]) [types addObject:t];

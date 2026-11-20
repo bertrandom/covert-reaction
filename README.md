@@ -90,6 +90,8 @@ The first time Covert Reaction starts, it shows a setup screen with two cards:
 - **Game files** (required): click **Choose…** and pick your copy of Covert
   Action, as you have it. Any of these work:
   - GOG's installer for Windows (`.exe`), macOS (`.pkg`) or Linux (`.sh`)
+  - the app GOG's macOS installer installs (`Sid Meier's Covert Action.app`,
+    usually in Applications)
   - eXoDOS's archive (`Covert Action (1990).zip`), or any zip with the game
   - the original floppy disks: a `.7z` of disk images, a folder of disk images,
     or a single image
@@ -330,7 +332,9 @@ the setup screen. File names are matched case-insensitively.
 
 **Importing.** The setup screen tells a release's format from its content, not
 its name: GOG's Windows installer (Inno Setup), GOG's macOS `.pkg` (xar, cpio),
-GOG's Linux `.sh` (a makeself script with a zip), zips, 7z archives, FAT floppy
+GOG's Linux `.sh` (a makeself script with a zip), the app GOG's macOS
+installer installs (the game is in `Contents/Resources/game/Covert`, beside GOG's
+DOSBox; the macOS file panel lets you pick an app), zips, 7z archives, FAT floppy
 images (copied in disk order, as the game's `INSTALL.BAT` does) and folders. The
 installers are read directly, never run. The game's folder inside a release is
 the one with `GAME.EXE` and `COVERT.EXE` (or, for a copy Covert Reaction made, its

@@ -153,10 +153,18 @@ Entries folderEntries(const fs::path& root) {
     return out;
 }
 
+// A macOS app bundle (GOG's "Sid Meier's Covert Action.app"): a folder named
+// *.app with a Contents folder.
+bool isMacApp(const fs::path& p) {
+    std::error_code ec;
+    const std::string ext = upper(utf8(p.extension()));
+    return ext == ".APP" && fs::is_directory(p / "Contents", ec);
+}
+
 GameFiles collect(const fs::path& source, GameSource& kind, const ImportProgress& progress) {
     std::error_code ec;
     if (fs::is_directory(source, ec)) {
-        kind = GameSource::Folder;
+        kind = isMacApp(source) ? GameSource::GogMacApp : GameSource::Folder;
         report(progress, 0.0, "Looking at the folder");
         const Entries files = folderEntries(source);
         GameFiles out;
@@ -226,7 +234,7 @@ GameFiles collect(const fs::path& source, GameSource& kind, const ImportProgress
 
 GameSource detectGameSource(const fs::path& source) {
     std::error_code ec;
-    if (fs::is_directory(source, ec)) return GameSource::Folder;
+    if (fs::is_directory(source, ec)) return isMacApp(source) ? GameSource::GogMacApp : GameSource::Folder;
     if (!fs::is_regular_file(source, ec)) return GameSource::Unknown;
     try {
         const Bytes head = readFile(source, 0x200000);
@@ -260,6 +268,7 @@ const char* describeGameSource(GameSource kind) {
     case GameSource::Folder: return "a folder";
     case GameSource::GogWindows: return "GOG's Windows installer";
     case GameSource::GogMac: return "GOG's macOS installer";
+    case GameSource::GogMacApp: return "GOG's macOS app";
     case GameSource::GogLinux: return "GOG's Linux installer";
     case GameSource::Zip: return "a zip archive";
     case GameSource::SevenZip: return "a 7z archive";

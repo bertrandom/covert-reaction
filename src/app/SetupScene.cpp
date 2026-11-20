@@ -43,8 +43,8 @@ constexpr float kButtonH = 36, kFooterButtonH = 40, kButtonPad = 18, kButtonRadi
 constexpr float kCardPad = 20, kCardRadius = 14, kCardGap = 14, kIcon = 28;
 
 constexpr const char* kHelp =
-    "Works with GOG’s installers for Windows, macOS and Linux, the eXoDOS zip, the floppy disk images, "
-    "or a folder with the game. The game’s files are copied into Covert Reaction’s own folder; "
+    "Works with GOG’s installers for Windows, macOS and Linux, GOG’s Mac app, the eXoDOS zip, the floppy "
+    "disk images, or a folder with the game. The game’s files are copied into Covert Reaction’s own folder; "
     "nothing is installed.";
 
 enum class Status { Empty, Ok, Warning, Error, Busy };
@@ -310,8 +310,8 @@ void SetupScene::choose(Action a) {
     default:
         r.pick = config_.importDir.empty() ? dialogs::Pick::Folder : dialogs::Pick::FileOrFolder;
         r.title = "Choose Sid Meier’s Covert Action";
-        r.message = "Choose Sid Meier's Covert Action (1990): GOG's installer (.exe, .pkg or .sh), eXoDOS's .zip, "
-                    "the original disks (a .7z or a disk image), or a folder that holds the game. Its files are "
+        r.message = "Choose Sid Meier's Covert Action (1990): GOG's installer (.exe, .pkg or .sh) or the "
+                    "app it installs on a Mac, eXoDOS's .zip, the original disks (a .7z or a disk image), or a folder that holds the game. Its files are "
                     "copied into Covert Reaction's own folder.";
         break;
     }
