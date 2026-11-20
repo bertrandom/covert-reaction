@@ -382,8 +382,10 @@ in `/usr/share/fonts`. If none can be read it falls back to a built-in 8x8
 font. `COVERT_UI_FONT` (and `COVERT_UI_FONT_BOLD`) name a font file instead;
 `COVERT_UI_SCALE` makes the whole screen bigger or smaller.
 
-For testing: `--scene picker` or `COVERT_FORCE_PICKER=1` shows the setup screen
-anyway. Scripted `--shot` runs never open a dialog; there `COVERT_TEST_PICK=PATH`
+For testing: `tools/clear_data.sh` removes the imported `data` folder (with
+`--settings`, also the saved `game_data` and `mt32_roms`), so the next start is a
+first run again; `--scene picker` or `COVERT_FORCE_PICKER=1` shows the setup
+screen anyway. Scripted `--shot` runs never open a dialog; there `COVERT_TEST_PICK=PATH`
 makes the next dialog "choose" PATH (`PATH1|PATH2`: one per dialog), the shot
 is the setup screen at `--ui-size WxH[@RATIO]` (default 1280x800; `@2` as a
 Retina display), a PNG if the file name ends in `.png`, and
